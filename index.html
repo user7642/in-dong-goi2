@@ -1,0 +1,2149 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Quản lý In & Đóng gói</title>
+<!-- BUILD MARKER: lightbox-fullsize-v1 — 2026-08-23
+     Dùng để xác nhận bản deploy trên GitHub Pages đã cập nhật code lightbox
+     mới nhất hay chưa: mở "View Page Source" (Ctrl+U) trên trang thật, tìm
+     chuỗi "BUILD MARKER" — nếu thấy đúng nhãn này (lightbox-fullsize-v1)
+     nghĩa là bản mới đã lên; nếu thấy nhãn khác/không thấy dòng này nghĩa
+     là GitHub Pages / trình duyệt vẫn đang phục vụ bản cache cũ. Mỗi lần
+     đẩy thay đổi thật sự lên, đổi số hiệu (v1 -> v2...) để so sánh nhanh. -->
+<style>
+  :root{
+    --bg:#f5f6f7;
+    --card:#ffffff;
+    --border:#e2e4e7;
+    --text:#1a1d21;
+    --muted:#6b7280;
+    --blue:#2563eb;
+    --blue-bg:#eaf1ff;
+    --amber:#b45309;
+    --amber-bg:#fef3e0;
+    --green:#15803d;
+    --green-bg:#e8f7ec;
+    --red:#dc2626;
+    --gray-bg:#eceef0;
+    --maxw:680px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    padding-bottom:90px;
+  }
+  /* header, thanh addbar/searchbar sticky, main, footer-style bars đều dùng
+     chung 1 độ rộng tối đa (--maxw), canh giữa — để trên desktop các khối
+     thẳng hàng nhau thay vì header/thanh công cụ chạy full-width còn danh
+     sách bên dưới bị bó hẹp lại trông lệch. */
+  header{
+    background:var(--card);
+    border-bottom:1px solid var(--border);
+    padding:14px 16px 0 16px;
+    position:sticky;
+    top:0;
+    z-index:20;
+    max-width:var(--maxw);
+    margin:0 auto;
+  }
+  h1{font-size:18px;margin:0 0 12px 0;font-weight:600;}
+  .tabs{display:flex;gap:6px;}
+  .tab{
+    flex:1;
+    text-align:center;
+    padding:12px 4px;
+    font-size:15px;
+    font-weight:600;
+    color:var(--muted);
+    border-bottom:3px solid transparent;
+    cursor:pointer;
+    user-select:none;
+  }
+  .tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+  .count-badge{
+    display:inline-block;
+    background:var(--border);
+    color:var(--text);
+    border-radius:10px;
+    font-size:12px;
+    padding:1px 7px;
+    margin-left:5px;
+  }
+  .tab.active .count-badge{background:var(--blue);color:#fff;}
+
+  .addbar{
+    background:var(--card);
+    border-bottom:1px solid var(--border);
+    padding:10px 16px;
+    display:flex;
+    gap:8px;
+    position:sticky;
+    top:53px;
+    z-index:19;
+    max-width:var(--maxw);
+    margin:0 auto;
+  }
+  .addbar input[type=text]{
+    flex:1;
+    min-width:0;
+    font-size:16px;
+    padding:11px 12px;
+    border:1px solid var(--border);
+    border-radius:8px;
+  }
+  .addbar input[type=number]{
+    width:64px;
+    font-size:16px;
+    padding:11px 6px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    text-align:center;
+  }
+  .addbar button{
+    background:var(--blue);
+    color:#fff;
+    border:none;
+    border-radius:8px;
+    padding:0 16px;
+    font-size:22px;
+    font-weight:600;
+    cursor:pointer;
+  }
+
+  .searchbar{
+    background:var(--card);
+    border-bottom:1px solid var(--border);
+    padding:8px 16px;
+    position:sticky;
+    top:106px;
+    z-index:18;
+    max-width:var(--maxw);
+    margin:0 auto;
+  }
+  .searchbar input{
+    width:100%;
+    font-size:15px;
+    padding:9px 12px;
+    border:1px solid var(--border);
+    border-radius:8px;
+  }
+
+  .quicklink{padding:10px 12px 0 12px;}
+  .quicklink a{
+    display:block;
+    text-align:center;
+    background:var(--blue-bg);
+    color:var(--blue);
+    font-weight:600;
+    font-size:14px;
+    padding:11px 12px;
+    border-radius:8px;
+    text-decoration:none;
+  }
+
+  main{padding:12px 12px 0 12px;max-width:var(--maxw);margin:0 auto;}
+  .empty{
+    text-align:center;
+    color:var(--muted);
+    padding:60px 20px;
+    font-size:14px;
+  }
+
+  .errbox{
+    background:#fde8e8;
+    color:var(--red);
+    border:1px solid #f5b8b8;
+    border-radius:8px;
+    padding:8px 12px;
+    font-size:13px;
+    margin-bottom:10px;
+  }
+
+  /* ---- Order box (grouping) — thẻ tóm tắt kiểu Shopee ---- */
+  .order-box{
+    border:1px solid var(--border);
+    border-radius:12px;
+    margin-bottom:12px;
+    overflow:hidden;
+    background:var(--card);
+    cursor:pointer;
+  }
+  .order-box.warn{border-color:var(--amber);}
+  .order-box.ready{border-color:var(--green);}
+
+  .order-summary-header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:9px 12px;background:#fafbfc;border-bottom:1px solid var(--border);
+    font-size:12.5px;
+  }
+  .order-time{color:var(--muted);}
+  .order-status-badge{font-weight:700;}
+  .order-status-badge.st-warn{color:var(--amber);}
+  .order-status-badge.st-info{color:var(--blue);}
+  .order-status-badge.st-ready{color:var(--green);}
+
+  .thumb-placeholder{
+    width:72px;height:72px;flex-shrink:0;border-radius:8px;
+    background:var(--gray-bg);display:flex;align-items:center;justify-content:center;
+    font-size:26px;color:var(--muted);overflow:hidden;
+    cursor:pointer;transition:opacity .12s;
+  }
+  .thumb-placeholder:active{opacity:.7;}
+  .thumb-placeholder img{width:100%;height:100%;object-fit:cover;display:block;}
+
+  /* Lightbox — bấm vào ảnh phân loại trong danh sách để phóng to, tránh
+     nhầm giữa các phân loại có tông màu giống nhau khi nhìn ở ảnh tí hon. */
+  .thumb-lightbox-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;
+    display:flex;align-items:center;justify-content:center;padding:24px;
+    animation:tlbFadeIn .12s ease-out;
+  }
+  @keyframes tlbFadeIn{from{opacity:0;}to{opacity:1;}}
+  .thumb-lightbox-box{
+    position:relative;background:#fff;border-radius:12px;max-width:min(1100px,94vw);max-height:94vh;
+    overflow:hidden;display:flex;flex-direction:column;
+  }
+  .thumb-lightbox-imgwrap{
+    background:var(--gray-bg);display:flex;align-items:center;justify-content:center;
+    max-height:82vh;overflow:hidden;
+  }
+  .thumb-lightbox-imgwrap img{max-width:100%;max-height:82vh;display:block;object-fit:contain;}
+  .thumb-lightbox-imgwrap .thumb-lightbox-noimg{font-size:48px;color:var(--muted);padding:60px;}
+  .thumb-lightbox-info{padding:12px 14px;border-top:1px solid var(--border);}
+  .thumb-lightbox-title{font-weight:700;font-size:15px;color:var(--text);}
+  .thumb-lightbox-classification{font-size:13px;color:var(--muted);margin-top:2px;}
+  .thumb-lightbox-close{
+    position:absolute;top:10px;right:10px;width:44px;height:44px;border-radius:50%;
+    background:rgba(0,0,0,.55);color:#fff;border:none;font-size:20px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;line-height:1;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .thumb-lightbox-close:active{background:rgba(0,0,0,.75);}
+
+  /* Preview khi rê chuột (chỉ desktop/thiết bị có hover thật — xem
+     supportsHoverPreview trong JS) — hiện ảnh to ngay cạnh con trỏ mà
+     KHÔNG cần bấm, nhanh hơn lightbox khi chỉ muốn liếc qua nhiều dòng
+     liên tiếp. Bấm vẫn mở lightbox đầy đủ như cũ (hữu ích trên mobile). */
+  .thumb-hover-preview{
+    position:fixed;z-index:1001;pointer-events:none;
+    background:#fff;border-radius:10px;box-shadow:0 10px 36px rgba(0,0,0,.32);
+    overflow:hidden;width:420px;opacity:0;transform:translateY(4px);
+    transition:opacity .1s,transform .1s;
+  }
+  .thumb-hover-preview.show{opacity:1;transform:translateY(0);}
+  .thumb-hover-preview img{width:100%;height:420px;object-fit:cover;display:block;background:var(--gray-bg);}
+  .thumb-hover-preview .thumb-hover-info{padding:10px 12px;border-top:1px solid var(--border);}
+  .thumb-hover-preview .thumb-hover-title{font-weight:700;font-size:14px;color:var(--text);}
+  .thumb-hover-preview .thumb-hover-classification{font-size:12.5px;color:var(--muted);margin-top:2px;}
+
+  .order-item-summary{
+    display:flex;gap:10px;align-items:flex-start;
+    padding:10px 12px;border-bottom:1px solid var(--border);
+  }
+  .order-item-summary:last-of-type{border-bottom:none;}
+  .order-item-summary input[type=checkbox]{width:20px;height:20px;flex-shrink:0;margin-top:4px;accent-color:var(--blue);}
+  .info-summary{flex:1;min-width:0;}
+  /* Tiêu đề: 1 dòng, dài quá thì ẩn bớt (ellipsis) — giống kiểu Shopee. */
+  .name-summary{
+    font-size:14px;font-weight:600;line-height:1.35;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  /* Dòng dưới: phân loại bên trái (ẩn bớt nếu dài) + số lượng bên phải,
+     luôn giữ chỗ cố định cho SL để không bao giờ bị đẩy mất. */
+  .meta-row-summary{
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+    margin-top:3px;
+  }
+  .classification-summary{
+    flex:1;min-width:0;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    font-size:12.5px;color:var(--muted);
+  }
+  .qty-summary{
+    flex-shrink:0;font-size:12.5px;color:var(--muted);
+  }
+
+  .order-summary-footer{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:8px 12px;border-bottom:1px solid var(--border);
+    font-size:12.5px;color:var(--muted);background:#fbfcfd;
+  }
+  .order-summary-footer b{color:var(--text);}
+
+  .order-code-row{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:8px 12px;border-bottom:1px solid var(--border);font-size:12.5px;
+  }
+  .order-code-row .code-label{color:var(--muted);}
+  .order-code-row .code-value{font-weight:600;display:flex;align-items:center;gap:6px;}
+  .ship-label-chip{font-size:12px;margin-left:2px;}
+  /* Placeholder cho đơn chưa có mã vận đơn thật — cố tình KHÔNG dùng chuỗi
+     ký tự giả nữa (xem renderOrderName() trong script). Độ rộng cân đối do
+     CSS quyết định, không phụ thuộc số ký tự của mã thật (mỗi hãng dài ngắn
+     khác nhau: GHN ~8 ký tự, SPX ~18 ký tự...). */
+  .order-name-placeholder{color:var(--border);font-weight:400;letter-spacing:1px;}
+
+  .order-status-line{font-size:11.5px;text-align:center;padding:6px 12px;color:var(--muted);border-bottom:1px solid var(--border);}
+  .order-status-line.warn{color:var(--amber);font-weight:600;}
+  .order-status-line.ready{color:var(--green);font-weight:600;}
+
+  .order-summary-actions{display:flex;gap:8px;padding:10px 12px;}
+  .order-summary-actions button{
+    flex:1;border:none;border-radius:8px;padding:10px 8px;font-size:13px;font-weight:600;cursor:pointer;
+  }
+  .order-summary-actions .ship-quick-btn{background:var(--gray-bg);color:var(--text);}
+  .order-summary-actions .order-primary-btn{background:var(--blue);color:#fff;}
+  .order-summary-actions .order-primary-btn.green{background:var(--green);}
+
+  /* Header đơn hàng: bấm vào để mở/đóng khu vực phiếu giao + ghi chú (thay
+     cho việc mở trang chi tiết toàn màn hình như trước). */
+  .order-summary-header{cursor:pointer;user-select:none;}
+  .order-header-right{display:flex;align-items:center;gap:6px;}
+  .header-dot{font-size:12px;line-height:1;}
+  .expand-arrow{font-size:10px;color:var(--muted);margin-left:2px;}
+
+  /* ---- Tab "Đã xong": thanh chuyển chế độ xem + chip lọc theo hãng ---- */
+  .carrierBar{
+    display:none;flex-direction:column;gap:8px;
+    padding:10px 16px;background:var(--card);border-bottom:1px solid var(--border);
+    max-width:var(--maxw);margin:0 auto;
+  }
+  .carrierViewToggle{
+    align-self:flex-start;border:1px solid var(--border);background:var(--gray-bg);
+    color:var(--text);border-radius:8px;padding:6px 12px;font-size:12.5px;font-weight:600;
+    cursor:pointer;
+  }
+  .carrierChips{display:flex;gap:6px;flex-wrap:wrap;}
+  .carrierChip{
+    border:1px solid var(--border);background:var(--card);color:var(--text);
+    border-radius:14px;padding:5px 10px;font-size:12.5px;font-weight:600;
+    cursor:pointer;display:flex;align-items:center;gap:5px;
+  }
+  .carrierChip .n{color:var(--muted);font-weight:400;}
+  .carrierChip.active{background:var(--blue);border-color:var(--blue);color:#fff;}
+  .carrierChip.active .n{color:#dbe8ff;}
+
+  /* ---- Accordion nhóm theo hãng (chế độ xem "Nhóm theo hãng") ---- */
+  .carrierGroup{margin-bottom:12px;}
+  .carrierGroupHead{
+    display:flex;justify-content:space-between;align-items:center;
+    background:var(--gray-bg);border-radius:10px;padding:12px 14px;
+    cursor:pointer;user-select:none;font-weight:600;font-size:14px;
+  }
+  .carrierGroupHeadRight{display:flex;align-items:center;gap:8px;}
+  .carrierGroupHead .carrierGroupCount{color:var(--muted);font-weight:400;font-size:12.5px;}
+  .carrierGroupHead .expand-arrow{margin-left:2px;}
+  .carrierGroupBody{padding-top:10px;}
+
+  /* ---- Chế độ "Đối soát bàn giao" (bật riêng theo từng nhóm hãng, chỉ tồn
+     tại trong bộ nhớ, KHÔNG lưu vào dữ liệu thật) — dùng tông màu amber để
+     tách biệt hẳn với xanh dương (chọn hàng loạt) / xanh lá (đã giao). ---- */
+  .reconcile-toggle-btn{
+    border:1px solid var(--amber);background:#fff;color:var(--amber);
+    border-radius:8px;padding:5px 9px;font-size:12px;font-weight:600;
+    cursor:pointer;white-space:nowrap;
+  }
+  .reconcile-toggle-btn.active{background:var(--amber);color:#fff;}
+  .reconcileBar{
+    position:sticky;top:106px;z-index:15;
+    display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;
+    background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber);
+    border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:12.5px;font-weight:600;
+  }
+  .reconcileFilterBtn{
+    border:1px solid var(--amber);background:#fff;color:var(--amber);
+    border-radius:14px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;
+  }
+  .reconcileFilterBtn.active{background:var(--amber);color:#fff;}
+  .reconcileRow{
+    display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;
+    background:var(--amber-bg);padding:9px 12px;border-bottom:1px solid var(--border);
+    cursor:default;
+  }
+  .reconcileCheckLabel{
+    display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--amber);cursor:pointer;
+  }
+  .reconcileCheckLabel input{width:19px;height:19px;accent-color:var(--amber);}
+  .reconcileBackBtn{
+    border:none;border-radius:7px;padding:6px 10px;font-size:12px;font-weight:600;
+    background:#fde8e8;color:var(--red);cursor:pointer;white-space:nowrap;
+  }
+
+  /* Dòng xem trước ghi chú chung của cả đơn — luôn hiện ngay dưới header,
+     không cần mở khu vực mở rộng mới thấy. */
+  .order-note-preview{
+    font-size:12.5px;color:var(--blue);background:var(--blue-bg);
+    padding:7px 12px;word-break:break-word;border-bottom:1px solid var(--border);
+  }
+
+  /* Khu vực mở rộng: phiếu giao (đính kèm PDF, dùng chung cho cả đơn, không
+     theo từng sản phẩm) + ghi chú chung của đơn — chỉ hiện khi bấm header. */
+  .order-expand-panel{border-bottom:1px solid var(--border);background:#fbfcfd;}
+  .ship-label-row{
+    padding:9px 12px;
+    display:flex;gap:8px;flex-wrap:wrap;justify-content:center;
+  }
+  /* Icon-only, gọn gàng: mọi nút trong khu vực mở rộng chỉ có icon, không chữ. */
+  .icon-btn{
+    border:none;border-radius:8px;width:40px;height:40px;font-size:17px;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;flex-shrink:0;
+  }
+  .icon-btn.attach-btn{background:var(--blue-bg);color:var(--blue);}
+  .icon-btn.view-btn{background:var(--gray-bg);color:var(--text);}
+  .icon-btn.download-btn{background:var(--green-bg);color:var(--green);}
+  .icon-btn.remove-btn{background:#fde8e8;color:var(--red);}
+  .icon-btn.note-btn{background:var(--gray-bg);color:var(--text);}
+  .icon-btn.note-btn.has-note{background:var(--blue-bg);color:var(--blue);}
+  .icon-btn[disabled]{opacity:.6;cursor:default;}
+
+  .edit-icon-btn{
+    border:none;background:none;color:var(--muted);font-size:14px;cursor:pointer;padding:2px 4px;
+  }
+  input.order-title-input{
+    font-size:13px;font-weight:700;border:1px solid var(--blue);border-radius:6px;
+    padding:6px 8px;flex:1;min-width:0;
+  }
+  .save-icon{
+    border:none;background:var(--blue);color:#fff;border-radius:6px;
+    padding:6px 9px;font-size:12.5px;font-weight:600;cursor:pointer;flex-shrink:0;
+  }
+  select.order-carrier-select{
+    font-size:13px;font-weight:700;border:1px solid var(--blue);border-radius:6px;
+    padding:6px 8px;flex:1;min-width:0;background:#fff;color:var(--text);
+  }
+
+  .note-box{padding:0 12px 10px;}
+  .note-box textarea{
+    width:100%;font-size:13px;padding:8px 9px;border:1px solid var(--border);
+    border-radius:8px;min-height:54px;font-family:inherit;
+  }
+  .note-box .note-save{
+    margin-top:5px;font-size:12px;padding:6px 11px;border:none;border-radius:6px;
+    background:var(--blue);color:#fff;cursor:pointer;font-weight:600;
+  }
+
+  .batchbar{
+    position:fixed;
+    bottom:0;left:0;right:0;
+    background:var(--text);
+    color:#fff;
+    padding:12px 14px;
+    display:none;
+    align-items:center;
+    gap:10px;
+    z-index:30;
+    max-width:var(--maxw);
+    margin:0 auto;
+    border-radius:12px 12px 0 0;
+  }
+  .batchbar.show{display:flex;}
+  .batchbar span{flex:1;font-size:14px;}
+  .batchbar button{
+    border:none;
+    border-radius:8px;
+    padding:11px 14px;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .batchbar .done-btn{background:var(--green);color:#fff;}
+  .batchbar .del-btn{background:var(--red);color:#fff;}
+
+  .listToolbar{
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+    padding:4px 2px 10px;
+  }
+  .selectAllRow{
+    display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted);cursor:pointer;
+  }
+  .selectAllRow input{width:20px;height:20px;accent-color:var(--blue);}
+  .listToolbarRight{display:flex;align-items:center;gap:8px;}
+  .totalQtyInfo{font-size:13px;color:var(--muted);white-space:nowrap;}
+  .totalQtyInfo b{color:var(--text);}
+  .clearAllBtn{
+    border:none;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;
+    background:#fde8e8;color:var(--red);cursor:pointer;
+  }
+  .download-all-wrap{padding:0 2px 10px;}
+  .download-all-btn{
+    width:100%;border:none;border-radius:8px;padding:10px 12px;font-size:13px;font-weight:600;
+    background:var(--green-bg);color:var(--green);cursor:pointer;
+  }
+  .batchbar .ship-btn{background:var(--blue);color:#fff;}
+  .shipped-badge{
+    display:inline-block;margin-left:6px;font-size:11.5px;font-weight:600;
+    color:var(--blue);background:var(--blue-bg);border-radius:8px;padding:2px 7px;
+  }
+  .task-linkchip{
+    display:inline-block;margin-left:6px;font-size:11.5px;font-weight:600;
+    color:var(--blue);background:var(--blue-bg);border-radius:8px;padding:2px 7px;
+    text-decoration:none;
+  }
+
+  .status-line{
+    font-size:11px;
+    text-align:center;
+    color:var(--muted);
+    padding:8px 0 2px 0;
+    max-width:var(--maxw);
+    margin:0 auto;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Quản lý In &amp; Đóng gói</h1>
+  <div class="tabs">
+    <div class="tab active" data-tab="in">In <span class="count-badge" id="badge-in">0</span></div>
+    <div class="tab" data-tab="dong_goi">Đóng gói <span class="count-badge" id="badge-dong_goi">0</span></div>
+    <div class="tab" data-tab="xong">Đã xong <span class="count-badge" id="badge-xong">0</span></div>
+  </div>
+</header>
+
+<div class="addbar" id="addbar">
+  <input type="text" id="newName" placeholder="Tên sản phẩm...">
+  <input type="number" id="newQty" placeholder="SL" value="1" min="1">
+  <button id="addBtn">+</button>
+</div>
+
+<div class="searchbar">
+  <input type="text" id="searchTask" placeholder="🔍 Tìm việc theo tên, tên đơn hoặc ghi chú...">
+</div>
+
+<main>
+  <div class="quicklink"><a href="catalog.html">+ Thêm danh sách công việc</a></div>
+  <div class="download-all-wrap" id="downloadAllWrap" style="display:none;padding-top:8px;">
+    <button class="download-all-btn" id="downloadAllBtn">⬇️ Tải tất cả phiếu giao</button>
+  </div>
+  <div id="errArea"></div>
+  <div class="listToolbar" id="listToolbar">
+    <label class="selectAllRow"><input type="checkbox" id="selectAllBox"> Chọn tất cả</label>
+    <div class="listToolbarRight">
+      <span class="totalQtyInfo" id="totalQtyInfo">Số lượng: 0</span>
+      <button class="clearAllBtn" id="clearAllBtn" style="display:none;">🧹 Làm sạch</button>
+    </div>
+  </div>
+  <div class="carrierBar" id="carrierBar" style="display:none;">
+    <button class="carrierViewToggle" id="carrierViewToggle" type="button"></button>
+    <div class="carrierChips" id="carrierChips"></div>
+  </div>
+  <div id="list"></div>
+  <div class="quicklink" style="padding-top:8px;"><a href="huong-dan.html" style="background:var(--green-bg);color:var(--green);">📖 Hướng dẫn sử dụng</a></div>
+</main>
+
+<div class="status-line" id="connStatus"></div>
+
+<div class="batchbar" id="batchbar">
+  <span id="batchCount">0 đã chọn</span>
+  <button class="done-btn" id="batchDone"></button>
+  <button class="ship-btn" id="batchShip" style="display:none;">🚚 Đã giao</button>
+  <button class="del-btn" id="batchDel">Xóa</button>
+</div>
+
+<!-- jsQR: thư viện thuần JS đọc mã QR từ dữ liệu ảnh (canvas), dùng để đọc
+     trực tiếp mã QR in trên phiếu giao thay vì dò chữ theo mẫu từng hãng. -->
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore, collection, addDoc, onSnapshot, doc,
+  updateDoc, deleteDoc, deleteField, serverTimestamp, query, orderBy
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import * as pdfjsLib from "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.6.82/pdf.min.mjs";
+pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.6.82/pdf.worker.min.mjs";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD7KyouXCw0dgRJK8pUiHkay8sUjqhGM3g",
+  authDomain: "in-dong-goi.firebaseapp.com",
+  projectId: "in-dong-goi",
+  storageBucket: "in-dong-goi.firebasestorage.app",
+  messagingSenderId: "532007763879",
+  appId: "1:532007763879:web:8d752aa4d86fd317ca0082"
+};
+
+// Phiếu giao (PDF) được lưu trên Cloudinary thay vì Firebase Storage — vì
+// Cloud Storage for Firebase hiện bắt buộc gói Blaze (cần khai thẻ). Cloudinary
+// có gói free không cần thẻ, dùng "unsigned upload preset" nên an toàn để gọi
+// thẳng từ trình duyệt (không lộ khóa bí mật nào trong code).
+const CLOUDINARY_CLOUD_NAME = "e8beonzt";
+const CLOUDINARY_UPLOAD_PRESET = "ship-labels";
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const tasksCol = collection(db, "tasks");
+
+let currentTab = "in";
+let allTasks = [];
+let selected = new Set();
+let searchTerm = "";
+
+// ---- Tab "Đã xong": chế độ xem + lọc theo hãng vận chuyển ----
+// "carrier" = nhóm theo hãng (accordion), "completion" = theo thứ tự hoàn
+// tất (như cũ). Nhớ lựa chọn gần nhất qua localStorage — mặc định lần đầu là
+// "carrier" theo thống nhất, nhưng nếu người dùng từng đổi thì giữ nguyên.
+let xongViewMode = localStorage.getItem("xongViewMode") || "carrier";
+// Lọc nhanh theo 1 hãng cụ thể (áp dụng ở cả 2 chế độ xem) — "all" = không lọc.
+let carrierFilter = "all";
+// Các nhóm hãng đang mở (accordion) — mặc định TẤT CẢ đều gập.
+let expandedCarrierGroups = new Set();
+
+// ---- Tab "Đã xong": chế độ "🤝 Đối soát bàn giao" (bật riêng theo từng
+// nhóm hãng). Đây là trạng thái TẠM, chỉ tồn tại trong bộ nhớ — KHÔNG lưu
+// vào Firestore/localStorage, tự mất khi rời tab "Đã xong", tắt chế độ của
+// nhóm đó, hoặc tải lại trang. Hoàn toàn tách biệt với checkbox `selected`
+// (chọn hàng loạt) và cờ `shipped` ("Đã giao") đã có sẵn.
+let reconcileActiveGroups = new Set();   // key = carrier, nhóm đang bật đối soát
+let reconcileConfirmed = new Set();      // orderId đã tích "Đã xác nhận bàn giao"
+let reconcileFilterUnconfirmed = new Set(); // key = carrier đang bật lọc "chỉ hiện chưa xác nhận"
+
+// Reset toàn bộ trạng thái đối soát — gọi khi rời tab "Đã xong".
+function resetReconcileState(){
+  reconcileActiveGroups.clear();
+  reconcileConfirmed.clear();
+  reconcileFilterUnconfirmed.clear();
+}
+
+// UI-only ephemeral state (reset on re-render is fine; kept across snapshots via Sets keyed by id)
+let editingOrderIds = new Set();
+// orderId đang mở ô chỉnh sửa hãng vận chuyển (dòng "Đơn vị VC:") — tách
+// riêng Set với editingOrderIds vì đây là 1 dòng khác (select thay vì input text).
+let editingCarrierIds = new Set();
+// orderId đang trong lúc tải lên phiếu giao (để hiện trạng thái "Đang tải lên...")
+let uploadingShipLabelIds = new Set();
+// orderId đang mở khu vực mở rộng (phiếu giao + ghi chú) ngay trên thẻ tóm tắt
+// — thay cho việc mở trang "Chi tiết đơn hàng" toàn màn hình như trước.
+let expandedOrderIds = new Set();
+// orderId đang mở ô nhập ghi chú (nằm trong khu vực mở rộng ở trên).
+let openOrderNoteIds = new Set();
+
+const list = document.getElementById("list");
+const connStatus = document.getElementById("connStatus");
+const batchbar = document.getElementById("batchbar");
+const addbar = document.getElementById("addbar");
+const errArea = document.getElementById("errArea");
+const selectAllBox = document.getElementById("selectAllBox");
+const clearAllBtn = document.getElementById("clearAllBtn");
+const totalQtyInfo = document.getElementById("totalQtyInfo");
+const listToolbar = document.getElementById("listToolbar");
+const downloadAllWrap = document.getElementById("downloadAllWrap");
+const downloadAllBtn = document.getElementById("downloadAllBtn");
+
+function showError(msg){
+  errArea.innerHTML = `<div class="errbox">⚠️ ${escapeHtml(msg)}</div>`;
+  setTimeout(() => { errArea.innerHTML = ""; }, 6000);
+}
+
+// ---- Helper: commit an edit (save) either on explicit click or on click-away ----
+// Attaches a "focusout" listener to containerEl; if focus moves to something
+// outside containerEl, commitFn() runs automatically (click ra ngoài = lưu & đóng).
+// The returned function can be wired to a "Lưu" button so both paths share
+// the same one-shot commit (no double-submit).
+function attachClickAwayCommit(containerEl, commitFn){
+  let committed = false;
+  const commit = () => {
+    if(committed) return;
+    committed = true;
+    commitFn();
+  };
+  containerEl.addEventListener("focusout", () => {
+    setTimeout(() => {
+      if(!containerEl.isConnected) return; // already closed/removed (e.g. Hủy)
+      if(!containerEl.contains(document.activeElement)) commit();
+    }, 0);
+  });
+  return commit;
+}
+
+// ---- Helpers: id generation for orders ----
+function newOrderId(){ return "o_" + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+// Không còn sinh "tên tự động" giả (kiểu "#ABC123XYZ") cho đơn chưa đặt tên
+// nữa — orderName để trống (null/"") cho tới khi quét được mã vận đơn thật từ
+// PDF phiếu giao (xem extractTrackingFromPdf ở dưới). Ở mọi nơi hiển thị,
+// orderName trống được render bằng placeholder CSS "┈┈┈┈┈┈┈┈┈" (class
+// "order-name-placeholder", xem hàm renderOrderName()) thay vì một chuỗi ký
+// tự giả — tránh gây hiểu lầm với mã vận đơn thật, và không phụ thuộc vào
+// việc "đoán" độ dài mã thật (mã thật của mỗi hãng dài ngắn khác nhau).
+function renderOrderName(name){
+  const n = (name || "").trim();
+  return n ? escapeHtml(n) : '<span class="order-name-placeholder">┈┈┈┈┈┈┈┈┈</span>';
+}
+function isBlankOrderName(name){ return !((name || "").trim()); }
+
+// ---- Tabs ----
+document.querySelectorAll(".tab").forEach(t => {
+  t.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+    currentTab = t.dataset.tab;
+    selected.clear();
+    if(currentTab !== "xong") resetReconcileState();
+    addbar.style.display = currentTab === "in" ? "flex" : "none";
+    clearAllBtn.style.display = currentTab === "xong" ? "inline-block" : "none";
+    render();
+  });
+});
+addbar.style.display = "flex";
+
+// ---- Chọn tất cả ----
+selectAllBox.addEventListener("change", () => {
+  const shown = getShown();
+  if(selectAllBox.checked) shown.forEach(t => selected.add(t.id));
+  else shown.forEach(t => selected.delete(t.id));
+  updateBatchBar();
+  render();
+});
+
+// ---- Làm sạch (xóa toàn bộ sản phẩm đã xong) ----
+clearAllBtn.addEventListener("click", async () => {
+  const items = allTasks.filter(t => t.status === "xong");
+  if(items.length === 0) return;
+  if(!confirm(`Xóa toàn bộ ${items.length} sản phẩm đã xong? Không thể hoàn tác.`)) return;
+  try{
+    for(const it of items){
+      await deleteDoc(doc(db, "tasks", it.id));
+    }
+    selected.clear();
+    updateBatchBar();
+  }catch(e){ showError("Không làm sạch được danh sách: " + e.message); }
+});
+
+// ---- Search ----
+document.getElementById("searchTask").addEventListener("input", e => {
+  searchTerm = e.target.value.trim().toLowerCase();
+  render();
+});
+
+// ---- Add task ----
+document.getElementById("addBtn").addEventListener("click", addTask);
+document.getElementById("newName").addEventListener("keydown", e => { if(e.key === "Enter") addTask(); });
+
+async function addTask(){
+  const nameEl = document.getElementById("newName");
+  const qtyEl = document.getElementById("newQty");
+  const name = nameEl.value.trim();
+  // Chặn số lượng âm/0/thập phân gõ tay (thuộc tính min="1" trên input chỉ
+  // là gợi ý UI, không chặn được người dùng gõ số âm bằng bàn phím) — ép về
+  // tối thiểu 1 nếu giá trị không hợp lệ hoặc nhỏ hơn 1.
+  const qty = Math.max(1, parseInt(qtyEl.value) || 1);
+  if(!name) return;
+  try{
+    await addDoc(tasksCol, {
+      name, qty,
+      status: "cho_in",
+      note: "",
+      orderId: newOrderId(),
+      orderName: null,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+    nameEl.value = "";
+    qtyEl.value = "1";
+    nameEl.focus();
+  }catch(e){
+    showError("Không thêm được việc mới: " + e.message);
+  }
+}
+
+// ---- Realtime listener ----
+const q = query(tasksCol, orderBy("createdAt", "asc"));
+onSnapshot(q, snap => {
+  allTasks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  connStatus.textContent = "";
+  render();
+}, err => {
+  connStatus.textContent = "Lỗi kết nối: " + err.message;
+});
+
+// Lưu ý: từ khi chuyển phiếu giao sang lưu ở Cloudinary, việc xóa file PDF
+// không còn thực hiện được an toàn từ trình duyệt nữa (Cloudinary yêu cầu ký
+// bằng API Secret để xóa, không thể nhúng secret đó vào code public trên
+// GitHub Pages). Nên khi 1 đơn bị xóa (thủ công), chỉ Firestore doc bị xóa —
+// file PDF cũ trên Cloudinary sẽ "mồ côi" (không tự dọn). Vì file phiếu giao
+// rất nhẹ và gói free Cloudinary có 25GB/tháng, việc này không đáng ngại —
+// đây là đánh đổi đã thống nhất để tránh phải khai thẻ cho Firebase Blaze.
+
+function escapeHtml(s){
+  return (s || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+// Định dạng thời gian tạo đơn kiểu "14:32, 26/07" — thay cho tên người mua
+// (dữ liệu không có) trên thẻ tóm tắt, giống vị trí đó ở giao diện Shopee.
+function formatDT(ts){
+  if(!ts || typeof ts.toDate !== "function") return "";
+  const d = ts.toDate();
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mo = String(d.getMonth() + 1).padStart(2, "0");
+  return `${hh}:${mm}, ${dd}/${mo}`;
+}
+
+const STATUS_LABEL = { in: "Chờ in", dong_goi: "Chờ đóng gói", xong: "Đã xong" };
+const STATUS_COLOR_CLASS = { in: "st-warn", dong_goi: "st-info", xong: "st-ready" };
+
+// ---- Đơn vị vận chuyển ----
+// Danh sách hãng đã nhận diện được từ mẫu phiếu thật (xem detectCarrierFromText).
+// "unknown" đại diện cho các đơn chưa nhận diện được hãng (mẫu lạ, PDF ảnh
+// scan không đọc được text, hoặc chưa đính phiếu giao) — vẫn xử lý như 1
+// nhóm/carrier bình thường trong UI, chỉ khác là luôn xếp cuối danh sách.
+const CARRIER_LABEL = { "jt": "J&T Express", "spx": "SPX Express", "ghn": "Giao Hàng Nhanh", "unknown": "Chưa rõ hãng" };
+const CARRIER_ORDER = ["jt", "spx", "ghn", "unknown"]; // thứ tự cố định khi hiển thị nhóm — "unknown" luôn ở cuối
+
+// Chỉ bật preview-khi-rê-chuột trên thiết bị có hover thật + con trỏ chính
+// xác (chuột desktop) — tránh tình trạng lag/kẹt overlay trên cảm ứng, nơi
+// "hover" có thể bị trình duyệt giả lập khi chạm.
+const supportsHoverPreview = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+let hoverPreviewEl = null;
+
+function getHoverPreviewEl(){
+  if(hoverPreviewEl) return hoverPreviewEl;
+  hoverPreviewEl = document.createElement("div");
+  hoverPreviewEl.className = "thumb-hover-preview";
+  document.body.appendChild(hoverPreviewEl);
+  return hoverPreviewEl;
+}
+
+function showHoverPreview(t, anchorEl){
+  const { title, classification } = splitProductName(t.name);
+  const el = getHoverPreviewEl();
+  el.innerHTML = t.image
+    ? `<img src="${t.image}" alt="">`
+    : `<div class="thumb-lightbox-noimg" style="padding:80px 0;text-align:center;">🖼</div>`;
+  el.innerHTML += `<div class="thumb-hover-info">
+      <div class="thumb-hover-title"></div>
+      <div class="thumb-hover-classification"></div>
+    </div>`;
+  el.querySelector(".thumb-hover-title").textContent = title;
+  el.querySelector(".thumb-hover-classification").textContent = classification;
+
+  // Đặt preview cạnh bên phải thumbnail; nếu không đủ chỗ (gần mép phải
+  // màn hình) thì lật sang trái. Kẹp trong khung nhìn theo chiều dọc.
+  const rect = anchorEl.getBoundingClientRect();
+  const previewW = 420, previewH = 480, gap = 12;
+  let left = rect.right + gap;
+  if(left + previewW > window.innerWidth) left = rect.left - previewW - gap;
+  left = Math.max(8, Math.min(left, window.innerWidth - previewW - 8));
+  let top = rect.top;
+  top = Math.max(8, Math.min(top, window.innerHeight - previewH - 8));
+  el.style.left = left + "px";
+  el.style.top = top + "px";
+  el.classList.add("show");
+}
+
+function hideHoverPreview(){
+  if(hoverPreviewEl) hoverPreviewEl.classList.remove("show");
+}
+// An toàn: nếu cuộn trang hoặc đổi tab trong lúc đang hover (element bị gỡ
+// khỏi DOM giữa chừng khiến mouseleave không kịp bắn), ẩn preview theo để
+// tránh ô nổi bị "kẹt" sai vị trí trên màn hình.
+window.addEventListener("scroll", hideHoverPreview, true);
+window.addEventListener("resize", hideHoverPreview);
+
+// Khung ảnh sản phẩm — hiện ảnh thật nếu task có field "image" (URL, gán từ
+// catalog.html), ảnh lỗi tự rơi về icon 🖼 mặc định thay vì để ô vỡ hình.
+// Bấm vào ảnh sẽ mở lightbox phóng to (xem openThumbLightbox); trên desktop
+// rê chuột qua cũng hiện preview to ngay lập tức (xem showHoverPreview) —
+// các phân loại cùng sản phẩm (vd MS1/MS2/MS3) thường có tông màu giống
+// nhau, ảnh tí hon 56-72px rất dễ nhìn nhầm, cần phóng to để người in xác
+// nhận đúng mẫu trước khi in.
+function renderThumb(t){
+  const thumb = document.createElement("div");
+  thumb.className = "thumb-placeholder";
+  thumb.title = "Bấm để xem ảnh lớn";
+  if(t.image){
+    const img = document.createElement("img");
+    img.src = t.image;
+    img.alt = t.name || "";
+    img.addEventListener("error", () => { thumb.innerHTML = ""; thumb.textContent = "🖼"; });
+    thumb.appendChild(img);
+  } else {
+    thumb.textContent = "🖼";
+  }
+  thumb.addEventListener("click", e => {
+    e.stopPropagation();
+    hideHoverPreview();
+    openThumbLightbox(t);
+  });
+  if(supportsHoverPreview){
+    thumb.addEventListener("mouseenter", () => showHoverPreview(t, thumb));
+    thumb.addEventListener("mouseleave", hideHoverPreview);
+  }
+  return thumb;
+}
+
+// Overlay phóng to ảnh phân loại — đóng bằng nút X, bấm ra ngoài, hoặc phím Esc.
+function openThumbLightbox(t){
+  const { title, classification } = splitProductName(t.name);
+  const overlay = document.createElement("div");
+  overlay.className = "thumb-lightbox-overlay";
+
+  const box = document.createElement("div");
+  box.className = "thumb-lightbox-box";
+
+  const closeBtn = document.createElement("button");
+  closeBtn.className = "thumb-lightbox-close";
+  closeBtn.textContent = "✕";
+  closeBtn.addEventListener("click", close);
+  box.appendChild(closeBtn);
+
+  const imgWrap = document.createElement("div");
+  imgWrap.className = "thumb-lightbox-imgwrap";
+  if(t.image){
+    const img = document.createElement("img");
+    img.src = t.image;
+    img.alt = t.name || "";
+    img.addEventListener("error", () => {
+      imgWrap.innerHTML = `<div class="thumb-lightbox-noimg">🖼</div>`;
+    });
+    imgWrap.appendChild(img);
+  } else {
+    imgWrap.innerHTML = `<div class="thumb-lightbox-noimg">🖼</div>`;
+  }
+  box.appendChild(imgWrap);
+
+  const info = document.createElement("div");
+  info.className = "thumb-lightbox-info";
+  info.innerHTML = `<div class="thumb-lightbox-title"></div><div class="thumb-lightbox-classification"></div>`;
+  info.querySelector(".thumb-lightbox-title").textContent = title;
+  info.querySelector(".thumb-lightbox-classification").textContent = classification;
+  box.appendChild(info);
+
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+  // Khoá cuộn nền trong lúc lightbox mở — quan trọng trên mobile/tablet để
+  // tránh trang phía sau trôi/nảy theo khi vuốt trong vùng overlay.
+  const prevBodyOverflow = document.body.style.overflow;
+  document.body.style.overflow = "hidden";
+
+  function close(){
+    overlay.remove();
+    document.body.style.overflow = prevBodyOverflow;
+    document.removeEventListener("keydown", onKey);
+  }
+  function onKey(e){ if(e.key === "Escape") close(); }
+  overlay.addEventListener("click", e => { if(e.target === overlay) close(); });
+  document.addEventListener("keydown", onKey);
+}
+
+// ---- Grouping helpers ----
+function orderPackInfo(orderId){
+  const items = allTasks.filter(t => t.orderId === orderId);
+  const pending = items.filter(t => t.status === "cho_in").length;
+  const readyToPack = items.filter(t => t.status === "cho_dong_goi").length;
+  return {
+    total: items.length,
+    pending, readyToPack,
+    eligible: pending === 0 && readyToPack > 0
+  };
+}
+
+function groupShown(shown){
+  const order = [];
+  const map = new Map();
+  shown.forEach(t => {
+    const oid = t.orderId || t.id;
+    if(!map.has(oid)){
+      // Không còn fallback về t.name nữa: orderName rỗng phải hiện placeholder
+      // "┈┈┈┈┈┈┈┈┈" (renderOrderName()) chứ không phải tên sản phẩm — trước
+      // đây fallback này vô hại vì orderName luôn có giá trị (mã "#..." tự
+      // sinh), giờ orderName có thể thật sự rỗng nên phải bỏ fallback.
+      map.set(oid, { orderId: oid, orderName: t.orderName || null, carrier: null, shipLabelUrl: "", note: "", items: [] });
+      order.push(oid);
+    }
+    const g = map.get(oid);
+    // shipLabelUrl/note/carrier được ghi lặp lên mọi item cùng orderId (giống
+    // orderName) — chỉ cần lấy giá trị đầu tiên tìm thấy trong cả nhóm.
+    if(!g.shipLabelUrl && t.shipLabelUrl) g.shipLabelUrl = t.shipLabelUrl;
+    if(!g.note && t.note) g.note = t.note;
+    if(!g.carrier && t.carrier) g.carrier = t.carrier;
+    g.items.push(t);
+  });
+  return order.map(oid => map.get(oid));
+}
+
+// Cho biết những orderId nào sẽ KHÔNG còn item nào sau khi xóa các id trong
+// deletedIds — dùng để biết đơn nào "trống hẳn" (từ đó dọn phiếu giao đính
+// kèm nếu cần). So sánh trên allTasks HIỆN TẠI (trước khi xóa thật sự), nên
+// phải gọi hàm này trước khi deleteDoc(), không phải sau.
+function orderIdsBecomingEmpty(deletedIds){
+  const deletedSet = new Set(deletedIds);
+  const affectedOrderIds = new Set(
+    allTasks
+      .filter(t => deletedSet.has(t.id))
+      .map(t => t.orderId || t.id)
+  );
+  const result = [];
+  affectedOrderIds.forEach(oid => {
+    const remaining = allTasks.some(t => t.orderId === oid && !deletedSet.has(t.id));
+    if(!remaining) result.push(oid);
+  });
+  return result;
+}
+
+// ---- Tab "Đã xong": đơn "đã giao" tự chuyển xuống cuối danh sách, đơn vừa
+// "Bỏ đã giao" nhảy lên ĐẦU TUYỆT ĐỐI danh sách — áp dụng CHUNG cho mọi chế
+// độ xem (cả "Nhóm theo hãng" lẫn "Theo thứ tự hoàn thành"), vì hàm này chạy
+// TRƯỚC khi vào groupShown()/renderXongByCarrier() nên cả 2 nơi đều thừa
+// hưởng cùng 1 thứ tự. Cố ý ưu tiên việc "vừa bỏ đã giao" hơn cả mốc thời
+// gian hoàn thành — người dùng bấm "Bỏ đã giao" nghĩa là phát hiện SAI ngay
+// lúc đối soát, cần thấy lại đơn đó NGAY LẬP TỨC ở trên cùng, không phải tìm
+// theo đúng vị trí thời gian hoàn thành cũ của nó.
+// 3 nhóm, xếp theo đúng thứ tự này:
+//   1) "Vừa bỏ đã giao" (shipped=false NHƯNG từng có shippedAt) — lên đầu,
+//      bỏ gần đây nhất thì đứng trên cùng.
+//   2) Task bình thường, CHƯA từng đụng tới "Đã giao" lần nào — giữ nguyên
+//      thứ tự hoàn thành cũ (không đổi hành vi trước đây).
+//   3) "Đã giao" — luôn xuống cuối, giao gần đây nhất đứng đầu nhóm này.
+function sortXongByShipped(shown){
+  const ts = v => (v && typeof v.toMillis === "function") ? v.toMillis() : 0;
+  const justUnshipped = [], normal = [], shipped = [];
+  shown.forEach(t => {
+    if(t.shipped) shipped.push(t);
+    else if(t.shippedAt) justUnshipped.push(t);
+    else normal.push(t);
+  });
+  justUnshipped.sort((a, b) => ts(b.shippedAt) - ts(a.shippedAt));
+  shipped.sort((a, b) => ts(b.shippedAt) - ts(a.shippedAt));
+  return justUnshipped.concat(normal, shipped);
+}
+
+// ---- Render ----
+// Trả về danh sách task theo TAB + TỪ KHÓA TÌM KIẾM — CHƯA áp dụng lọc theo
+// hãng vận chuyển (xem applyCarrierFilter()). Tách riêng để carrierBar luôn
+// tính được tổng số đúng của từng hãng, không bị chính bộ lọc của nó che mất.
+function getShown(){
+  let shown;
+  if(currentTab === "in") shown = allTasks.filter(t => t.status === "cho_in");
+  else if(currentTab === "dong_goi") shown = allTasks.filter(t => t.status === "cho_dong_goi");
+  // Không giới hạn số mục ở client: tập dữ liệu status=xong không còn tự dọn
+  // theo thời gian nữa (đã bỏ cơ chế hết hạn 7 ngày) — người dùng tự xóa thủ
+  // công qua nút "Dọn dẹp" khi cần.
+  else shown = sortXongByShipped(allTasks.filter(t => t.status === "xong").slice().reverse());
+
+  if(searchTerm){
+    shown = shown.filter(t =>
+      (t.name || "").toLowerCase().includes(searchTerm) ||
+      (t.orderName || "").toLowerCase().includes(searchTerm) ||
+      (t.note || "").toLowerCase().includes(searchTerm)
+    );
+  }
+  return shown;
+}
+
+// Carrier hiệu lực của 1 task — "unknown" cho mọi giá trị lạ/rỗng, để luôn
+// khớp với 1 trong các key của CARRIER_LABEL (tránh sinh nhóm rác nếu dữ
+// liệu cũ/lỗi có carrier không nằm trong danh sách đã biết).
+function effectiveCarrier(t){
+  return (t.carrier && CARRIER_LABEL[t.carrier]) ? t.carrier : "unknown";
+}
+
+// Áp dụng lọc theo hãng (carrierFilter) — chỉ có tác dụng ở tab "Đã xong".
+function applyCarrierFilter(tasks){
+  if(currentTab !== "xong" || carrierFilter === "all") return tasks;
+  return tasks.filter(t => effectiveCarrier(t) === carrierFilter);
+}
+
+// Vẽ thanh chuyển chế độ xem + chip lọc theo hãng (chỉ ở tab "Đã xong").
+// baseShown = tasks theo tab+tìm kiếm, TRƯỚC khi lọc theo hãng, để đếm số
+// lượng đúng cho từng chip.
+function renderCarrierBar(baseShown){
+  const toggleBtn = document.getElementById("carrierViewToggle");
+  toggleBtn.textContent = xongViewMode === "carrier" ? "🔀 Xem theo thứ tự hoàn thành" : "🗂 Xem nhóm theo hãng";
+  toggleBtn.onclick = () => {
+    xongViewMode = xongViewMode === "carrier" ? "completion" : "carrier";
+    localStorage.setItem("xongViewMode", xongViewMode);
+    render();
+  };
+
+  const counts = new Map();
+  baseShown.forEach(t => {
+    const key = effectiveCarrier(t);
+    counts.set(key, (counts.get(key) || 0) + 1);
+  });
+
+  const chipsEl = document.getElementById("carrierChips");
+  chipsEl.innerHTML = "";
+
+  const allChip = document.createElement("button");
+  allChip.type = "button";
+  allChip.className = "carrierChip" + (carrierFilter === "all" ? " active" : "");
+  allChip.innerHTML = `Tất cả <span class="n">${baseShown.length}</span>`;
+  allChip.addEventListener("click", () => { carrierFilter = "all"; render(); });
+  chipsEl.appendChild(allChip);
+
+  CARRIER_ORDER.forEach(key => {
+    const n = counts.get(key) || 0;
+    if(n === 0) return; // ẩn hãng hiện không có đơn nào để đỡ rối chip
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "carrierChip" + (carrierFilter === key ? " active" : "");
+    chip.innerHTML = `${CARRIER_LABEL[key]} <span class="n">${n}</span>`;
+    chip.addEventListener("click", () => { carrierFilter = (carrierFilter === key ? "all" : key); render(); });
+    chipsEl.appendChild(chip);
+  });
+}
+
+// Vẽ danh sách "Đã xong" theo accordion nhóm hãng — mỗi nhóm gập mặc định,
+// bấm head mới xổ ra. Thứ tự mặc định giữa các hãng là CARRIER_ORDER (và
+// "unknown" luôn ở cuối trong số các hãng CHƯA xong hẳn) — NHƯNG áp dụng
+// thêm 1 tầng sắp xếp tương tự sortXongByShipped() ở cấp NHÓM HÃNG: hãng nào
+// mà MỌI đơn trong đó đều đã "Đã giao" thì cả nhóm hãng đó bị đẩy xuống dưới
+// CÙNG (dưới mọi hãng khác), giống cách 1 đơn "đã giao" tự nhảy xuống cuối
+// trong phạm vi 1 hãng. Chỉ cần 1 đơn trong hãng đó bị "bỏ đã giao" là ngay
+// lập tức cả hãng đó nhảy về lại đúng vị trí bình thường theo CARRIER_ORDER
+// (không còn bị đẩy xuống cuối nữa). Trả về mảng group (đơn) đã render, để
+// render() dùng tính nút "Tải tất cả phiếu giao".
+function renderXongByCarrier(shownTasks){
+  const buckets = new Map();
+  shownTasks.forEach(t => {
+    const key = effectiveCarrier(t);
+    if(!buckets.has(key)) buckets.set(key, []);
+    buckets.get(key).push(t);
+  });
+
+  // Tách các hãng đang có mặt thành 2 nhóm, mỗi nhóm giữ nguyên thứ tự tương
+  // đối theo CARRIER_ORDER: hãng chưa xong hẳn (còn ít nhất 1 đơn chưa giao)
+  // đứng trước, hãng đã xong hẳn (100% đơn đã giao) bị đẩy xuống cuối.
+  const notFullyShippedKeys = [], fullyShippedKeys = [];
+  CARRIER_ORDER.forEach(key => {
+    if(!buckets.has(key)) return;
+    const allShipped = buckets.get(key).every(t => t.shipped);
+    (allShipped ? fullyShippedKeys : notFullyShippedKeys).push(key);
+  });
+  const orderedKeys = notFullyShippedKeys.concat(fullyShippedKeys);
+
+  let allGroups = [];
+  orderedKeys.forEach(key => {
+    const tasks = buckets.get(key);
+    const groups = groupShown(tasks);
+    allGroups = allGroups.concat(groups);
+
+    const isExpanded = expandedCarrierGroups.has(key);
+    const isReconciling = reconcileActiveGroups.has(key);
+    const wrap = document.createElement("div");
+    wrap.className = "carrierGroup";
+
+    const head = document.createElement("div");
+    head.className = "carrierGroupHead";
+    head.addEventListener("click", () => {
+      if(isExpanded) expandedCarrierGroups.delete(key); else expandedCarrierGroups.add(key);
+      render();
+    });
+    const left = document.createElement("span");
+    left.textContent = CARRIER_LABEL[key] || key;
+
+    const right = document.createElement("span");
+    right.className = "carrierGroupHeadRight";
+    const reconcileBtn = document.createElement("button");
+    reconcileBtn.className = "reconcile-toggle-btn" + (isReconciling ? " active" : "");
+    reconcileBtn.textContent = isReconciling ? "✖ Tắt đối soát" : "🤝 Đối soát bàn giao";
+    reconcileBtn.title = "Đối soát bàn giao — tích tạm để kiểm lại từng đơn trước khi bàn giao, không ảnh hưởng dữ liệu thật";
+    reconcileBtn.addEventListener("click", e => {
+      e.stopPropagation();
+      if(isReconciling){
+        reconcileActiveGroups.delete(key);
+        groups.forEach(g => reconcileConfirmed.delete(g.orderId));
+        reconcileFilterUnconfirmed.delete(key);
+      } else {
+        reconcileActiveGroups.add(key);
+        expandedCarrierGroups.add(key); // mở nhóm ra để thấy ngay ô tích
+      }
+      render();
+    });
+    right.appendChild(reconcileBtn);
+    const countSpan = document.createElement("span");
+    countSpan.className = "carrierGroupCount";
+    countSpan.textContent = `${groups.length} đơn`;
+    right.appendChild(countSpan);
+    const arrowSpan = document.createElement("span");
+    arrowSpan.className = "expand-arrow";
+    arrowSpan.textContent = isExpanded ? "▾" : "▸";
+    right.appendChild(arrowSpan);
+    head.appendChild(left);
+    head.appendChild(right);
+    wrap.appendChild(head);
+
+    if(isExpanded){
+      const body = document.createElement("div");
+      body.className = "carrierGroupBody";
+
+      if(isReconciling){
+        const confirmedCount = groups.filter(g => reconcileConfirmed.has(g.orderId)).length;
+        const totalCount = groups.length;
+        const filterOn = reconcileFilterUnconfirmed.has(key);
+
+        const bar = document.createElement("div");
+        bar.className = "reconcileBar";
+        const countLabel = document.createElement("span");
+        countLabel.textContent = `Đã xác nhận ${confirmedCount}/${totalCount} — còn ${totalCount - confirmedCount} chưa xác nhận`;
+        const filterBtn = document.createElement("button");
+        filterBtn.className = "reconcileFilterBtn" + (filterOn ? " active" : "");
+        filterBtn.textContent = filterOn ? "👁 Hiện tất cả" : "👁 Chỉ hiện chưa xác nhận";
+        filterBtn.addEventListener("click", () => {
+          if(filterOn) reconcileFilterUnconfirmed.delete(key); else reconcileFilterUnconfirmed.add(key);
+          render();
+        });
+        bar.appendChild(countLabel);
+        bar.appendChild(filterBtn);
+        body.appendChild(bar);
+      }
+
+      const bodyGroups = (isReconciling && reconcileFilterUnconfirmed.has(key))
+        ? groups.filter(g => !reconcileConfirmed.has(g.orderId))
+        : groups;
+      bodyGroups.forEach(g => body.appendChild(renderOrderBox(g, isReconciling)));
+      wrap.appendChild(body);
+    }
+    list.appendChild(wrap);
+  });
+  return allGroups;
+}
+
+function updateSelectAllBox(shown){
+  const n = shown.length;
+  const nSel = shown.filter(t => selected.has(t.id)).length;
+  selectAllBox.checked = n > 0 && nSel === n;
+  selectAllBox.indeterminate = nSel > 0 && nSel < n;
+}
+
+// Đếm SỐ KIỆN HÀNG (số đơn/orderId khác nhau) đang ở 1 trạng thái — dùng cho
+// badge số trên tab (thay vì đếm số dòng sản phẩm/task như trước). Nhiều sản
+// phẩm cùng orderId chỉ tính là 1 kiện. Không phụ thuộc từ khóa tìm kiếm,
+// giống cách badge cũ luôn phản ánh TOÀN BỘ dữ liệu chứ không theo bộ lọc.
+function countOrdersByStatus(status){
+  const ids = new Set();
+  allTasks.forEach(t => { if(t.status === status) ids.add(t.orderId || t.id); });
+  return ids.size;
+}
+
+function render(){
+  const badgeIn = countOrdersByStatus("cho_in");
+  const badgeDG = countOrdersByStatus("cho_dong_goi");
+  const badgeXong = countOrdersByStatus("xong");
+  document.getElementById("badge-in").textContent = badgeIn;
+  document.getElementById("badge-dong_goi").textContent = badgeDG;
+  document.getElementById("badge-xong").textContent = badgeXong;
+
+  const baseShown = getShown(); // theo tab + tìm kiếm, CHƯA lọc theo hãng
+  const shown = applyCarrierFilter(baseShown);
+  updateSelectAllBox(shown);
+
+  // Tổng số lượng (cộng dồn field qty của từng sản phẩm) của danh sách ĐANG
+  // HIỂN THỊ — theo đúng tab + tìm kiếm + lọc hãng hiện tại, nằm cùng hàng với
+  // "Chọn tất cả" (căn phải) — đây là con số "số lượng" cũ từng nằm cạnh tên
+  // tab, giờ chuyển xuống đây; số cạnh tên tab đổi thành số kiện hàng.
+  const totalQtyShown = shown.reduce((s, t) => s + (t.qty || 1), 0);
+  totalQtyInfo.innerHTML = `Số lượng: <b>${totalQtyShown}</b>`;
+  // Ẩn hẳn hàng "Chọn tất cả" + "Số lượng" khi danh sách đang hiển thị rỗng —
+  // đỡ rối vì lúc đó chọn/số lượng đều vô nghĩa (0).
+  listToolbar.style.display = shown.length === 0 ? "none" : "flex";
+
+  list.innerHTML = "";
+
+  const carrierBar = document.getElementById("carrierBar");
+  if(currentTab === "xong" && baseShown.length > 0){
+    carrierBar.style.display = "flex";
+    renderCarrierBar(baseShown);
+  } else {
+    carrierBar.style.display = "none";
+  }
+
+  if(shown.length === 0){
+    const emptyMsg = searchTerm ? "Không tìm thấy việc nào khớp."
+      : currentTab === "in" ? "Chưa có việc nào. Thêm sản phẩm ở ô trên."
+      : currentTab === "dong_goi" ? "Chưa có sản phẩm nào chờ đóng gói."
+      : carrierFilter !== "all" ? "Không có đơn nào thuộc hãng này."
+      : "Chưa có sản phẩm nào hoàn tất.";
+    list.innerHTML = `<div class="empty">${emptyMsg}</div>`;
+    downloadAllWrap.style.display = "none";
+    return;
+  }
+
+  const groups = (currentTab === "xong" && xongViewMode === "carrier")
+    ? renderXongByCarrier(shown)
+    : groupShown(shown);
+  if(!(currentTab === "xong" && xongViewMode === "carrier")){
+    groups.forEach(g => list.appendChild(renderOrderBox(g)));
+  }
+
+  // Nút "Tải tất cả phiếu giao" chỉ hiện khi trong danh sách đang xem (theo
+  // tab + từ khóa tìm kiếm hiện tại) có ít nhất 1 đơn đã đính kèm phiếu giao.
+  const groupsWithLabel = groups.filter(g => g.shipLabelUrl);
+  if(groupsWithLabel.length > 0){
+    downloadAllWrap.style.display = "block";
+    downloadAllBtn.textContent = `⬇️ Tải tất cả phiếu giao (${groupsWithLabel.length})`;
+  } else {
+    downloadAllWrap.style.display = "none";
+  }
+}
+
+// Thẻ tóm tắt 1 đơn hàng trong danh sách — kiểu Shopee, giờ là TẦNG DUY NHẤT
+// (không còn trang "Chi tiết đơn hàng" toàn màn hình). Bấm vào header (giờ
+// tạo + trạng thái) để mở/đóng khu vực mở rộng chứa phiếu giao + ghi chú.
+function renderOrderBox(g, isReconciling){
+  isReconciling = !!isReconciling;
+  const box = document.createElement("div");
+  box.className = "order-box";
+
+  let info = null;
+  if(currentTab === "dong_goi"){
+    info = orderPackInfo(g.orderId);
+    box.classList.add(info.eligible ? "ready" : "warn");
+  }
+
+  // Hàng ô tích "Đối soát bàn giao" — tách biệt hoàn toàn với checkbox
+  // `selected` (chọn hàng loạt) và nút "🚚 Đã giao" đã có sẵn; chỉ tồn tại
+  // trong bộ nhớ (xem reconcileConfirmed), không đụng tới trạng thái thật.
+  if(isReconciling){
+    const isConfirmed = reconcileConfirmed.has(g.orderId);
+    const rrow = document.createElement("div");
+    rrow.className = "reconcileRow";
+    rrow.addEventListener("click", e => e.stopPropagation());
+
+    const label = document.createElement("label");
+    label.className = "reconcileCheckLabel";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = isConfirmed;
+    cb.addEventListener("change", () => {
+      if(cb.checked) reconcileConfirmed.add(g.orderId); else reconcileConfirmed.delete(g.orderId);
+      render();
+    });
+    label.appendChild(cb);
+    const labelText = document.createElement("span");
+    labelText.textContent = "Đã xác nhận bàn giao";
+    label.appendChild(labelText);
+    rrow.appendChild(label);
+
+    if(!isConfirmed){
+      const backBtn = document.createElement("button");
+      backBtn.className = "reconcileBackBtn";
+      backBtn.textContent = "↩ Lùi lại (chưa có hàng)";
+      backBtn.addEventListener("click", () => revertOrderItems(g.items));
+      rrow.appendChild(backBtn);
+    }
+    box.appendChild(rrow);
+  }
+
+  const isExpanded = expandedOrderIds.has(g.orderId);
+
+  // Dòng đầu: thời gian tạo đơn (thay cho tên người mua — không có dữ liệu
+  // thật) + trạng thái màu + chấm báo hiệu (📎 phiếu giao, 📝 ghi chú) + mũi
+  // tên ▾/▸. Bấm vào bất kỳ đâu trên header sẽ mở/đóng khu vực mở rộng.
+  const header = document.createElement("div");
+  header.className = "order-summary-header";
+  header.addEventListener("click", () => {
+    if(isExpanded) expandedOrderIds.delete(g.orderId); else expandedOrderIds.add(g.orderId);
+    render();
+  });
+  const timeSpan = document.createElement("span");
+  timeSpan.className = "order-time";
+  timeSpan.textContent = formatDT(g.items[0] && g.items[0].createdAt);
+
+  const rightWrap = document.createElement("span");
+  rightWrap.className = "order-header-right";
+  const statusSpan = document.createElement("span");
+  statusSpan.className = "order-status-badge " + STATUS_COLOR_CLASS[currentTab];
+  statusSpan.textContent = STATUS_LABEL[currentTab];
+  rightWrap.appendChild(statusSpan);
+  if(g.shipLabelUrl){
+    const dot = document.createElement("span");
+    dot.className = "header-dot";
+    dot.title = "Đã đính kèm phiếu giao";
+    dot.textContent = "📎";
+    rightWrap.appendChild(dot);
+  }
+  // Chip hãng vận chuyển ở header đã được thay bằng dòng "Đơn vị VC:" riêng
+  // (đặt ngay trước dòng "Mã đơn hàng", có thể bấm ✏️ để sửa tay) — xem bên dưới.
+  if(g.note){
+    const dot = document.createElement("span");
+    dot.className = "header-dot";
+    dot.title = "Đơn có ghi chú";
+    dot.textContent = "📝";
+    rightWrap.appendChild(dot);
+  }
+  const arrow = document.createElement("span");
+  arrow.className = "expand-arrow";
+  arrow.textContent = isExpanded ? "▾" : "▸";
+  rightWrap.appendChild(arrow);
+
+  header.appendChild(timeSpan);
+  header.appendChild(rightWrap);
+  box.appendChild(header);
+
+  // Xem trước ghi chú chung của đơn — luôn hiện nếu có, không cần mở rộng.
+  if(g.note){
+    const notePrev = document.createElement("div");
+    notePrev.className = "order-note-preview";
+    notePrev.textContent = "📝 " + g.note;
+    box.appendChild(notePrev);
+  }
+
+  if(isExpanded){
+    box.appendChild(renderOrderExpandPanel(g));
+  }
+
+  g.items.forEach(t => box.appendChild(renderItemSummary(t)));
+
+  const totalQty = g.items.reduce((s, t) => s + (t.qty || 1), 0);
+  const footer = document.createElement("div");
+  footer.className = "order-summary-footer";
+  footer.innerHTML = `<span>${g.items.length} sản phẩm</span><span>Tổng số lượng: <b>${totalQty}</b></span>`;
+  box.appendChild(footer);
+
+  // Đơn vị VC (hãng vận chuyển) — đặt ngay trước dòng "Mã đơn hàng", cùng
+  // kiểu dòng (label bên trái, giá trị + nút bút chì bên phải) để sửa tay khi
+  // tự nhận diện sai hãng. Dùng <select> thay vì input text vì hãng là tập
+  // giá trị cố định (jt/spx/ghn/unknown).
+  const carrierRow = document.createElement("div");
+  carrierRow.className = "order-code-row";
+  if(editingCarrierIds.has(g.orderId)){
+    const select = document.createElement("select");
+    select.className = "order-carrier-select";
+    Object.keys(CARRIER_LABEL).forEach(key => {
+      const opt = document.createElement("option");
+      opt.value = key;
+      opt.textContent = CARRIER_LABEL[key];
+      if((g.carrier || "unknown") === key) opt.selected = true;
+      select.appendChild(opt);
+    });
+    const saveBtn = document.createElement("button");
+    saveBtn.className = "save-icon";
+    saveBtn.textContent = "Lưu";
+    const commit = attachClickAwayCommit(carrierRow, () => {
+      editingCarrierIds.delete(g.orderId);
+      setOrderCarrier(g.orderId, select.value);
+    });
+    saveBtn.addEventListener("click", commit);
+    select.addEventListener("change", commit);
+    carrierRow.appendChild(select);
+    carrierRow.appendChild(saveBtn);
+    setTimeout(() => select.focus(), 0);
+  } else {
+    const carrierLabelSpan = document.createElement("span");
+    carrierLabelSpan.className = "code-label";
+    carrierLabelSpan.textContent = "Đơn vị VC";
+    const carrierValueWrap = document.createElement("span");
+    carrierValueWrap.className = "code-value";
+    const carrierValueText = document.createElement("span");
+    carrierValueText.textContent = CARRIER_LABEL[g.carrier] || CARRIER_LABEL.unknown;
+    const carrierEditBtn = document.createElement("button");
+    carrierEditBtn.className = "edit-icon-btn";
+    carrierEditBtn.textContent = "✏️";
+    carrierEditBtn.title = "Đổi hãng vận chuyển";
+    carrierEditBtn.addEventListener("click", () => { editingCarrierIds.add(g.orderId); render(); });
+    carrierValueWrap.appendChild(carrierValueText);
+    carrierValueWrap.appendChild(carrierEditBtn);
+    carrierRow.appendChild(carrierLabelSpan);
+    carrierRow.appendChild(carrierValueWrap);
+  }
+  box.appendChild(carrierRow);
+
+  // Mã đơn hàng — không còn nút "Sao chép"; mã dịch sang phải lấp chỗ trống,
+  // vẫn giữ nút bút chì nhỏ để đổi tên đơn khi cần.
+  const codeRow = document.createElement("div");
+  codeRow.className = "order-code-row";
+  if(editingOrderIds.has(g.orderId)){
+    const input = document.createElement("input");
+    input.type = "text";
+    input.className = "order-title-input";
+    input.value = g.orderName || "";
+    const saveBtn = document.createElement("button");
+    saveBtn.className = "save-icon";
+    saveBtn.textContent = "Lưu";
+    const commit = attachClickAwayCommit(codeRow, () => renameOrder(g.orderId, input.value));
+    saveBtn.addEventListener("click", commit);
+    input.addEventListener("keydown", e => { if(e.key === "Enter") commit(); });
+    codeRow.appendChild(input);
+    codeRow.appendChild(saveBtn);
+    setTimeout(() => input.focus(), 0);
+  } else {
+    const labelSpan = document.createElement("span");
+    labelSpan.className = "code-label";
+    labelSpan.textContent = "Mã đơn hàng";
+    const valueWrap = document.createElement("span");
+    valueWrap.className = "code-value";
+    const valueText = document.createElement("span");
+    valueText.innerHTML = renderOrderName(g.orderName);
+    const editBtn = document.createElement("button");
+    editBtn.className = "edit-icon-btn";
+    editBtn.textContent = "✏️";
+    editBtn.title = "Đổi tên đơn";
+    editBtn.addEventListener("click", () => { editingOrderIds.add(g.orderId); render(); });
+    valueWrap.appendChild(valueText);
+    valueWrap.appendChild(editBtn);
+    codeRow.appendChild(labelSpan);
+    codeRow.appendChild(valueWrap);
+  }
+  box.appendChild(codeRow);
+
+  if(currentTab === "dong_goi" && info){
+    const line = document.createElement("div");
+    line.className = "order-status-line " + (info.eligible ? "ready" : "warn");
+    line.textContent = info.eligible
+      ? "Đủ hàng — có thể đóng gói cả đơn"
+      : `Đơn chưa đủ — còn ${info.pending} sản phẩm đang in`;
+    box.appendChild(line);
+  }
+
+  const actionsRow = document.createElement("div");
+  actionsRow.className = "order-summary-actions";
+
+  if(currentTab === "in"){
+    const shipBtn = document.createElement("button");
+    shipBtn.className = "ship-quick-btn";
+    shipBtn.textContent = "📦 In phiếu giao";
+    shipBtn.addEventListener("click", () => {
+      if(g.shipLabelUrl) downloadShipLabel(g.shipLabelUrl, g.orderName);
+      else { expandedOrderIds.add(g.orderId); render(); }
+    });
+    actionsRow.appendChild(shipBtn);
+
+    const btn = document.createElement("button");
+    btn.className = "order-primary-btn";
+    btn.textContent = "✅ Đã in xong";
+    btn.addEventListener("click", () => advanceOrderItems(g.items));
+    actionsRow.appendChild(btn);
+  } else if(currentTab === "dong_goi"){
+    const revBtn = document.createElement("button");
+    revBtn.className = "ship-quick-btn";
+    revBtn.textContent = "↩ Lùi lại";
+    revBtn.addEventListener("click", () => revertOrderItems(g.items));
+    actionsRow.appendChild(revBtn);
+
+    if(info && info.eligible){
+      const btn = document.createElement("button");
+      btn.className = "order-primary-btn green";
+      btn.textContent = "📦 Đóng gói cả đơn";
+      btn.addEventListener("click", () => packWholeOrder(g.orderId));
+      actionsRow.appendChild(btn);
+    }
+  } else if(currentTab === "xong"){
+    const revBtn = document.createElement("button");
+    revBtn.className = "ship-quick-btn";
+    revBtn.textContent = "↩ Lùi lại";
+    revBtn.addEventListener("click", () => revertOrderItems(g.items));
+    actionsRow.appendChild(revBtn);
+
+    const allShipped = g.items.every(t => t.shipped);
+    const btn = document.createElement("button");
+    btn.className = "order-primary-btn" + (allShipped ? "" : " green");
+    btn.textContent = allShipped ? "↩ Bỏ đã giao" : "🚚 Đã giao";
+    btn.addEventListener("click", () => g.items.forEach(t => markShipped(t.id, !allShipped)));
+    actionsRow.appendChild(btn);
+  }
+  box.appendChild(actionsRow);
+
+  return box;
+}
+
+// Tên sản phẩm thường được gõ theo dạng "Tên gốc — Phân loại" (dấu gạch
+// ngang dài "—"). Hàm này tách ra 2 phần để hiển thị tiêu đề và phân loại
+// trên 2 dòng riêng thay vì dính liền — nếu không có "—" thì coi cả chuỗi
+// là tiêu đề, không có phân loại.
+function splitProductName(name){
+  name = name || "";
+  const idx = name.indexOf("—");
+  if(idx === -1) return { title: name, classification: "" };
+  const title = name.slice(0, idx).trim();
+  const classification = name.slice(idx + 1).trim();
+  return title ? { title, classification } : { title: classification, classification: "" };
+}
+
+// Dòng 1 sản phẩm trong thẻ tóm tắt — chỉ ảnh/tiêu đề/SL + checkbox (dùng
+// cho chọn hàng loạt), KHÔNG có nút thao tác (những nút đó chuyển hết vào
+// trang chi tiết vì ít khi dùng tới).
+function renderItemSummary(t){
+  const row = document.createElement("div");
+  row.className = "order-item-summary";
+
+  const cb = document.createElement("input");
+  cb.type = "checkbox";
+  cb.checked = selected.has(t.id);
+  cb.addEventListener("click", e => e.stopPropagation());
+  cb.addEventListener("change", () => {
+    if(cb.checked) selected.add(t.id); else selected.delete(t.id);
+    updateBatchBar();
+  });
+  row.appendChild(cb);
+
+  row.appendChild(renderThumb(t));
+
+  const info = document.createElement("div");
+  info.className = "info-summary";
+  const { title, classification } = splitProductName(t.name);
+  const nameDiv = document.createElement("div");
+  nameDiv.className = "name-summary";
+  nameDiv.title = t.name;
+  nameDiv.textContent = title;
+  if(t.link){
+    const linkA = document.createElement("a");
+    linkA.className = "task-linkchip";
+    linkA.href = t.link;
+    linkA.target = "_blank";
+    linkA.rel = "noopener";
+    linkA.textContent = "🔗 File in";
+    linkA.addEventListener("click", e => e.stopPropagation());
+    nameDiv.appendChild(linkA);
+  }
+  if(currentTab === "xong" && t.shipped){
+    const badge = document.createElement("span");
+    badge.className = "shipped-badge";
+    badge.textContent = "🚚 Đã giao";
+    nameDiv.appendChild(badge);
+  }
+  const metaDiv = document.createElement("div");
+  metaDiv.className = "meta-row-summary";
+  const classDiv = document.createElement("span");
+  classDiv.className = "classification-summary";
+  classDiv.title = classification;
+  classDiv.textContent = classification;
+  const qtyDiv = document.createElement("span");
+  qtyDiv.className = "qty-summary";
+  qtyDiv.textContent = "SL: " + (t.qty || 1);
+  metaDiv.appendChild(classDiv);
+  metaDiv.appendChild(qtyDiv);
+  info.appendChild(nameDiv);
+  info.appendChild(metaDiv);
+  row.appendChild(info);
+
+  return row;
+}
+
+// Đưa cả đơn (mọi sản phẩm đang hiện ở tab hiện tại) tiến 1 bước trạng thái —
+// dùng cho nút hành động chính trên thẻ tóm tắt ở tab "In".
+async function advanceOrderItems(items){
+  for(const t of items) await advanceStatus(t);
+}
+
+// Lùi cả đơn (mọi sản phẩm đang hiện ở tab hiện tại) về 1 bước trước — dùng
+// cho nút "↩ Lùi lại" trên thẻ tóm tắt ở tab "Đóng gói" / "Đã xong".
+async function revertOrderItems(items){
+  for(const t of items) await revertStatus(t);
+}
+
+// Nút icon-only dùng chung cho khu vực mở rộng (phiếu giao + ghi chú) — gọn
+// gàng, không chữ, chỉ 1 icon + tooltip (title) khi hover/giữ.
+function mkIconBtn(icon, cls, title, onClick){
+  const b = document.createElement("button");
+  b.className = "icon-btn " + cls;
+  b.textContent = icon;
+  b.title = title;
+  b.addEventListener("click", onClick);
+  return b;
+}
+
+// Khu vực mở rộng của 1 đơn hàng — hiện khi bấm vào header. Gồm 1 hàng icon:
+// phiếu giao (đính kèm PDF, dùng chung cho cả đơn — khác "🔗 File in" ở từng
+// sản phẩm) rồi tới nút 📝 Ghi chú ở CUỐI CÙNG (sau nút Xóa/Tải lên). Bấm 📝
+// lần nữa mới mở ô nhập để gõ ghi chú.
+function renderOrderExpandPanel(g){
+  const wrap = document.createElement("div");
+  wrap.className = "order-expand-panel";
+
+  const rowEl = document.createElement("div");
+  rowEl.className = "ship-label-row";
+
+  const fileInput = document.createElement("input");
+  fileInput.type = "file";
+  fileInput.accept = "application/pdf";
+  fileInput.style.display = "none";
+  fileInput.addEventListener("change", () => {
+    const f = fileInput.files[0];
+    if(f) uploadShipLabel(g.orderId, f);
+    fileInput.value = "";
+  });
+  rowEl.appendChild(fileInput);
+
+  if(uploadingShipLabelIds.has(g.orderId)){
+    const busyBtn = mkIconBtn("⏳", "attach-btn", "Đang tải lên...", () => {});
+    busyBtn.disabled = true;
+    rowEl.appendChild(busyBtn);
+  } else if(g.shipLabelUrl){
+    // target="_blank" qua window.open — chỉ mở tab mới hiển thị PDF (trình
+    // duyệt tự render), không tải file về máy như nút tải xuống.
+    rowEl.appendChild(mkIconBtn("👁", "view-btn", "Xem phiếu giao", () => window.open(g.shipLabelUrl, "_blank", "noopener")));
+    rowEl.appendChild(mkIconBtn("⬇️", "download-btn", "Tải phiếu giao", () => downloadShipLabel(g.shipLabelUrl, g.orderName)));
+    rowEl.appendChild(mkIconBtn("🔄", "attach-btn", "Thay file", () => fileInput.click()));
+    rowEl.appendChild(mkIconBtn("🗑", "remove-btn", "Xóa phiếu giao", () => removeShipLabel(g.orderId)));
+  } else {
+    rowEl.appendChild(mkIconBtn("⬆️", "attach-btn", "Tải lên phiếu giao", () => fileInput.click()));
+  }
+
+  // Nút ghi chú — luôn đặt cuối cùng trong hàng icon.
+  const noteBtn = mkIconBtn("📝", "note-btn" + (g.note ? " has-note" : ""), "Ghi chú đơn hàng", () => {
+    if(openOrderNoteIds.has(g.orderId)) openOrderNoteIds.delete(g.orderId);
+    else openOrderNoteIds.add(g.orderId);
+    render();
+  });
+  rowEl.appendChild(noteBtn);
+
+  wrap.appendChild(rowEl);
+
+  if(openOrderNoteIds.has(g.orderId)){
+    const noteBox = document.createElement("div");
+    noteBox.className = "note-box";
+    const ta = document.createElement("textarea");
+    ta.placeholder = "Ghi chú cho đơn hàng này...";
+    ta.value = g.note || "";
+    const saveNoteBtn = document.createElement("button");
+    saveNoteBtn.className = "note-save";
+    saveNoteBtn.textContent = "Lưu ghi chú";
+    const commit = attachClickAwayCommit(noteBox, async () => {
+      await saveOrderNote(g.orderId, ta.value);
+      openOrderNoteIds.delete(g.orderId);
+      render();
+    });
+    saveNoteBtn.addEventListener("click", commit);
+    noteBox.appendChild(ta);
+    noteBox.appendChild(saveNoteBtn);
+    wrap.appendChild(noteBox);
+    setTimeout(() => ta.focus(), 0);
+  }
+
+  return wrap;
+}
+
+// ---- Actions ----
+
+async function advanceStatus(t){
+  const next = t.status === "cho_in" ? "cho_dong_goi" : "xong";
+  const patch = { status: next, updatedAt: serverTimestamp() };
+  try{
+    await updateDoc(doc(db, "tasks", t.id), patch);
+  }catch(e){ showError("Không cập nhật được trạng thái: " + e.message); }
+}
+
+async function revertStatus(t){
+  const prev = t.status === "cho_dong_goi" ? "cho_in" : t.status === "xong" ? "cho_dong_goi" : null;
+  if(!prev) return;
+  const patch = { status: prev, updatedAt: serverTimestamp() };
+  if(t.status === "xong"){
+    // Đồng thời reset "đã giao" — nếu không, khi item hoàn tất LẠI lần sau
+    // (thật sự), nhãn "🚚 Đã giao" cũ sẽ tự hiện sẵn dù chưa ai bấm, gây sai
+    // lệch dữ liệu đối soát.
+    patch.shipped = false;
+    // Xoá luôn shippedAt (mốc sắp xếp "vừa bỏ đã giao" lên đầu) — vì đơn đang
+    // RỜI HẲN khỏi "xong", không phải kiểu "bỏ đã giao để sửa lại" nữa, nên
+    // không nên giữ ưu tiên lên đầu cho lần "xong" kế tiếp của nó.
+    patch.shippedAt = deleteField();
+  }
+  try{
+    await updateDoc(doc(db, "tasks", t.id), patch);
+  }catch(e){ showError("Không lùi được trạng thái: " + e.message); }
+}
+
+async function markShipped(id, value){
+  try{
+    // shippedAt ghi lại MỌI LẦN bấm (cả bật lẫn tắt) — dùng làm mốc sắp xếp
+    // cho quy tắc "đã giao xuống cuối / bỏ đã giao lên đầu" (sortXongByShipped()).
+    await updateDoc(doc(db, "tasks", id), { shipped: value, shippedAt: serverTimestamp(), updatedAt: serverTimestamp() });
+  }catch(e){ showError("Không cập nhật được trạng thái đã giao: " + e.message); }
+}
+
+async function packWholeOrder(orderId){
+  const items = allTasks.filter(t => t.orderId === orderId && t.status === "cho_dong_goi");
+  try{
+    for(const it of items){
+      await updateDoc(doc(db, "tasks", it.id), { status: "xong", updatedAt: serverTimestamp() });
+    }
+  }catch(e){ showError("Không đóng gói được cả đơn: " + e.message); }
+}
+
+// Ghi chú giờ là CHUNG CHO CẢ ĐƠN (không còn riêng từng sản phẩm) — ghi cùng
+// 1 giá trị lên mọi item cùng orderId, giống cách renameOrder() đồng bộ tên đơn.
+async function saveOrderNote(orderId, note){
+  const items = allTasks.filter(t => t.orderId === orderId);
+  try{
+    for(const it of items){
+      await updateDoc(doc(db, "tasks", it.id), { note: note || "", updatedAt: serverTimestamp() });
+    }
+  }catch(e){ showError("Không lưu được ghi chú: " + e.message); }
+}
+
+// ---- Phiếu giao (ship label PDF) — gắn theo order, không theo item ----
+
+// ---- Trích mã vận đơn từ PDF phiếu giao ----
+// Có 2 cách, dùng kết hợp:
+//  1) Đọc MÃ QR in trên phiếu (render trang PDF ra canvas rồi giải mã bằng
+//     jsQR) — ĐÂY LÀ CÁCH CHÍNH. Mã QR trên các phiếu đã kiểm tra (J&T, SPX,
+//     GHN) đều encode ĐÚNG mã vận đơn dạng chữ thuần, không kèm nhãn hay chữ
+//     rác gì khác — nên không cần biết trước mẫu của từng hãng, không sợ hãng
+//     đổi cách trình bày, và vẫn đọc được kể cả khi PDF là ảnh scan (miễn ảnh
+//     đủ nét để thấy mã QR), vì làm việc trên ảnh render chứ không phụ thuộc
+//     lớp text của PDF.
+//  2) Đọc LỚP TEXT bằng pdf.js (cách cũ) — chỉ dùng làm DỰ PHÒNG khi trang
+//     không có mã QR nào đọc được. Không còn dùng để suy ra tên hãng nữa —
+//     kết quả trả về CHỈ LÀ chuỗi mã vận đơn (string), không kèm carrier.
+async function renderPdfPageToCanvas(page, scale){
+  const viewport = page.getViewport({ scale });
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.ceil(viewport.width);
+  canvas.height = Math.ceil(viewport.height);
+  const ctx = canvas.getContext("2d");
+  await page.render({ canvasContext: ctx, viewport }).promise;
+  return canvas;
+}
+
+async function extractQrFromPdf(file){
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+  // Thử nhiều độ phân giải (scale) tăng dần: ảnh nét hơn thì đọc mã QR nhỏ dễ
+  // hơn, nhưng cũng chậm hơn — nên chỉ tăng scale khi lần thử trước thất bại.
+  const scales = [2, 3, 4];
+  for(let i = 1; i <= pdf.numPages; i++){
+    const page = await pdf.getPage(i);
+    for(const scale of scales){
+      const canvas = await renderPdfPageToCanvas(page, scale);
+      const ctx = canvas.getContext("2d");
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const qr = window.jsQR(imageData.data, imageData.width, imageData.height);
+      if(qr && qr.data && qr.data.trim()){
+        return qr.data.trim();
+      }
+    }
+  }
+  return null;
+}
+
+async function extractPdfText(file){
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+  let text = "";
+  for(let i = 1; i <= pdf.numPages; i++){
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    text += " " + content.items.map(it => it.str).join(" ");
+  }
+  return text;
+}
+
+// Nhận diện hãng vận chuyển từ text layer của PDF. Dùng CHUNG text đã đọc
+// sẵn cho detectTrackingFromText (không đọc thêm PDF/QR nào) — chạy độc lập
+// với việc QR có đọc được mã vận đơn hay không, vì thông tin hãng nằm ở phần
+// header/khuyến mãi của phiếu chứ không nằm trong mã QR. Trả về 1 trong các
+// key của CARRIER_LABEL ("jt"/"spx"/"ghn"), hoặc null nếu không khớp mẫu nào
+// (mẫu lạ hoặc PDF ảnh scan không có text layer) — null sẽ được coi là
+// "unknown" ở nơi gọi.
+function detectCarrierFromText(text){
+  if(/J\s*&\s*T/i.test(text)) return "jt";
+  if(/SPX/i.test(text)) return "spx";
+  if(/Giao\s*H[àa]ng\s*Nhanh|\bGHN\b/i.test(text)) return "ghn";
+  return null;
+}
+
+// Dự phòng khi text layer không khớp mẫu nào (phiếu GHN không có chữ
+// "Giao Hàng Nhanh"/"GHN" nào trong text layer — logo hãng trên phiếu là
+// ẢNH, không phải chữ, nên không thể dò bằng regex text được) — suy hãng từ
+// chính MÃ VẬN ĐƠN đã đọc được (QR hoặc text):
+//  - SPX: mã luôn có tiền tố "SPX" ngay đầu (vd "SPXVN060792078418") — dò
+//    thẳng trong mã, không phụ thuộc text layer có ghi rõ tên hãng hay không.
+//  - GHN: mã quan sát được có đúng 8 ký tự (vd "GYA8MTK8"), ngắn hơn hẳn mã
+//    SPX (18 ký tự) — dùng ngưỡng "độ dài ≤ 8" làm dấu hiệu nhận GHN. Đây
+//    vẫn là suy đoán heuristic dựa trên 1 mẫu quan sát được, chỉ dùng SAU
+//    CÙNG khi không còn cách nào khác — nếu sau này gặp mã GHN dài/ngắn khác
+//    8 ký tự thì cần chỉnh lại ngưỡng này.
+function detectCarrierFromCode(code){
+  if(!code) return null;
+  if(/^SPX/i.test(code)) return "spx";
+  if(code.length <= 8) return "ghn";
+  return null;
+}
+
+// Dự phòng khi không đọc được mã QR nào — dò trong lớp text. Trả về CHUỖI mã
+// vận đơn hoặc null (không còn phân biệt hãng).
+function detectTrackingFromText(text){
+  // --- J&T Express: phiếu không ghi rõ nhãn "Mã vận đơn:" — mã vận đơn
+  // chính là dãy số của mã vạch, lặp lại nhiều lần dọc theo lề phiếu. Phải
+  // loại trừ "Order ID" (đó là mã đơn hàng của sàn TikTok Shop/Shopee, KHÔNG
+  // phải mã vận đơn) rồi chọn dãy số xuất hiện nhiều lần nhất còn lại.
+  if(/J\s*&\s*T/i.test(text)){
+    const cleaned = text.replace(/Order\s*ID\s*:?\s*\d+/gi, "");
+    const nums = cleaned.match(/\d{9,15}/g) || [];
+    const freq = new Map();
+    nums.forEach(n => freq.set(n, (freq.get(n) || 0) + 1));
+    let best = null, bestCount = 0;
+    for(const [n, c] of freq){ if(c > bestCount){ best = n; bestCount = c; } }
+    return best || null;
+  }
+  // --- Các nhãn "họ Shopee" (SPX Express, hoặc đối tác Giao Hàng Nhanh) đều
+  // ghi rõ nhãn "Mã vận đơn:" ngay trước mã.
+  const m = text.match(/Mã vận đơn:?\s*([A-Za-z0-9]{5,})/i);
+  return m ? m[1] : null;
+}
+
+// Trả về { trackingCode, carrier } — gộp chung 1 lượt đọc PDF cho cả 2 việc,
+// vì text layer (dùng để suy ra carrier) vốn dĩ đã phải đọc song song với QR
+// làm phương án dự phòng cho trackingCode; không tách thành 1 nút/1 lượt quét
+// riêng để tránh đọc PDF 2 lần và tránh lệch dữ liệu giữa 2 lần quét.
+async function extractShipLabelInfo(file){
+  // Không "nuốt" lỗi hoàn toàn ở đây — chỉ ném lỗi ra ngoài cho nơi gọi (để
+  // phân biệt "đọc PDF lỗi thật sự" vs "đọc được nhưng không khớp mẫu nào")
+  // khi KHÔNG lấy được trackingCode từ bất kỳ nguồn nào cả (xem điều kiện ở
+  // cuối hàm) — còn nếu QR đã đọc được mã vận đơn thì luôn coi là thành công,
+  // dù việc đọc text layer (chỉ dùng suy carrier) có lỗi hay không.
+
+  // Đọc song song cả 2 cách; ưu tiên QR cho trackingCode, chỉ dùng text khi
+  // QR không ra gì. Carrier LUÔN suy từ text (QR chỉ chứa mã vận đơn thuần).
+  // extractQrFromPdf tự bắt lỗi riêng (trả null nếu lỗi). Với extractPdfText,
+  // GIỮ LẠI lỗi (textError) thay vì để nó làm Promise.all reject toàn bộ —
+  // nếu không, lỗi đọc text layer sẽ "cuốn trôi" luôn kết quả QR đã đọc
+  // thành công ở nhánh kia (bug cũ). textError chỉ được ném ra ở điều kiện
+  // cuối hàm, khi thực sự không còn gì để dùng.
+  let textError = null;
+  const [qrCode, text] = await Promise.all([
+    extractQrFromPdf(file).catch(() => null),
+    extractPdfText(file).catch(e => { textError = e; return ""; })
+  ]);
+
+  const trackingCode = qrCode || detectTrackingFromText(text);
+  // Ưu tiên nhận diện qua text layer (đáng tin hơn); chỉ khi không khớp mẫu
+  // nào mới suy đoán tiếp từ chính mã vận đơn (xem detectCarrierFromCode()).
+  const carrier = detectCarrierFromText(text) || detectCarrierFromCode(trackingCode);
+
+  // Chỉ coi là "lỗi đọc PDF thật sự" khi KHÔNG lấy được trackingCode từ bất kỳ
+  // nguồn nào (kể cả QR) VÀ việc đọc text layer có lỗi thật.
+  if(!trackingCode && textError) throw textError;
+
+  return { trackingCode, carrier };
+}
+
+// Tải file PDF lên Cloudinary (unsigned upload preset) rồi ghi URL vào mọi
+// item cùng orderId (giống cách renameOrder() đồng bộ tên đơn). Dùng chung
+// 1 public_id cố định theo orderId nên lần tải lên sau tự ghi đè file cũ
+// (cần bật "Overwrite" cho upload preset "ship-labels" trên Cloudinary).
+async function uploadShipLabel(orderId, file){
+  if(!file) return;
+  if(file.type !== "application/pdf"){
+    showError("Chỉ chấp nhận file PDF cho phiếu giao.");
+    return;
+  }
+  uploadingShipLabelIds.add(orderId);
+  render();
+  try{
+    // URL (public_id) LUÔN cố định theo orderId nội bộ — không đổi dù đọc
+    // được mã vận đơn hay không, để link luôn "vô danh" với người ngoài và
+    // luôn ghi đè đúng 1 file (không phát sinh file mồ côi khi mã vận đơn
+    // đổi giữa các lần tải lên). Chỉ TÊN FILE GỐC (display name trên
+    // Cloudinary) mới đổi theo mã vận đơn khi đọc được, để tiện tìm kiếm
+    // trong Media Library — tách biệt hoàn toàn khỏi URL thật.
+    const publicId = `ship-labels/${orderId}`;
+    const currentItem = allTasks.find(t => t.orderId === orderId);
+    const currentName = (currentItem && currentItem.orderName) || "";
+    let uploadFile = file;
+    let trackingCode = null;
+    let carrier = null;
+    let readErrorMsg = null;
+    try{
+      ({ trackingCode, carrier } = await extractShipLabelInfo(file));
+    }catch(e){
+      readErrorMsg = (e && e.message) ? e.message : String(e);
+    }
+    // Carrier ghi nhận độc lập với việc có đọc được trackingCode hay không —
+    // 1 phiếu vẫn có thể nhận ra hãng (qua header/khuyến mãi trong text layer)
+    // dù QR/mã vận đơn không đọc được. Chỉ bỏ qua khi đọc PDF LỖI THẬT SỰ
+    // (readErrorMsg) — còn "đọc được nhưng không khớp mẫu nào" vẫn ghi nhận
+    // là "unknown" (khác với "chưa từng thử đọc").
+    if(!readErrorMsg){
+      await setOrderCarrier(orderId, carrier || "unknown");
+    }
+    if(trackingCode){
+      const safeCode = trackingCode.replace(/[^A-Za-z0-9]/g, "");
+      uploadFile = new File([file], `${safeCode}.pdf`, { type: file.type });
+      const newTitle = trackingCode;
+      // Đơn chưa có tên (trước đây là kiểu "#ABC123XYZ" tự sinh, giờ là
+      // trống hẳn) thì tự đổi tên luôn, không cần hỏi lại.
+      const shouldRename = isBlankOrderName(currentName) ||
+        confirm(`Đơn đang có tên "${currentName}".\nĐổi tên đơn thành "${newTitle}"?`);
+      if(shouldRename) await renameOrder(orderId, newTitle);
+    } else {
+      if(readErrorMsg){
+        showError("Không đọc được file PDF này để tự nhận diện mã vận đơn — vẫn tải phiếu lên bình thường, bạn có thể tự đổi tên đơn nếu cần.");
+      } else {
+        showError("Không nhận diện được mã vận đơn từ file này (mẫu lạ hoặc PDF ảnh scan) — vẫn tải phiếu lên bình thường, bạn có thể tự đổi tên đơn nếu cần.");
+      }
+      // Không giữ tên gốc lộn xộn từ điện thoại — đổi theo tên đơn hiện tại
+      // (giống cách downloadShipLabel() đặt tên lúc tải xuống).
+      const safeName = (currentName || "don-hang").replace(/[^a-zA-Z0-9-_]+/g, "_");
+      uploadFile = new File([file], `phieu-giao-${safeName}.pdf`, { type: file.type });
+    }
+    const formData = new FormData();
+    formData.append("file", uploadFile);
+    formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+    formData.append("public_id", publicId);
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/raw/upload`, {
+      method: "POST",
+      body: formData
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error((data && data.error && data.error.message) || ("HTTP " + res.status));
+    const url = data.secure_url;
+    const items = allTasks.filter(t => t.orderId === orderId);
+    for(const it of items){
+      await updateDoc(doc(db, "tasks", it.id), { shipLabelUrl: url, updatedAt: serverTimestamp() });
+    }
+  }catch(e){
+    showError("Không tải lên được phiếu giao: " + e.message);
+  }finally{
+    uploadingShipLabelIds.delete(orderId);
+    render();
+  }
+}
+
+async function removeShipLabel(orderId){
+  if(!confirm("Xóa phiếu giao đã đính kèm cho đơn này?")) return;
+  try{
+    // Không xóa file trên Cloudinary ở đây: xóa cần chữ ký (API secret) nên
+    // không thể gọi an toàn từ trình duyệt. Chỉ gỡ URL khỏi Firestore; file
+    // cũ trên Cloudinary sẽ tự bị ghi đè ở lần tải lên kế tiếp cho orderId này.
+    const items = allTasks.filter(t => t.orderId === orderId);
+    for(const it of items){
+      await updateDoc(doc(db, "tasks", it.id), { shipLabelUrl: deleteField(), updatedAt: serverTimestamp() });
+    }
+  }catch(e){ showError("Không xóa được phiếu giao: " + e.message); }
+}
+
+// Được gọi khi đơn hàng không còn item nào (mọi item cùng orderId đã bị xóa).
+// Vì lý do tương tự removeShipLabel(), không thể xóa file trên Cloudinary từ
+// trình duyệt mà không lộ API secret — file mồ côi (nếu có) sẽ nằm lại trên
+// Cloudinary nhưng vô hại vì không còn được tham chiếu ở đâu trong ứng dụng.
+async function deleteShipLabelFileIfExists(orderId){
+  // no-op: xem ghi chú ở trên.
+}
+
+// Tải file về máy trực tiếp (không mở tab mới): fetch nguyên byte gốc thành
+// blob rồi tự trigger tải — cách này bắt buộc phải dùng vì URL nằm khác domain
+// (Cloudinary), thẻ <a download> trỏ thẳng URL cross-domain sẽ bị trình
+// duyệt mở tab xem thay vì tải về.
+async function downloadShipLabel(url, orderName){
+  try{
+    const res = await fetch(url);
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    const blob = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const safeName = (orderName || "don-hang").replace(/[^a-zA-Z0-9-_]+/g, "_");
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.download = `phieu-giao-${safeName}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 4000);
+  }catch(e){
+    showError("Không tải được phiếu giao (có thể do cấu hình CORS trên Cloudinary): " + e.message);
+  }
+}
+
+// Tải lần lượt (tuần tự, không đồng thời) mọi phiếu giao của các đơn ĐANG
+// HIỂN THỊ trong danh sách hiện tại (theo tab + tìm kiếm) — tránh trình
+// duyệt chặn khi kích hoạt quá nhiều tải xuống cùng lúc.
+async function downloadAllShipLabels(){
+  // Dùng applyCarrierFilter() giống render() — để "Tải tất cả" luôn khớp
+  // đúng những gì đang hiển thị trên màn hình (nếu đang lọc theo 1 hãng cụ
+  // thể ở tab "Đã xong" thì chỉ tải phiếu của hãng đó, không tải hết).
+  const groups = groupShown(applyCarrierFilter(getShown())).filter(g => g.shipLabelUrl);
+  if(groups.length === 0){
+    showError("Không có phiếu giao nào trong danh sách đang xem để tải.");
+    return;
+  }
+  if(!confirm(`Tải xuống ${groups.length} phiếu giao đang hiển thị?`)) return;
+  downloadAllBtn.disabled = true;
+  const originalText = downloadAllBtn.textContent;
+  for(let i = 0; i < groups.length; i++){
+    downloadAllBtn.textContent = `⏳ Đang tải (${i + 1}/${groups.length})...`;
+    await downloadShipLabel(groups[i].shipLabelUrl, groups[i].orderName);
+  }
+  downloadAllBtn.disabled = false;
+  downloadAllBtn.textContent = originalText;
+}
+downloadAllBtn.addEventListener("click", downloadAllShipLabels);
+
+async function renameOrder(orderId, newName){
+  // Để trống là hợp lệ — không còn ép về mã tự sinh nữa, đơn trống tên sẽ
+  // hiện placeholder "┈┈┈┈┈┈┈┈┈" (xem renderOrderName()).
+  const n = (newName || "").trim() || null;
+  const items = allTasks.filter(t => t.orderId === orderId);
+  try{
+    for(const it of items){
+      await updateDoc(doc(db, "tasks", it.id), { orderName: n, updatedAt: serverTimestamp() });
+    }
+    editingOrderIds.delete(orderId);
+    render();
+  }catch(e){ showError("Không đổi được tên đơn: " + e.message); }
+}
+
+// Ghi carrier lên mọi item cùng orderId — cùng cơ chế denormalized với
+// renameOrder() ở trên. Dùng khi tự nhận diện được hãng lúc tải phiếu giao
+// lên (uploadShipLabel), và có thể tái dùng sau này nếu cần sửa tay khi
+// nhận sai hãng.
+async function setOrderCarrier(orderId, carrier){
+  const items = allTasks.filter(t => t.orderId === orderId);
+  try{
+    for(const it of items){
+      await updateDoc(doc(db, "tasks", it.id), { carrier: carrier || null, updatedAt: serverTimestamp() });
+    }
+    render();
+  }catch(e){ showError("Không ghi được đơn vị vận chuyển: " + e.message); }
+}
+
+// ---- Batch actions ----
+function updateBatchBar(){
+  const n = selected.size;
+  document.getElementById("batchCount").textContent = n + " đã chọn";
+  const doneBtn = document.getElementById("batchDone");
+  const shipBtn = document.getElementById("batchShip");
+  if(currentTab === "xong"){
+    doneBtn.style.display = "none";
+    shipBtn.style.display = "inline-block";
+  } else {
+    doneBtn.style.display = "inline-block";
+    doneBtn.textContent = currentTab === "in" ? "Đã in xong" : "Đã đóng gói";
+    shipBtn.style.display = "none";
+  }
+  batchbar.classList.toggle("show", n > 0);
+}
+
+document.getElementById("batchShip").addEventListener("click", async () => {
+  const ids = Array.from(selected);
+  try{
+    for(const id of ids){
+      await markShipped(id, true);
+    }
+  }catch(e){ showError("Lỗi khi đánh dấu đã giao theo lô: " + e.message); }
+  selected.clear();
+  updateBatchBar();
+});
+
+document.getElementById("batchDone").addEventListener("click", async () => {
+  const ids = Array.from(selected);
+  try{
+    for(const id of ids){
+      const t = allTasks.find(x => x.id === id);
+      if(t) await advanceStatus(t);
+    }
+  }catch(e){ showError("Lỗi khi xử lý theo lô: " + e.message); }
+  selected.clear();
+  updateBatchBar();
+});
+
+document.getElementById("batchDel").addEventListener("click", async () => {
+  if(!confirm("Xóa " + selected.size + " mục đã chọn?")) return;
+  const ids = Array.from(selected);
+  const emptiedOrders = orderIdsBecomingEmpty(ids);
+  try{
+    for(const id of ids){
+      await deleteDoc(doc(db, "tasks", id));
+    }
+    for(const oid of emptiedOrders) await deleteShipLabelFileIfExists(oid);
+  }catch(e){ showError("Không xóa được các mục đã chọn: " + e.message); }
+  selected.clear();
+  updateBatchBar();
+});
+</script>
+</body>
+</html>
