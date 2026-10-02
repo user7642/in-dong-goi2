@@ -343,6 +343,8 @@
     background:var(--blue-bg);border-radius:10px;
   }
   .groupImgEditBox input{margin-bottom:6px;}
+  .vimgItem{display:inline-flex;align-items:center;margin:0 6px 6px 0;}
+  .vimgItem .groupImgBtn{margin-left:2px;}
   .groupOpts{display:flex;flex-wrap:wrap;gap:6px;}
   .status{font-size:13px;margin-top:8px;min-height:18px;}
   .status.ok{color:var(--green);}
@@ -700,6 +702,60 @@ textarea:focus, input.searchbox:focus {
   }
 }
 
+/* ---- #selectAllRow = THANH HÀNH ĐỘNG NỔI ở đáy màn hình (tab Quản lý) ----
+   Chỉ hiện khi đang ở tab Quản lý, không ở chế độ sắp xếp VÀ đã chọn >= 1
+   sản phẩm: JS (syncFloatingBar) bật/tắt class .floating-show; display:none
+   khai báo !important để thắng cả style.display inline do applyModeUI() và
+   reorganizeManageToolbar() đặt, nên không phải sửa các chỗ đó.
+   Dùng biến theme (var(--card)...) thay vì rgb() cố định để theme sáng/tối
+   đều đúng. Kích thước/vị trí khớp với .taskbar (tab "Thêm việc") — 2 thanh
+   không bao giờ cùng hiện vì .taskbar chỉ .show ở tab "Thêm việc". */
+#modern-manage-toolbar #selectAllRow{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  width:800px;max-width:95vw;height:48px;box-sizing:border-box;
+  padding:0 16px;margin:0;
+  background:var(--card);color:var(--text);
+  border:1px solid var(--border);border-radius:12px;
+  box-shadow:0 8px 24px var(--shadow);
+  align-items:center;gap:8px;z-index:1000;
+  display:none !important;
+}
+#modern-manage-toolbar #selectAllRow.floating-show{display:flex !important;}
+/* Khối "Đã chọn N" nằm trong thanh nổi: bỏ nền riêng + bỏ rule mobile
+   position:fixed (nếu giữ, nó sẽ neo theo thanh nổi vì cha có transform
+   và đè lên cả thanh). Selector 2 id nên thắng rule @media bên dưới. */
+#modern-manage-toolbar #selectAllRow .action-bar{
+  position:static !important;background:transparent !important;
+  box-shadow:none !important;border-radius:0 !important;
+  padding:0 !important;margin:0 8px 0 auto !important;
+  width:auto !important;justify-content:flex-start !important;
+}
+/* Nút Xóa đã bị dời ra khỏi .action-bar nên mất style .action-bar .del-btn */
+#selectAllRow #topDelBtn{
+  background:var(--border);color:var(--muted);cursor:not-allowed;
+  font-size:13px;padding:8px 14px;margin-left:0 !important;
+}
+#selectAllRow #topDelBtn.enabled{background:var(--red);color:#fff;cursor:pointer;}
+/* Chừa chỗ cuối trang để thanh nổi không che mục cuối danh sách */
+body[data-current-mode="manage"].has-floating-bar main{padding-bottom:90px;}
+
+/* ---- Khối "Nhập / sửa danh sách" thu gọn được (accordion) ----
+   Thu/mở bằng cách đổi grid-template-rows 1fr <-> 0fr (animate được chiều
+   cao "auto", không cần đoán max-height — textarea kéo giãn được nên
+   max-height cố định sẽ cắt nội dung). Chỉ đụng tới #manageSectionContent,
+   KHÔNG đụng display của <section> vì applyModeUI() đang quản lý cái đó. */
+#manageSectionTitle{cursor:pointer;user-select:none;display:flex;align-items:center;gap:8px;}
+#manageSectionTitle:focus-visible{outline:2px solid var(--blue);outline-offset:3px;border-radius:6px;}
+#manageSectionTitle .collapse-arrow{font-size:12px;color:var(--muted);transition:transform .25s ease;display:inline-block;}
+#manageSection.collapsed #manageSectionTitle .collapse-arrow{transform:rotate(-90deg);}
+#manageSectionContent{display:grid;grid-template-rows:1fr;transition:grid-template-rows .3s ease;}
+#manageSection.collapsed #manageSectionContent{grid-template-rows:0fr;}
+#manageSectionContent > .collapse-inner{overflow:hidden;min-height:0;}
+#manageSection.collapsed #manageSectionTitle{margin-bottom:0;}
+@media (prefers-reduced-motion:reduce){
+  #manageSectionContent,#manageSectionTitle .collapse-arrow{transition:none;}
+}
+
 /* ---- State machine theo tab: body[data-current-mode] do applyModeUI() cập
    nhật (JS chỉ set 1 thuộc tính duy nhất), CSS tự quyết định ẩn/hiện —
    không cần JS can thiệp style.display riêng cho từng phần tử này nữa. ---- */
@@ -710,6 +766,31 @@ body[data-current-mode="manage"] #productListHeading { display: block !important
    thêm sản phẩm) — tab "Quản lý" luôn cố định list view nên không cần nút
    này, giữ đúng hành vi cũ, chỉ đổi cách cài đặt sang CSS. */
 body[data-current-mode="task"] #viewSwitch { display: flex !important; }
+
+/* ---- Tab Quản lý: thẻ ảnh kiểu Shopee ---- */
+.mcard{overflow:visible;position:relative;}
+.mcard .img-thumb{cursor:default;border-radius:8px 8px 0 0;overflow:hidden;}
+.mcard .mchk{position:absolute;top:6px;left:6px;z-index:3;width:20px;height:20px;accent-color:var(--blue);}
+.mcard.sel{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue-bg);}
+.mcard .mname{font-size:13px;font-weight:600;padding:8px 8px 4px;line-height:1.3;min-height:2.9em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.mcard .mstat{display:flex;gap:12px;padding:0 8px 8px;font-size:12px;color:var(--muted);align-items:center;}
+.mcard .mstat button{background:none;padding:0;font-size:12px;font-weight:600;color:var(--muted);}
+.mcard .mstat .on{color:var(--green);}
+.mcard .mstat .off{opacity:.45;}
+.mfoot{display:flex;border-top:1px solid var(--border);}
+.mfoot button{flex:1;background:transparent;color:var(--text);border-radius:0;padding:9px 0;font-size:15px;}
+.mfoot button+button{border-left:1px solid var(--border);}
+.mfoot button:disabled{opacity:.3;cursor:default;}
+.mmenu{position:absolute;right:4px;bottom:42px;z-index:8;background:var(--card);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px var(--shadow);min-width:150px;overflow:hidden;}
+.mmenu button{display:block;width:100%;text-align:left;background:transparent;color:var(--text);border-radius:0;padding:10px 12px;font-size:13px;}
+.mmenu button:hover{background:var(--hover-bg);}
+.mmenu .danger{color:var(--red);}
+#editorTools{display:none;gap:8px;margin:8px 0 0;}
+#editorPreview{display:none;margin:8px 0;max-height:22vh;overflow:auto;font-size:12px;}
+#editorPreview .pv{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+#editorPreview img{width:36px;height:36px;object-fit:cover;border-radius:6px;border:1px solid var(--border);}
+#editorPreview .tg{background:var(--gray-bg);border-radius:10px;padding:2px 8px;}
+#editorPreview .pe{color:var(--red);margin-bottom:4px;}
 </style>
 </head>
 <body>
@@ -720,16 +801,17 @@ body[data-current-mode="task"] #viewSwitch { display: flex !important; }
   <a class="back" href="index.html">← Về trang chính</a>
   <h1 id="pageTitle">Thêm danh sách công việc</h1>
   <div class="tabs">
-    <div class="tab active" data-mode="task">➕ Thêm việc</div>
-    <div class="tab" data-mode="manage">🗂 Quản lý danh mục</div>
+    <div class="tab active" data-mode="task">➕ Thêm Sản Phẩm</div>
+    <div class="tab" data-mode="manage">🗂 Quản Lý Sản Phẩm</div>
   </div>
 
 </header>
 
 <main>
 
-  <section id="manageSection" style="display:none;">
-    <h2>Nhập / sửa danh sách (dán vào đây)</h2>
+  <section id="manageSection" class="collapsed" style="display:none;">
+    <h2 id="manageSectionTitle" role="button" tabindex="0" aria-expanded="false" aria-controls="manageSectionContent"><span class="collapse-arrow" aria-hidden="true">▼</span> Nhập / sửa danh sách (dán vào đây)</h2>
+    <div id="manageSectionContent"><div class="collapse-inner">
     <p class="muted" style="margin-top:0;">
       Mỗi dòng 1 sản phẩm, hỗ trợ 3 kiểu:<br>
       1) Không phân loại: <b>Tên sản phẩm</b><br>
@@ -744,12 +826,12 @@ body[data-current-mode="task"] #viewSwitch { display: flex !important; }
       <button class="btn-outline" id="expandBtn" type="button" style="flex:1;">⤢ Mở rộng</button>
     </div>
     <div class="status" id="bulkStatus"></div>
+    </div></div>
   </section>
 
   <section>
     <div class="row" style="justify-content:space-between;align-items:center;">
       <div class="viewSwitch" id="viewSwitch">
-        <button class="vswBtn" data-view="list" type="button" title="Xem danh sách">☰</button>
         <button class="vswBtn" data-view="grid" type="button" title="Xem lưới">▦</button>
         <button class="vswBtn" data-view="image" type="button" title="Xem ảnh">🖼</button>
       </div>
@@ -810,6 +892,8 @@ body[data-current-mode="task"] #viewSwitch { display: flex !important; }
   <h3 id="editorTitle">Sửa sản phẩm</h3>
   <p class="muted" id="editorDesc">Định dạng: <b>Tên</b> (không phân loại) · <b>Tên | a, b</b> (1 tầng) · <b>Tên | a, b | c, d</b> (2 tầng)</p>
   <textarea id="editorTextarea"></textarea>
+  <div class="row" id="editorTools"><button class="btn-outline" id="insImgBtn" type="button">＋ Ảnh</button><button class="btn-outline" id="insLinkBtn" type="button">＋ Link</button></div>
+  <div id="editorPreview"></div>
   <div class="editor-actions">
     <button class="btn-outline" id="editorCancel">Hủy</button>
     <button class="btn-green" id="editorSave">Lưu</button>
@@ -904,12 +988,15 @@ let pinnedKey = null; // ngoài chế độ gom: chỉ 1 phân loại được "
 let editorSaveHandler = null;
 // Danh sách sản phẩm đang mở form "chèn link file in" ở tab Thêm việc.
 let editingLinkIds = new Set();
-// Danh sách sản phẩm đang mở form gán ảnh riêng cho 1 tổ hợp các tầng ngoài
-// (dạng key: productId__nhãn, với nhãn = tổ hợp mọi tầng trừ tầng cuối cùng,
-// nối bằng " - " nếu có nhiều hơn 1 tầng ngoài) — áp dụng cho sản phẩm có
-// TỪ 2 TẦNG phân loại trở lên (không giới hạn đúng 2 tầng), vì logic dùng
-// cartesianProduct() để gộp mọi tầng ngoài thành 1 nhãn duy nhất trước khi
-// gán ảnh, giống cách Shopee gán ảnh theo "Phân loại 1".
+// Danh sách ô "ảnh phân loại" đang mở (key: productId__nhãn). Theo đúng thực
+// tế đăng trên Shopee: ảnh phân loại luôn gắn với PHÂN LOẠI 1.
+//  - 1 tầng: nhãn = tên từng lựa chọn của tầng đó (mỗi lựa chọn 1 ô ảnh).
+//  - 2 tầng: nhãn = giá trị tầng 1; tầng 2 chỉ mang tính thông tin/chọn, KHÔNG có ảnh.
+//  - >2 tầng (ngoài thực tế sàn): giữ tương thích, gộp mọi tầng trừ tầng cuối
+//    thành 1 nhãn bằng cartesianProduct() như trước.
+// Không có phân loại: chỉ dùng ảnh sản phẩm (p.image).
+// Link file in riêng (p.variantLinks) dùng CÙNG nhãn/key với ảnh: gán chung 1 hộp,
+// ưu tiên link riêng, không có thì dùng p.link chung của sản phẩm.
 let editingGroupImageIds = new Set();
 
 // Dọn mọi trạng thái đang "treo" theo id sản phẩm khi sản phẩm đó bị xoá —
@@ -918,7 +1005,7 @@ let editingGroupImageIds = new Set();
 function cleanupProductState(productId){
   editingLinkIds.delete(productId);
   for(const key of Array.from(editingGroupImageIds)){
-    if(key.startsWith(productId + "__")) editingGroupImageIds.delete(key);
+    if(typeof key === "string" && key.startsWith(productId + "__")) editingGroupImageIds.delete(key);
   }
   if(openImageCardId === productId) openImageCardId = null;
 }
@@ -1003,6 +1090,7 @@ let viewMode = "image";
 // Ở chế độ xem ảnh: id sản phẩm đang mở overlay chọn phân loại trên điện
 // thoại (chạm để bật/tắt, vì không có hover thật như máy tính).
 let openImageCardId = null;
+let openMenuId = null;
 
 function applyModeUI(){
   const isManage = mode === "manage";
@@ -1022,6 +1110,18 @@ function applyModeUI(){
   sortModeBtn.textContent = sortMode ? "✅ Xong sắp xếp" : "🔀 Sắp xếp";
   sortModeBtn.classList.toggle("active", sortMode);
   document.getElementById("gomGroup").style.display = isManage ? "none" : "flex";
+  syncFloatingBar();
+}
+// Thanh hành động nổi (#selectAllRow) chỉ hiện ở tab Quản lý, ngoài chế độ
+// sắp xếp, và khi đã chọn >= 1 sản phẩm. Đọc trạng thái từ Set `selected`
+// (nguồn dữ liệu thật), KHÔNG đếm checkbox trong DOM — checkbox có thể bị
+// render lại/lọc bởi ô tìm kiếm nên không phản ánh đúng số đã chọn.
+function syncFloatingBar(){
+  const row = document.getElementById("selectAllRow");
+  if(!row) return;
+  const show = mode === "manage" && !sortMode && selected.size > 0;
+  row.classList.toggle("floating-show", show);
+  document.body.classList.toggle("has-floating-bar", show);
 }
 applyModeUI();
 updateViewSwitch();
@@ -1060,6 +1160,26 @@ updateViewSwitch();
     manageActionBar.style.marginLeft = "auto";
     manageActionBar.style.marginRight = "8px";
   }
+})();
+
+// ---- Thu gọn / mở rộng khối "Nhập / sửa danh sách" ----
+// `inert` khi đang thu gọn để Tab/screen reader không rơi vào các ô đã ẩn.
+(function setupCollapsibleManageSection(){
+  const section = document.getElementById("manageSection");
+  const title = document.getElementById("manageSectionTitle");
+  const content = document.getElementById("manageSectionContent");
+  if(!section || !title || !content) return;
+  content.inert = section.classList.contains("collapsed"); // mặc định thu gọn (class đặt sẵn trong HTML)
+  function toggle(){
+    const collapsed = section.classList.toggle("collapsed");
+    title.setAttribute("aria-expanded", String(!collapsed));
+    content.inert = collapsed;
+    title.querySelector(".collapse-arrow").textContent = "▼"; // xoay bằng CSS
+  }
+  title.addEventListener("click", toggle);
+  title.addEventListener("keydown", e => {
+    if(e.key === "Enter" || e.key === " "){ e.preventDefault(); toggle(); }
+  });
 })();
 
 document.getElementById("sortModeBtn").addEventListener("click", () => {
@@ -1203,7 +1323,8 @@ onSnapshot(q, snap => {
       order: (typeof data.order === "number" ? data.order : null),
       link: data.link || "",
       image: data.image || "",
-      variantImages: data.variantImages || {}
+      variantImages: data.variantImages || {},
+      variantLinks: data.variantLinks || {}
     };
   });
   sortProductsInPlace();
@@ -1376,6 +1497,50 @@ function renderTiersStaticHtml(p){
   }).join("");
 }
 
+// Hộp nhập URL ảnh riêng cho 1 nhãn phân loại (dùng chung cho 1 tầng & 2 tầng).
+// data-groupkey đặt ngay trên hộp để handler không phụ thuộc vị trí nút bấm.
+function groupImgEditBoxHtml(p, label, groupKey){
+  const cur = (p.variantImages && p.variantImages[label]) || "";
+  const curLink = (p.variantLinks && p.variantLinks[label]) || "";
+  return `<div class="groupImgEditBox" data-groupkey="${escapeHtml(groupKey)}">
+      <input type="text" class="groupImgInput" value="${escapeHtml(cur)}" placeholder='Dán URL ảnh riêng cho "${escapeHtml(label)}" — để trống = dùng ảnh mặc định'>
+      <div class="imgPreviewBox"><img class="imgPreview" src="${escapeHtml(cur)}" style="display:${cur ? "block" : "none"};"><span class="imgPreviewMsg muted"></span></div>
+      <input type="text" class="groupLinkInput" value="${escapeHtml(curLink)}" placeholder='Dán link file in riêng cho "${escapeHtml(label)}" — để trống = dùng link chung'>
+      <div class="row row-nowrap" style="margin-top:4px;">
+        <button type="button" class="btn-blue groupImgSaveBtn" style="flex:1;">Lưu</button>
+        <button type="button" class="btn-outline groupImgCancelBtn" style="flex:1;">Hủy</button>
+      </div>
+      <div class="status groupImgStatus"></div>
+    </div>`;
+}
+
+function groupImgBtnHtml(p, label, groupKey){
+  const hasImg = !!(p.variantImages && p.variantImages[label]);
+  const hasLink = !!(p.variantLinks && p.variantLinks[label]);
+  const icon = (hasImg && hasLink) ? "🖼🔗" : hasImg ? "🖼" : hasLink ? "🔗" : "➕";
+  const title = (hasImg || hasLink)
+    ? `Đã có ${[hasImg ? "ảnh" : "", hasLink ? "link file in" : ""].filter(Boolean).join(" + ")} riêng cho phân loại này — bấm để sửa`
+    : "Gán ảnh / link file in riêng cho phân loại này";
+  return `<button type="button" class="groupImgBtn" data-groupkey="${escapeHtml(groupKey)}" title="${title}">${icon}</button>`;
+}
+
+// 1 TẦNG: mỗi lựa chọn là 1 chip + 1 nút ảnh riêng (ảnh gắn với chính lựa chọn
+// đó, giống ô ảnh "Phân loại 1" trên Shopee). Ô nhập ảnh của lựa chọn đang mở
+// hiện bên dưới hàng chip.
+function renderFlatSelectionHtml(p){
+  const chips = p.variants.map(v => {
+    const gk = p.id + "__" + v;
+    return `<span class="vimgItem">${chipHtml(p, v, v, v)}${groupImgBtnHtml(p, v, gk)}</span>`;
+  }).join("");
+  const boxes = p.variants
+    .filter(v => editingGroupImageIds.has(p.id + "__" + v))
+    .map(v => `<div class="groupRow"><div class="groupName">${escapeHtml(v)} :</div>${groupImgEditBoxHtml(p, v, p.id + "__" + v)}</div>`)
+    .join("");
+  return `<div class="option-wrap">${chips}</div>${boxes}`;
+}
+
+// 2 TẦNG (và hơn): ảnh gắn với tầng ngoài (Phân loại 1); tầng cuối (Phân loại 2)
+// chỉ là chip chọn, không có ảnh.
 function renderTiersSelectionHtml(p){
   const outerTiers = p.tiers.slice(0, -1);
   const lastTier = p.tiers[p.tiers.length - 1];
@@ -1383,24 +1548,13 @@ function renderTiersSelectionHtml(p){
   return combos.map(combo => {
     const label = combo.join(" - ");
     const groupKey = p.id + "__" + label;
-    const hasImg = !!(p.variantImages && p.variantImages[label]);
     const editingGroup = editingGroupImageIds.has(groupKey);
     const chips = lastTier.map(v => chipHtml(p, label + ": " + v, v, label)).join("");
     return `<div class="groupRow">
         <div class="groupName">${escapeHtml(label)} :
-          <button type="button" class="groupImgBtn" data-groupkey="${escapeHtml(groupKey)}" title="${hasImg ? "Đã có ảnh riêng cho phân loại này — bấm để sửa" : "Gán ảnh riêng cho phân loại này"}">${hasImg ? "🖼" : "➕"}</button>
+          ${groupImgBtnHtml(p, label, groupKey)}
         </div>
-        ${editingGroup ? `
-          <div class="groupImgEditBox">
-            <input type="text" class="groupImgInput" value="${escapeHtml((p.variantImages && p.variantImages[label]) || "")}" placeholder='Dán URL ảnh riêng cho "${escapeHtml(label)}" — để trống = dùng ảnh mặc định'>
-            <div class="imgPreviewBox"><img class="imgPreview" src="${escapeHtml((p.variantImages && p.variantImages[label]) || "")}" style="display:${hasImg ? "block" : "none"};"><span class="imgPreviewMsg muted"></span></div>
-            <div class="row row-nowrap" style="margin-top:4px;">
-              <button type="button" class="btn-blue groupImgSaveBtn" style="flex:1;">Lưu</button>
-              <button type="button" class="btn-outline groupImgCancelBtn" style="flex:1;">Hủy</button>
-            </div>
-            <div class="status groupImgStatus"></div>
-          </div>
-        ` : ""}
+        ${editingGroup ? groupImgEditBoxHtml(p, label, groupKey) : ""}
         <div class="groupOpts">${chips}</div>
       </div>`;
   }).join("");
@@ -1500,6 +1654,8 @@ function attachVchipListeners(container, p){
       // (imgLabel), không để dành suy luận lại từ chuỗi variant lúc gửi sang
       // index — tránh lỗi cắt nhầm khi tên phân loại chứa dấu ": ".
       const variantImage = (imgLabel && p.variantImages && p.variantImages[imgLabel]) || "";
+      // Link file in riêng theo phân loại: resolve cùng lúc, cùng key với ảnh.
+      const variantLink = (imgLabel && p.variantLinks && p.variantLinks[imgLabel]) || "";
       const act = e.target.dataset.act;
       if(act === "remove"){
         if(storageKey && taskSelections.has(storageKey)){
@@ -1521,7 +1677,7 @@ function attachVchipListeners(container, p){
         const sKey = storageKeyOf(baseKey, currentGroupId);
         let cur = taskSelections.get(sKey);
         if(!cur){
-          cur = { productName: p.name, variant, qty: 0, orderId: currentGroupId, productId: p.id, variantImage };
+          cur = { productName: p.name, variant, qty: 0, orderId: currentGroupId, productId: p.id, variantImage, variantLink };
           taskSelections.set(sKey, cur);
         }
         cur.qty += 1;
@@ -1540,7 +1696,7 @@ function attachVchipListeners(container, p){
         // chốt trước đó của cùng phân loại này.
         const orderId = newOrderId();
         const sKey = storageKeyOf(baseKey, orderId);
-        taskSelections.set(sKey, { productName: p.name, variant, qty: 1, orderId, productId: p.id, variantImage });
+        taskSelections.set(sKey, { productName: p.name, variant, qty: 1, orderId, productId: p.id, variantImage, variantLink });
         pinnedKey = sKey;
       }
       renderList();
@@ -1572,7 +1728,7 @@ function renderGrid(filtered){
     if(hasTiers){
       inner = renderGridTiersHtml(p);
     } else if(hasFlat){
-      inner = `<div class="option-wrap">${p.variants.map(v => chipHtml(p, v, v)).join("")}</div>`;
+      inner = `<div class="option-wrap">${p.variants.map(v => chipHtml(p, v, v, v)).join("")}</div>`;
     } else {
       inner = `<div class="option-wrap">${chipHtml(p, "", isChipActive(p.id) ? "Đã chọn" : "➕ Chọn sản phẩm này")}</div>`;
     }
@@ -1596,7 +1752,7 @@ function renderImageGrid(filtered){
     if(hasTiers){
       inner = renderGridTiersHtml(p);
     } else if(hasFlat){
-      inner = `<div class="option-wrap">${p.variants.map(v => chipHtml(p, v, v)).join("")}</div>`;
+      inner = `<div class="option-wrap">${p.variants.map(v => chipHtml(p, v, v, v)).join("")}</div>`;
     } else {
       inner = `<div class="option-wrap">${chipHtml(p, "", isChipActive(p.id) ? "Đã chọn" : "➕ Chọn sản phẩm này")}</div>`;
     }
@@ -1605,7 +1761,7 @@ function renderImageGrid(filtered){
     card.dataset.id = p.id;
     card.innerHTML = `
       <div class="img-thumb">
-        ${p.image ? `<img src="${escapeHtml(p.image)}" alt="">` : `<div class="img-placeholder">🖼</div>`}
+        ${thumbOf(p) ? `<img src="${escapeHtml(thumbOf(p))}" alt="">` : `<div class="img-placeholder">🖼</div>`}
         <div class="img-overlay"><div class="img-overlay-inner">${inner}</div></div>
       </div>
       <div class="img-name" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</div>
@@ -1631,6 +1787,150 @@ function renderImageGrid(filtered){
   return wrap;
 }
 
+// ===== Tab Quản lý: ảnh/link gắn qua cú pháp Markdown =====
+// Nhãn phân loại có ảnh/link riêng: 2+ tầng -> mọi tầng trừ tầng cuối (nối " - "); 1 tầng -> từng lựa chọn.
+function labelsOf(p){
+  if(p.tiers && p.tiers.length >= 2) return cartesianProduct(p.tiers.slice(0,-1)).map(c => c.join(" - "));
+  return (p.variants || []).slice();
+}
+// Ảnh thẻ: ưu tiên ảnh chung; chưa có thì tạm lấy ảnh riêng đầu tiên.
+function thumbOf(p){
+  if(p.image) return p.image;
+  const vi = p.variantImages || {};
+  const k = Object.keys(vi).find(x => vi[x]);
+  return k ? vi[k] : "";
+}
+function productToEditorText(p){
+  const vi = p.variantImages || {}, vl = p.variantLinks || {}, labs = labelsOf(p), out = [];
+  if(p.image) out.push(`![${p.name}](${p.image})`);
+  if(p.link) out.push(`[${p.name}](${p.link})`);
+  labs.forEach(l => { if(vi[l]) out.push(`![${l}](${vi[l]})`); });
+  labs.forEach(l => { if(vl[l]) out.push(`[${l}](${vl[l]})`); });
+  return productToLine(p) + (out.length ? "\n\n" + out.join("\n") : "");
+}
+// Dòng đầu = sản phẩm; các dòng sau = ![Tên](URL ảnh) hoặc [Tên](URL link in).
+// Tên trống / = tên sản phẩm -> bản chung; = nhãn phân loại -> bản riêng. URL trống = bỏ qua (gỡ).
+function parseEditorText(text, oldName){
+  const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+  const first = parseLine(lines[0] || "");
+  if(!first) return { error: "Định dạng không hợp lệ, cần có ít nhất tên sản phẩm" };
+  const labels = labelsOf(first);
+  const r = { parsed: first, image: "", link: "", variantImages: {}, variantLinks: {}, items: [], errors: [] };
+  lines.slice(1).forEach(l => {
+    const m = l.match(/^(!?)\[(.*)\]\((.*)\)$/);
+    if(!m){ r.errors.push(`Sai cú pháp Markdown: ${l.slice(0,50)}`); return; }
+    const isImg = m[1] === "!", name = m[2].trim(), url = m[3].trim();
+    if(!url) return;
+    if(!isValidHttpUrl(url)){ r.errors.push(`URL không hợp lệ (phải bắt đầu bằng http:// hoặc https://): ${url.slice(0,60)}`); return; }
+    const low = name.toLowerCase();
+    const common = !name || low === first.name.toLowerCase() || (oldName && low === oldName.toLowerCase());
+    const lab = common ? null : labels.find(x => x.toLowerCase() === low);
+    if(!common && !lab){ r.errors.push(`"${name}" không khớp phân loại nào (${labels.join(", ") || "sản phẩm không có phân loại"})`); return; }
+    const store = isImg ? (common ? null : r.variantImages) : (common ? null : r.variantLinks);
+    const dup = common ? (isImg ? r.image : r.link) : store[lab];
+    if(dup){ r.errors.push(`Trùng ${isImg ? "ảnh" : "link"} cho "${common ? "cả sản phẩm" : lab}"`); return; }
+    if(common){ if(isImg) r.image = url; else r.link = url; } else store[lab] = url;
+    r.items.push({ isImg, target: common ? "Chung" : lab, url });
+  });
+  return r;
+}
+function setEditorExtras(on){
+  document.getElementById("editorTools").style.display = on ? "flex" : "none";
+  document.getElementById("editorPreview").style.display = on ? "block" : "none";
+}
+let editorPreviewOn = false, editorOldName = "";
+function refreshEditorPreview(){
+  if(!editorPreviewOn) return;
+  const r = parseEditorText(document.getElementById("editorTextarea").value, editorOldName);
+  const box = document.getElementById("editorPreview");
+  if(r.error){ box.innerHTML = `<div class="pe">⚠️ ${escapeHtml(r.error)}</div>`; return; }
+  let h = r.errors.map(e => `<div class="pe">⚠️ ${escapeHtml(e)}</div>`).join("");
+  h += r.items.map(it => it.isImg
+    ? `<div class="pv"><img src="${escapeHtml(it.url)}" alt=""><span class="tg">🖼 ${escapeHtml(it.target)}</span></div>`
+    : `<div class="pv"><span class="tg">🔗 ${escapeHtml(it.target)} — ${escapeHtml(it.url.replace(/^https?:\/\//,"").slice(0,40))}</span></div>`).join("");
+  box.innerHTML = h || '<span class="muted">Chưa gắn ảnh / link nào.</span>';
+}
+function insertEditorLine(prefix){
+  const ta = document.getElementById("editorTextarea");
+  ta.value = ta.value.replace(/\s*$/, "") + `\n${prefix}[]()`;
+  ta.focus();
+  ta.setSelectionRange(ta.value.length - 1, ta.value.length - 1);
+  refreshEditorPreview();
+}
+document.getElementById("insImgBtn").addEventListener("click", () => insertEditorLine("!"));
+document.getElementById("insLinkBtn").addEventListener("click", () => insertEditorLine(""));
+document.getElementById("editorTextarea").addEventListener("input", refreshEditorPreview);
+
+function openUrl(u){ if(u) window.open(u, "_blank", "noopener"); }
+function renderManageGrid(filtered){
+  const wrap = document.createElement("div");
+  wrap.className = "img-grid";
+  filtered.forEach((p, idx) => {
+    const vi = p.variantImages || {}, vl = p.variantLinks || {};
+    const nImg = Object.values(vi).filter(Boolean).length, nLink = Object.values(vl).filter(Boolean).length;
+    const labs = labelsOf(p), thumb = thumbOf(p);
+    const anyLink = p.link || Object.values(vl).find(Boolean) || "";
+    const first = idx === 0, last = idx === filtered.length - 1;
+    const card = document.createElement("div");
+    card.className = "img-card mcard" + (selected.has(p.id) ? " sel" : "");
+    card.dataset.id = p.id;
+    card.innerHTML = `
+      ${sortMode ? "" : `<input type="checkbox" class="mchk" ${selected.has(p.id) ? "checked" : ""}>`}
+      <div class="img-thumb">${thumb ? `<img src="${escapeHtml(thumb)}" alt="" loading="lazy">` : `<div class="img-placeholder">🖼</div>`}</div>
+      <div class="mname" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</div>
+      <div class="mstat">
+        <button type="button" class="mImg ${p.image ? "on" : "off"}" title="${p.image ? "Có ảnh chung" : "Chưa có ảnh chung"}${nImg ? " + " + nImg + " ảnh riêng" : ""} — bấm để xem">👁${nImg ? " +" + nImg : ""}</button>
+        <button type="button" class="mLink ${p.link ? "on" : "off"}" title="${p.link ? "Có link in chung" : "Chưa có link in chung"}${nLink ? " + " + nLink + " link riêng" : ""} — bấm để mở">🔗${nLink ? " +" + nLink : ""}</button>
+        <span title="Phân loại: ${escapeHtml(labs.join(", "))}">🗂 ${labs.length}</span>
+      </div>
+      <div class="mfoot">${sortMode
+        ? `<button type="button" class="mTop" title="Lên đầu" ${first ? "disabled" : ""}>⤒</button><button type="button" class="mUp" title="Lùi 1 ô" ${first ? "disabled" : ""}>◀</button><button type="button" class="mDown" title="Tiến 1 ô" ${last ? "disabled" : ""}>▶</button><button type="button" class="mBot" title="Xuống cuối" ${last ? "disabled" : ""}>⤓</button>`
+        : `<button type="button" class="mEdit" title="Sửa">✏️</button><button type="button" class="mMore" title="Khác">···</button>`}</div>
+      ${openMenuId === p.id && !sortMode ? `<div class="mmenu">
+        ${thumb ? `<button type="button" data-act="img">👁 Xem ảnh lớn</button>` : ""}
+        ${anyLink ? `<button type="button" data-act="link">🔗 Mở link file in</button>` : ""}
+        <button type="button" data-act="top">⤒ Lên đầu</button>
+        <button type="button" data-act="bottom">⤓ Xuống cuối</button>
+        <button type="button" data-act="del" class="danger">🗑 Xóa</button></div>` : ""}`;
+    const q = s => card.querySelector(s);
+    if(sortMode){
+      if(!first){ q(".mTop").addEventListener("click", () => moveToTop(p.id)); q(".mUp").addEventListener("click", () => moveItem(p.id, -1)); }
+      if(!last){ q(".mDown").addEventListener("click", () => moveItem(p.id, 1)); q(".mBot").addEventListener("click", () => moveToBottom(p.id)); }
+    } else {
+      q(".mchk").addEventListener("change", e => {
+        if(e.target.checked) selected.add(p.id); else selected.delete(p.id);
+        card.classList.toggle("sel", e.target.checked);
+        updateActionBar(); updateSelectAllState(filtered);
+      });
+      q(".mEdit").addEventListener("click", () => openEditor(p));
+      q(".mMore").addEventListener("click", e => { e.stopPropagation(); openMenuId = (openMenuId === p.id) ? null : p.id; renderList(); });
+      card.querySelectorAll(".mmenu button").forEach(b => b.addEventListener("click", async e => {
+        e.stopPropagation();
+        const act = b.dataset.act;
+        openMenuId = null;
+        if(act === "img") openUrl(thumb);
+        else if(act === "link") openUrl(anyLink);
+        else if(act === "top") await moveToTop(p.id);
+        else if(act === "bottom") await moveToBottom(p.id);
+        else if(act === "del"){
+          if(confirm(`Xóa sản phẩm "${p.name}"?`)){
+            try{ await deleteDoc(doc(db, "catalog", p.id)); selected.delete(p.id); cleanupProductState(p.id); }
+            catch(err){ showError("Không xóa được sản phẩm: " + err.message); }
+          }
+        }
+        renderList();
+      }));
+    }
+    q(".mImg").addEventListener("click", () => openUrl(thumb));
+    q(".mLink").addEventListener("click", () => openUrl(anyLink));
+    wrap.appendChild(card);
+  });
+  return wrap;
+}
+document.addEventListener("click", e => {
+  if(openMenuId && !e.target.closest(".mmenu")){ openMenuId = null; renderList(); }
+});
+
 function renderList(){
   const list = document.getElementById("list");
   const filtered = getFiltered();
@@ -1650,8 +1950,8 @@ function renderList(){
     updateTaskBar();
     return;
   }
-  if(useGrid){
-    list.appendChild(viewMode === "image" ? renderImageGrid(filtered) : renderGrid(filtered));
+  if(true){ // Tab Thêm việc: chỉ còn lưới/ảnh; tab Quản lý: lưới ảnh có nút chức năng
+    list.appendChild(isManage ? renderManageGrid(filtered) : (viewMode === "grid" ? renderGrid(filtered) : renderImageGrid(filtered)));
     updateActionBar();
     updateSelectAllState(filtered);
     updateTaskBar();
@@ -1672,7 +1972,7 @@ function renderList(){
     } else if(hasFlat){
       variantsHtml = isManage
         ? p.variants.map(v => `<span class="vchip static">${escapeHtml(v)}</span>`).join("")
-        : p.variants.map(v => chipHtml(p, v, v)).join("");
+        : renderFlatSelectionHtml(p);
     } else if(!isManage){
       // Sản phẩm không có phân loại — hiện 1 nút để chọn cả sản phẩm
       variantsHtml = chipHtml(p, "", isChipActive(p.id) ? "Đã chọn" : "➕ Chọn sản phẩm này");
@@ -1822,7 +2122,7 @@ function renderList(){
           renderList();
         });
       }
-      div.querySelectorAll(".groupImgBtn").forEach(btn => {
+      div.querySelectorAll(".groupImgBtn[data-groupkey]").forEach(btn => {
         btn.addEventListener("click", () => {
           const gk = btn.dataset.groupkey;
           if(editingGroupImageIds.has(gk)) editingGroupImageIds.delete(gk);
@@ -1830,11 +2130,8 @@ function renderList(){
           renderList();
         });
       });
-      div.querySelectorAll(".groupRow").forEach(row => {
-        const box = row.querySelector(".groupImgEditBox");
-        const btn = row.querySelector(".groupImgBtn");
-        if(!box || !btn) return;
-        const groupKey = btn.dataset.groupkey;
+      div.querySelectorAll(".groupImgEditBox").forEach(box => {
+        const groupKey = box.dataset.groupkey;
         const label = groupKey.slice(p.id.length + 2);
         const input = box.querySelector(".groupImgInput");
         const previewImg = box.querySelector(".imgPreview");
@@ -1852,15 +2149,23 @@ function renderList(){
         box.querySelector(".groupImgSaveBtn").addEventListener("click", async () => {
           const statusEl = box.querySelector(".groupImgStatus");
           const raw = input.value.trim();
+          const rawLink = box.querySelector(".groupLinkInput").value.trim();
           if(raw && !isValidHttpUrl(raw)){
             statusEl.textContent = "URL ảnh không hợp lệ — phải bắt đầu bằng http:// hoặc https://";
             statusEl.className = "status err";
             return;
           }
+          if(rawLink && !isValidHttpUrl(rawLink)){
+            statusEl.textContent = "Link file in không hợp lệ — phải bắt đầu bằng http:// hoặc https://";
+            statusEl.className = "status err";
+            return;
+          }
           const newVariantImages = { ...(p.variantImages || {}) };
           if(raw) newVariantImages[label] = raw; else delete newVariantImages[label];
+          const newVariantLinks = { ...(p.variantLinks || {}) };
+          if(rawLink) newVariantLinks[label] = rawLink; else delete newVariantLinks[label];
           try{
-            await updateDoc(doc(db, "catalog", p.id), { variantImages: newVariantImages });
+            await updateDoc(doc(db, "catalog", p.id), { variantImages: newVariantImages, variantLinks: newVariantLinks });
             editingGroupImageIds.delete(groupKey);
             renderList();
           }catch(e){
@@ -2032,7 +2337,9 @@ document.getElementById("sendToIndexBtn").addEventListener("click", async () => 
         qty: e.qty,
         status: "cho_in",
         note: "",
-        link: (prod && prod.link) ? prod.link : "",
+        // Link file in: ưu tiên link riêng của phân loại (đã resolve lúc bấm chip),
+        // không có thì dùng link chung của sản phẩm.
+        link: e.variantLink || ((prod && prod.link) ? prod.link : ""),
         image: (() => {
           // Ảnh riêng theo phân loại (nếu có) đã được resolve SẴN lúc bấm chip
           // (attachVchipListeners, dùng đúng key label — xem chipHtml/imgLabel).
@@ -2079,6 +2386,7 @@ function updateActionBar(){
   const delBtn = document.getElementById("topDelBtn");
   delBtn.classList.toggle("enabled", n > 0);
   delBtn.disabled = n === 0;
+  syncFloatingBar();
 }
 
 document.getElementById("topDelBtn").addEventListener("click", async () => {
@@ -2203,10 +2511,12 @@ document.getElementById("expandBtn").addEventListener("click", () => {
 function closeFullscreen(){
   document.getElementById("editorOverlay").classList.remove("show");
   editorSaveHandler = null;
+  editorPreviewOn = false; setEditorExtras(false);
 }
 
 function openEditorRaw(title, initialText, onSave, descriptionHtml, saveLabel){
   document.getElementById("editorTitle").textContent = title;
+  editorPreviewOn = false; setEditorExtras(false);
   document.getElementById("editorDesc").innerHTML = descriptionHtml;
   document.getElementById("editorTextarea").value = initialText;
   document.getElementById("editorOverlay").classList.add("show");
@@ -2219,27 +2529,28 @@ function openEditorRaw(title, initialText, onSave, descriptionHtml, saveLabel){
 }
 
 function openEditor(product){
-  const line = productToLine(product);
-  openEditorRaw("Sửa: " + product.name, line, async (text) => {
-    const firstLine = text.split("\n").map(l => l.trim()).filter(Boolean)[0] || "";
-    const parsed = parseLine(firstLine);
-    if(!parsed){
-      alert("Định dạng không hợp lệ, cần có ít nhất tên sản phẩm");
-      return false;
-    }
+  openEditorRaw("Sửa: " + product.name, productToEditorText(product), async (text) => {
+    const r = parseEditorText(text, product.name);
+    if(r.error){ alert(r.error); return false; }
+    if(r.errors.length){ alert("Chưa lưu được:\n- " + r.errors.join("\n- ")); return false; }
+    const parsed = r.parsed;
     const dup = allProducts.find(p => p.id !== product.id && p.name.toLowerCase() === parsed.name.toLowerCase());
     if(dup){
       alert(`Tên "${parsed.name}" đã trùng với 1 sản phẩm khác đang có trong danh mục.\nĐổi tên khác, hoặc nếu muốn gộp 2 sản phẩm làm 1, hãy xóa sản phẩm này rồi dùng ô "Nhập / sửa danh sách" để gộp phân loại vào sản phẩm còn lại.`);
       return false;
     }
     try{
-      await updateDoc(doc(db, "catalog", product.id), { name: parsed.name, variants: parsed.variants, tiers: tiersToFirestore(parsed.tiers) });
+      await updateDoc(doc(db, "catalog", product.id), { name: parsed.name, variants: parsed.variants, tiers: tiersToFirestore(parsed.tiers), image: r.image, link: r.link, variantImages: r.variantImages, variantLinks: r.variantLinks });
       return true;
     }catch(e){
       showError("Không lưu được sản phẩm: " + e.message);
       return false;
     }
-  }, 'Định dạng: <b>Tên</b> (không phân loại) · <b>Tên | a, b</b> (1 tầng) · <b>Tên | a, b | c, d</b> (2 tầng)', "Lưu");
+  }, 'Dòng đầu: <b>Tên | a, b | c, d</b>. Các dòng dưới (tùy chọn): <b>![Tên](URL ảnh)</b> và <b>[Tên](URL link file in)</b>.<br>Tên để trống hoặc = tên sản phẩm → gắn <b>chung</b>; = tên phân loại (vd MS1) → gắn <b>riêng</b>. Phân loại không có riêng sẽ dùng bản chung. Xóa dòng = gỡ.', "Lưu");
+  editorOldName = product.name;
+  editorPreviewOn = true;
+  setEditorExtras(true);
+  refreshEditorPreview();
 }
 
 document.getElementById("editorCancel").addEventListener("click", closeFullscreen);
