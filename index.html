@@ -20,7 +20,7 @@
   :root{
     --bg:#0f1115; --card:#1a1d23; --border:#2d3138; --text:#e8eaed; --muted:#9aa3af;
     --blue:#3b82f6; --blue-bg:#1e3a5f; --green:#34d399; --green-bg:#123524; --red:#f87171; --red-bg:#3a1a1a; --gray-bg:#262a32;
-    --amber:#fbbf24; --amber-bg:#3a2f14;
+    --amber:#fbbf24;
     --input-bg:#20242b; --row-bg:#171a20; --notice-border:#2f5a94; --err-border:#6b2b2b;
     --bar-bg:#262b34; --bar-border:rgba(255,255,255,.1); --warn:#f87171;
     --green-solid:#15803d; --red-solid:#dc2626;
@@ -30,7 +30,7 @@
   body.light-theme{
     --bg:#f5f6f7; --card:#ffffff; --border:#e2e4e7; --text:#1a1d21; --muted:#6b7280;
     --blue:#2563eb; --blue-bg:#eaf1ff; --green:#15803d; --green-bg:#e8f7ec; --red:#dc2626; --red-bg:#fde8e8; --gray-bg:#eceef0;
-    --amber:#b45309; --amber-bg:#fef3e0;
+    --amber:#b45309;
     --input-bg:#ffffff; --row-bg:#fafbfc; --notice-border:#bcd0f7; --err-border:#f5b8b8;
     --bar-bg:#1a1d21; --bar-border:transparent; --warn:#d92d20;
     --green-solid:#15803d; --red-solid:#dc2626;
@@ -215,9 +215,8 @@
   .order-box.ready{border-color:var(--green);}
 
   .order-summary-header{
-    display:flex;align-items:center;justify-content:space-between;
     padding:9px 12px;background:var(--row-bg);border-bottom:1px solid var(--border);
-    font-size:12.5px;
+    font-size:12.5px;cursor:pointer;user-select:none;
   }
   .order-time{color:var(--muted);}
   /* Header đơn = lưới 3 cột: [checkbox chọn đơn | ngày giờ | trạng thái + mũi tên].
@@ -342,7 +341,6 @@
   .code-dl-btn:hover{background:var(--blue-bg);}
   .code-dl-btn svg{width:16px;height:16px;}
   .order-code-row .code-value{font-weight:600;display:flex;align-items:center;gap:6px;}
-  .ship-label-chip{font-size:12px;margin-left:2px;}
   /* Placeholder cho đơn chưa có mã vận đơn thật — cố tình KHÔNG dùng chuỗi
      ký tự giả nữa (xem renderOrderName() trong script). Độ rộng cân đối do
      CSS quyết định, không phụ thuộc số ký tự của mã thật (mỗi hãng dài ngắn
@@ -366,7 +364,6 @@
 
   /* Header đơn hàng: bấm vào để mở/đóng khu vực phiếu giao + ghi chú (thay
      cho việc mở trang chi tiết toàn màn hình như trước). */
-  .order-summary-header{cursor:pointer;user-select:none;}
   .order-header-right{display:flex;align-items:center;gap:6px;}
   .header-dot{font-size:12px;line-height:1;}
   .expand-arrow{font-size:10px;color:var(--muted);margin-left:2px;}
@@ -376,11 +373,6 @@
     display:none;flex-direction:column;gap:8px;
     padding:10px 16px;background:var(--card);border-bottom:1px solid var(--border);
     max-width:var(--maxw);margin:0 auto;
-  }
-  .carrierViewToggle{
-    align-self:flex-start;border:1px solid var(--border);background:var(--gray-bg);
-    color:var(--text);border-radius:8px;padding:6px 12px;font-size:12.5px;font-weight:600;
-    cursor:pointer;
   }
   .carrierChips{display:flex;gap:6px;flex-wrap:wrap;min-width:0;}
   .carrierChip{
@@ -396,18 +388,6 @@
     .carrierChips{gap:6px 5px;}
     .carrierChip{padding:5px 9px;font-size:12px;gap:4px;}
   }
-
-  /* ---- Accordion nhóm theo hãng (chế độ xem "Nhóm theo hãng") ---- */
-  .carrierGroup{margin-bottom:12px;}
-  .carrierGroupHead{
-    display:flex;justify-content:space-between;align-items:center;
-    background:var(--gray-bg);border-radius:10px;padding:12px 14px;
-    cursor:pointer;user-select:none;font-weight:600;font-size:14px;
-  }
-  .carrierGroupHeadRight{display:flex;align-items:center;gap:8px;}
-  .carrierGroupHead .carrierGroupCount{color:var(--muted);font-weight:400;font-size:12.5px;}
-  .carrierGroupHead .expand-arrow{margin-left:2px;}
-  .carrierGroupBody{padding-top:10px;}
 
   /* Dòng xem trước ghi chú chung của cả đơn — luôn hiện ngay dưới header,
      không cần mở khu vực mở rộng mới thấy. */
@@ -604,7 +584,6 @@
     </div>
   </div>
   <div class="carrierBar" id="carrierBar" style="display:none;">
-    <button class="carrierViewToggle" id="carrierViewToggle" type="button"></button>
     <div class="carrierChips" id="carrierChips"></div>
   </div>
   <div id="list"></div>
@@ -657,7 +636,7 @@
   var stored = readStored();
   if(stored === 'light') body.classList.add('light-theme');
   else if(stored === 'dark') body.classList.remove('light-theme');
-  function render(){
+  function paintThemeBtn(){
     var isLight = body.classList.contains('light-theme');
     btn.textContent = isLight ? '☀️' : '🌙';
     btn.title = isLight ? 'Chuyển sang chế độ tối' : 'Chuyển sang chế độ sáng';
@@ -665,9 +644,9 @@
   btn.addEventListener('click', function(){
     body.classList.toggle('light-theme');
     writeStored(body.classList.contains('light-theme') ? 'light' : 'dark');
-    render();
+    paintThemeBtn();
   });
-  render();
+  paintThemeBtn();
 })();
 </script>
 
@@ -705,18 +684,12 @@ let allTasks = [];
 let selected = new Set();
 let searchTerm = "";
 
-// ---- Tab "Chờ bàn giao" + "Đã bàn giao": chế độ xem + lọc theo hãng vận chuyển ----
-// "carrier" = nhóm theo hãng (accordion), "time" = theo thứ tự thời gian.
-// Dùng chung cho cả 2 tab (tab 2 để đối chiếu khi shipper tới nhận, tab 3 để
-// kiểm tra lại nếu bàn giao sai). Nhớ lựa chọn gần nhất qua localStorage;
-// MẶC ĐỊNH (lần đầu, chưa từng bấm nút chuyển) là "time" = xem theo thời gian.
-let carrierViewMode = localStorage.getItem("carrierViewMode") || "time";
-// Tab nào có thanh nhóm/lọc theo hãng.
+// ---- Tab "Chờ bàn giao" + "Đã bàn giao": lọc theo hãng vận chuyển ----
+// Chỉ còn xem theo thời gian + chip lọc nhanh theo hãng (dùng chung cho cả 2 tab).
+// Tab nào có thanh chip lọc theo hãng.
 function hasCarrierView(){ return currentTab === "dong_goi" || currentTab === "xong"; }
-// Lọc nhanh theo 1 hãng cụ thể (áp dụng ở cả 2 chế độ xem) — "all" = không lọc.
+// Lọc nhanh theo 1 hãng cụ thể — "all" = không lọc.
 let carrierFilter = "all";
-// Các nhóm hãng đang mở (accordion) — mặc định TẤT CẢ đều gập.
-let expandedCarrierGroups = new Set();
 
 // UI-only ephemeral state (reset on re-render is fine; kept across snapshots via Sets keyed by id)
 let editingOrderIds = new Set();
@@ -802,7 +775,6 @@ document.querySelectorAll(".tab").forEach(t => {
     currentTab = t.dataset.tab;
     selected.clear();
     carrierFilter = "all";           // bộ lọc hãng không mang sang tab khác
-    expandedCarrierGroups.clear();   // các nhóm hãng luôn gập lại khi đổi tab
     addbar.style.display = currentTab === "in" ? "flex" : "none";
     clearAllBtn.style.display = currentTab === "xong" ? "inline-block" : "none";
     render();
@@ -1137,21 +1109,6 @@ function groupShown(shown){
 // deletedIds — dùng để biết đơn nào "trống hẳn" (từ đó dọn phiếu giao đính
 // kèm nếu cần). So sánh trên allTasks HIỆN TẠI (trước khi xóa thật sự), nên
 // phải gọi hàm này trước khi deleteDoc(), không phải sau.
-function orderIdsBecomingEmpty(deletedIds){
-  const deletedSet = new Set(deletedIds);
-  const affectedOrderIds = new Set(
-    allTasks
-      .filter(t => deletedSet.has(t.id))
-      .map(t => t.orderId || t.id)
-  );
-  const result = [];
-  affectedOrderIds.forEach(oid => {
-    const remaining = allTasks.some(t => t.orderId === oid && !deletedSet.has(t.id));
-    if(!remaining) result.push(oid);
-  });
-  return result;
-}
-
 // ---- Render ----
 // Trả về danh sách task theo TAB + TỪ KHÓA TÌM KIẾM — CHƯA áp dụng lọc theo
 // hãng vận chuyển (xem applyCarrierFilter()). Tách riêng để carrierBar luôn
@@ -1162,7 +1119,7 @@ function getShown(){
   else if(currentTab === "dong_goi") shown = allTasks.filter(t => t.status === "cho_dong_goi");
   // Không giới hạn số mục ở client: tập dữ liệu status=xong không còn tự dọn
   // theo thời gian nữa (đã bỏ cơ chế hết hạn 7 ngày) — người dùng tự xóa thủ
-  // công qua nút "Dọn dẹp" khi cần.
+  // công qua nút "Làm sạch" khi cần.
   else shown = allTasks.filter(t => t.status === "xong").slice().reverse(); // mới bàn giao xếp trước
 
   if(searchTerm) shown = shown.filter(matchesSearch);
@@ -1240,18 +1197,10 @@ function applyCarrierFilter(tasks){
   return tasks.filter(t => effectiveCarrier(t) === carrierFilter);
 }
 
-// Vẽ thanh chuyển chế độ xem + chip lọc theo hãng (tab "Chờ bàn giao" + "Đã bàn giao").
+// Vẽ chip lọc theo hãng (tab "Chờ bàn giao" + "Đã bàn giao").
 // baseShown = tasks theo tab+tìm kiếm, TRƯỚC khi lọc theo hãng, để đếm số
 // lượng đúng cho từng chip.
 function renderCarrierBar(baseShown){
-  const toggleBtn = document.getElementById("carrierViewToggle");
-  toggleBtn.textContent = carrierViewMode === "carrier" ? "🔀 Theo thời gian" : "🗂 Theo hãng";
-  toggleBtn.onclick = () => {
-    carrierViewMode = carrierViewMode === "carrier" ? "time" : "carrier";
-    localStorage.setItem("carrierViewMode", carrierViewMode);
-    render();
-  };
-
   // Đếm theo KIỆN HÀNG (số đơn/orderId khác nhau), không đếm số sản phẩm —
   // đơn gộp nhiều sản phẩm chỉ tính 1.
   const counts = new Map();
@@ -1284,65 +1233,6 @@ function renderCarrierBar(baseShown){
   });
 }
 
-// Vẽ danh sách đơn (tab "Chờ bàn giao" / "Đã bàn giao") theo accordion nhóm
-// hãng — mỗi nhóm gập mặc định, bấm head mới xổ ra. Thứ tự các hãng theo
-// sortCarrierKeys() (hãng đã biết → hãng tự nhập → "chưa rõ hãng" ở cuối).
-// Trả về mảng group (đơn) đã render, để render() dùng tính nút "Tải tất cả
-// phiếu giao".
-function renderOrdersByCarrier(shownTasks){
-  const buckets = new Map();
-  shownTasks.forEach(t => {
-    const key = effectiveCarrier(t);
-    if(!buckets.has(key)) buckets.set(key, []);
-    buckets.get(key).push(t);
-  });
-  const orderedKeys = sortCarrierKeys(Array.from(buckets.keys()));
-
-  let allGroups = [];
-  orderedKeys.forEach(key => {
-    const tasks = buckets.get(key);
-    const groups = groupShown(tasks);
-    allGroups = allGroups.concat(groups);
-
-    const isExpanded = expandedCarrierGroups.has(key);
-    const wrap = document.createElement("div");
-    wrap.className = "carrierGroup";
-
-    const head = document.createElement("div");
-    head.className = "carrierGroupHead";
-    head.addEventListener("click", () => {
-      if(isExpanded) expandedCarrierGroups.delete(key); else expandedCarrierGroups.add(key);
-      render();
-    });
-    const left = document.createElement("span");
-    left.textContent = carrierLabelOf(key);
-
-    const right = document.createElement("span");
-    right.className = "carrierGroupHeadRight";
-    const countSpan = document.createElement("span");
-    countSpan.className = "carrierGroupCount";
-    countSpan.textContent = `${groups.length} đơn`;
-    right.appendChild(countSpan);
-    const arrowSpan = document.createElement("span");
-    arrowSpan.className = "expand-arrow";
-    arrowSpan.textContent = isExpanded ? "▾" : "▸";
-    right.appendChild(arrowSpan);
-    head.appendChild(left);
-    head.appendChild(right);
-    wrap.appendChild(head);
-
-    if(isExpanded){
-      const body = document.createElement("div");
-      body.className = "carrierGroupBody";
-
-      groups.forEach(g => body.appendChild(renderOrderBox(g)));
-      wrap.appendChild(body);
-    }
-    list.appendChild(wrap);
-  });
-  return allGroups;
-}
-
 function updateSelectAllBox(shown){
   const ids = new Set(shown.map(orderKey));
   const n = ids.size;
@@ -1352,15 +1242,13 @@ function updateSelectAllBox(shown){
   selectAllBox.indeterminate = nSel > 0 && nSel < n;
 }
 
-// Đếm SỐ KIỆN HÀNG (số đơn/orderId khác nhau) đang ở 1 trạng thái — dùng cho
-// badge số trên tab (thay vì đếm số dòng sản phẩm/task như trước). Nhiều sản
-// phẩm cùng orderId chỉ tính là 1 kiện. Không phụ thuộc từ khóa tìm kiếm,
-// giống cách badge cũ luôn phản ánh TOÀN BỘ dữ liệu chứ không theo bộ lọc.
 // Số kiện hàng (đơn/orderId khác nhau) trong 1 danh sách task bất kỳ.
 function countOrders(tasks){
   return new Set(tasks.map(t => t.orderId || t.id)).size;
 }
 
+// Số kiện hàng đang ở 1 trạng thái — dùng cho badge số trên tab. Không phụ
+// thuộc từ khóa tìm kiếm/lọc hãng: badge luôn phản ánh TOÀN BỘ dữ liệu.
 function countOrdersByStatus(status){
   const ids = new Set();
   allTasks.forEach(t => { if(t.status === status) ids.add(t.orderId || t.id); });
@@ -1413,12 +1301,22 @@ function updateDupWarning(){
 }
 
 function render(){
-  // Bỏ khỏi danh sách chọn những đơn không còn ở tab hiện tại (vừa chuyển
-  // trạng thái / bị xóa) để số "đã chọn" luôn đúng.
+  const baseShown = getShown(); // theo tab + tìm kiếm, CHƯA lọc theo hãng
+
+  // Bộ lọc hãng đang chọn mà không còn đơn nào thuộc hãng đó (vừa bàn giao/xóa
+  // hết) → tự về "Tất cả", tránh kẹt ở danh sách rỗng với chip hãng đã biến mất.
+  if(carrierFilter !== "all" && !baseShown.some(t => effectiveCarrier(t) === carrierFilter)){
+    carrierFilter = "all";
+  }
+  const shown = applyCarrierFilter(baseShown);
+
+  // Chỉ giữ trong danh sách chọn những đơn ĐANG HIỂN THỊ (đúng tab + tìm kiếm +
+  // lọc hãng). Đơn vừa chuyển trạng thái/bị xóa, hoặc bị ẩn do đổi bộ lọc/tìm
+  // kiếm, bị bỏ chọn — tránh việc "Đã bàn giao"/"Xóa" hàng loạt tác động lên
+  // những đơn không nhìn thấy và để số "đã chọn" luôn đúng.
   {
-    const st = currentTabStatus();
-    const valid = new Set(allTasks.filter(t => t.status === st).map(orderKey));
-    selected.forEach(id => { if(!valid.has(id)) selected.delete(id); });
+    const visible = new Set(shown.map(orderKey));
+    selected.forEach(id => { if(!visible.has(id)) selected.delete(id); });
   }
   updateDupWarning();
   updateLabelButtons();
@@ -1430,8 +1328,6 @@ function render(){
   document.getElementById("badge-dong_goi").textContent = badgeDG;
   document.getElementById("badge-xong").textContent = badgeXong;
 
-  const baseShown = getShown(); // theo tab + tìm kiếm, CHƯA lọc theo hãng
-  const shown = applyCarrierFilter(baseShown);
   updateSelectAllBox(shown);
 
   // Tổng số lượng (cộng dồn field qty của từng sản phẩm) của danh sách ĐANG
@@ -1464,11 +1360,8 @@ function render(){
     return;
   }
 
-  const byCarrier = hasCarrierView() && carrierViewMode === "carrier";
-  const groups = byCarrier ? renderOrdersByCarrier(shown) : groupShown(shown);
-  if(!byCarrier){
-    groups.forEach(g => list.appendChild(renderOrderBox(g)));
-  }
+  const groups = groupShown(shown);
+  groups.forEach(g => list.appendChild(renderOrderBox(g)));
 }
 
 // Thẻ tóm tắt 1 đơn hàng trong danh sách — kiểu Shopee, giờ là TẦNG DUY NHẤT
@@ -2318,14 +2211,6 @@ async function removeShipLabel(orderId){
   }catch(e){ showError("Không xóa được phiếu giao: " + e.message); }
 }
 
-// Được gọi khi đơn hàng không còn item nào (mọi item cùng orderId đã bị xóa).
-// Vì lý do tương tự removeShipLabel(), không thể xóa file trên Cloudinary từ
-// trình duyệt mà không lộ API secret — file mồ côi (nếu có) sẽ nằm lại trên
-// Cloudinary nhưng vô hại vì không còn được tham chiếu ở đâu trong ứng dụng.
-async function deleteShipLabelFileIfExists(orderId){
-  // no-op: xem ghi chú ở trên.
-}
-
 // Tải file về máy trực tiếp (không mở tab mới): fetch nguyên byte gốc thành
 // blob rồi tự trigger tải — cách này bắt buộc phải dùng vì URL nằm khác domain
 // (Cloudinary), thẻ <a download> trỏ thẳng URL cross-domain sẽ bị trình
@@ -2636,12 +2521,10 @@ document.getElementById("batchDone").addEventListener("click", async () => {
 document.getElementById("batchDel").addEventListener("click", async () => {
   if(!confirm("Xóa " + selected.size + " đơn đã chọn?")) return;
   const ids = getSelectedTasks().map(t => t.id);
-  const emptiedOrders = orderIdsBecomingEmpty(ids);
   try{
     for(const id of ids){
       await deleteDoc(doc(db, "tasks", id));
     }
-    for(const oid of emptiedOrders) await deleteShipLabelFileIfExists(oid);
   }catch(e){ showError("Không xóa được các mục đã chọn: " + e.message); }
   selected.clear();
   updateBatchBar();
