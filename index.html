@@ -382,15 +382,20 @@
     color:var(--text);border-radius:8px;padding:6px 12px;font-size:12.5px;font-weight:600;
     cursor:pointer;
   }
-  .carrierChips{display:flex;gap:6px;flex-wrap:wrap;}
+  .carrierChips{display:flex;gap:6px;flex-wrap:wrap;min-width:0;}
   .carrierChip{
     border:1px solid var(--border);background:var(--card);color:var(--text);
     border-radius:14px;padding:5px 10px;font-size:12.5px;font-weight:600;
     cursor:pointer;display:flex;align-items:center;gap:5px;
+    flex:0 0 auto;white-space:nowrap;max-width:100%;
   }
   .carrierChip .n{color:var(--muted);font-weight:400;}
   .carrierChip.active{background:var(--blue);border-color:var(--blue);color:#fff;}
   .carrierChip.active .n{color:#dbe8ff;}
+  @media (max-width:420px){
+    .carrierChips{gap:6px 5px;}
+    .carrierChip{padding:5px 9px;font-size:12px;gap:4px;}
+  }
 
   /* ---- Accordion nhóm theo hãng (chế độ xem "Nhóm theo hãng") ---- */
   .carrierGroup{margin-bottom:12px;}
@@ -924,6 +929,8 @@ const STATUS_COLOR_CLASS = { in: "st-warn", dong_goi: "st-info", xong: "st-ready
 // CARRIER_LABEL + 1 key vào CARRIER_ORDER (trước "unknown"). Còn nếu chưa kịp
 // sửa code thì người dùng vẫn tự ghi tên hãng bất kỳ qua tùy chọn "✏️ Khác
 // (tự nhập)" ở ô Đơn vị VC — xem carrierKeyOf() bên dưới.
+// Nhãn ngắn chỉ dùng cho chip lọc (để vừa 1 hàng trên điện thoại); tên đầy đủ vẫn dùng ở nơi khác.
+const CARRIER_SHORT = { "jt": "J&T", "spx": "SPX", "ghn": "GHN", "best": "BEST", "unknown": "Chưa rõ" };
 const CARRIER_LABEL = { "jt": "J&T Express", "spx": "SPX Express", "ghn": "Giao Hàng Nhanh", "best": "BEST Express", "unknown": "Chưa rõ hãng" };
 const CARRIER_ORDER = ["jt", "spx", "ghn", "best", "unknown"]; // thứ tự cố định khi hiển thị nhóm — "unknown" luôn ở cuối
 // Hãng do người dùng TỰ GÕ: lưu carrier = "custom" + carrierName = chữ tự gõ.
@@ -1238,7 +1245,7 @@ function applyCarrierFilter(tasks){
 // lượng đúng cho từng chip.
 function renderCarrierBar(baseShown){
   const toggleBtn = document.getElementById("carrierViewToggle");
-  toggleBtn.textContent = carrierViewMode === "carrier" ? "🔀 Xem theo thời gian" : "🗂 Xem nhóm theo hãng";
+  toggleBtn.textContent = carrierViewMode === "carrier" ? "🔀 Theo thời gian" : "🗂 Theo hãng";
   toggleBtn.onclick = () => {
     carrierViewMode = carrierViewMode === "carrier" ? "time" : "carrier";
     localStorage.setItem("carrierViewMode", carrierViewMode);
@@ -1270,7 +1277,7 @@ function renderCarrierBar(baseShown){
     const chip = document.createElement("button");
     chip.type = "button";
     chip.className = "carrierChip" + (carrierFilter === key ? " active" : "");
-    chip.textContent = carrierLabelOf(key) + " ";
+    chip.textContent = (CARRIER_SHORT[key] || carrierLabelOf(key)) + " ";
     { const nSpan = document.createElement("span"); nSpan.className = "n"; nSpan.textContent = n; chip.appendChild(nSpan); }
     chip.addEventListener("click", () => { carrierFilter = (carrierFilter === key ? "all" : key); render(); });
     chipsEl.appendChild(chip);
