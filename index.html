@@ -695,8 +695,9 @@ let searchTerm = "";
 // ---- Tab "Chờ bàn giao" + "Đã bàn giao": chế độ xem + lọc theo hãng vận chuyển ----
 // "carrier" = nhóm theo hãng (accordion), "time" = theo thứ tự thời gian.
 // Dùng chung cho cả 2 tab (tab 2 để đối chiếu khi shipper tới nhận, tab 3 để
-// kiểm tra lại nếu bàn giao sai). Nhớ lựa chọn gần nhất qua localStorage.
-let carrierViewMode = localStorage.getItem("carrierViewMode") || "carrier";
+// kiểm tra lại nếu bàn giao sai). Nhớ lựa chọn gần nhất qua localStorage;
+// MẶC ĐỊNH (lần đầu, chưa từng bấm nút chuyển) là "time" = xem theo thời gian.
+let carrierViewMode = localStorage.getItem("carrierViewMode") || "time";
 // Tab nào có thanh nhóm/lọc theo hãng.
 function hasCarrierView(){ return currentTab === "dong_goi" || currentTab === "xong"; }
 // Lọc nhanh theo 1 hãng cụ thể (áp dụng ở cả 2 chế độ xem) — "all" = không lọc.
