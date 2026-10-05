@@ -12,22 +12,51 @@
      là GitHub Pages / trình duyệt vẫn đang phục vụ bản cache cũ. Mỗi lần
      đẩy thay đổi thật sự lên, đổi số hiệu (v1 -> v2...) để so sánh nhanh. -->
 <style>
+  /* ---- Hệ thống theme (giống catalog.html): DARK MODE là mặc định khai báo
+     trong :root, LIGHT MODE chỉ bật khi <body> có class .light-theme (nút tròn
+     góc trên-phải gắn/gỡ class này; lựa chọn lưu localStorage, dùng CHUNG khóa
+     'theme-preference' với catalog.html nên 2 trang luôn cùng chế độ). Mọi rule
+     bên dưới dùng var(--...) nên đổi biến ở 2 khối này là đổi cả trang. ---- */
   :root{
-    --bg:#f5f6f7;
-    --card:#ffffff;
-    --border:#e2e4e7;
-    --text:#1a1d21;
-    --muted:#6b7280;
-    --blue:#2563eb;
-    --blue-bg:#eaf1ff;
-    --amber:#b45309;
-    --amber-bg:#fef3e0;
-    --green:#15803d;
-    --green-bg:#e8f7ec;
-    --red:#dc2626;
-    --gray-bg:#eceef0;
+    --bg:#0f1115; --card:#1a1d23; --border:#2d3138; --text:#e8eaed; --muted:#9aa3af;
+    --blue:#3b82f6; --blue-bg:#1e3a5f; --green:#34d399; --green-bg:#123524; --red:#f87171; --red-bg:#3a1a1a; --gray-bg:#262a32;
+    --amber:#fbbf24; --amber-bg:#3a2f14;
+    --input-bg:#20242b; --row-bg:#171a20; --notice-border:#2f5a94; --err-border:#6b2b2b;
+    --bar-bg:#262b34; --bar-border:rgba(255,255,255,.1); --warn:#f87171;
+    --green-solid:#15803d; --red-solid:#dc2626;
+    --shadow:rgba(0,0,0,.45);
     --maxw:680px;
   }
+  body.light-theme{
+    --bg:#f5f6f7; --card:#ffffff; --border:#e2e4e7; --text:#1a1d21; --muted:#6b7280;
+    --blue:#2563eb; --blue-bg:#eaf1ff; --green:#15803d; --green-bg:#e8f7ec; --red:#dc2626; --red-bg:#fde8e8; --gray-bg:#eceef0;
+    --amber:#b45309; --amber-bg:#fef3e0;
+    --input-bg:#ffffff; --row-bg:#fafbfc; --notice-border:#bcd0f7; --err-border:#f5b8b8;
+    --bar-bg:#1a1d21; --bar-border:transparent; --warn:#d92d20;
+    --green-solid:#15803d; --red-solid:#dc2626;
+    --shadow:rgba(0,0,0,.12);
+  }
+  /* Nút tròn chuyển chế độ sáng/tối — cố định góc trên-phải màn hình. */
+  .theme-toggle{
+    position:fixed;top:14px;right:14px;z-index:40;
+    width:40px;height:40px;border-radius:50%;
+    background:var(--card);border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;line-height:1;cursor:pointer;padding:0;
+    box-shadow:0 2px 10px var(--shadow);
+    transition:transform .2s ease,background-color .2s ease;
+  }
+  @media (hover:hover) and (pointer:fine){
+    .theme-toggle:hover{transform:scale(1.08) rotate(8deg);}
+  }
+  @media (max-width:420px){
+    .theme-toggle{width:34px;height:34px;font-size:15px;top:10px;right:10px;}
+  }
+  /* Ô nhập liệu theo theme (trước đây dùng nền trắng mặc định của trình duyệt) */
+  input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=button]):not([type=submit]),textarea,select{
+    background:var(--input-bg);color:var(--text);
+  }
+  ::placeholder{color:var(--muted);opacity:.8;}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   body{
     margin:0;
@@ -153,10 +182,20 @@
     font-size:14px;
   }
 
+  .noticebox{
+    background:var(--blue-bg);
+    color:var(--text);
+    border:1px solid var(--notice-border);
+    border-radius:8px;
+    padding:8px 12px;
+    font-size:13px;
+    line-height:1.45;
+    margin-bottom:10px;
+  }
   .errbox{
-    background:#fde8e8;
+    background:var(--red-bg);
     color:var(--red);
-    border:1px solid #f5b8b8;
+    border:1px solid var(--err-border);
     border-radius:8px;
     padding:8px 12px;
     font-size:13px;
@@ -177,7 +216,7 @@
 
   .order-summary-header{
     display:flex;align-items:center;justify-content:space-between;
-    padding:9px 12px;background:#fafbfc;border-bottom:1px solid var(--border);
+    padding:9px 12px;background:var(--row-bg);border-bottom:1px solid var(--border);
     font-size:12.5px;
   }
   .order-time{color:var(--muted);}
@@ -204,7 +243,7 @@
   }
   @keyframes tlbFadeIn{from{opacity:0;}to{opacity:1;}}
   .thumb-lightbox-box{
-    position:relative;background:#fff;border-radius:12px;max-width:min(1100px,94vw);max-height:94vh;
+    position:relative;background:var(--card);border-radius:12px;max-width:min(1100px,94vw);max-height:94vh;
     overflow:hidden;display:flex;flex-direction:column;
   }
   .thumb-lightbox-imgwrap{
@@ -230,7 +269,7 @@
      liên tiếp. Bấm vẫn mở lightbox đầy đủ như cũ (hữu ích trên mobile). */
   .thumb-hover-preview{
     position:fixed;z-index:1001;pointer-events:none;
-    background:#fff;border-radius:10px;box-shadow:0 10px 36px rgba(0,0,0,.32);
+    background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:0 10px 36px rgba(0,0,0,.32);
     overflow:hidden;width:420px;opacity:0;transform:translateY(4px);
     transition:opacity .1s,transform .1s;
   }
@@ -248,8 +287,15 @@
   .order-item-summary input[type=checkbox]{width:20px;height:20px;flex-shrink:0;margin-top:4px;accent-color:var(--blue);}
   .info-summary{flex:1;min-width:0;}
   /* Tiêu đề: 1 dòng, dài quá thì ẩn bớt (ellipsis) — giống kiểu Shopee. */
+  /* Tiêu đề + chip "File in" nằm chung 1 hàng flex: chữ tiêu đề (.name-text)
+     co lại và hiện "…" khi dài, còn chip flex:none nên LUÔN còn chỗ. Trước đây
+     chip nằm lẫn trong dòng chữ có overflow:hidden → màn hình hẹp bị cắt mất. */
   .name-summary{
+    display:flex;align-items:center;gap:6px;
     font-size:14px;font-weight:600;line-height:1.35;
+  }
+  .name-summary .name-text{
+    flex:1 1 auto;min-width:0;
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   }
   /* Dòng dưới: phân loại bên trái (ẩn bớt nếu dài) + số lượng bên phải,
@@ -270,7 +316,7 @@
   .order-summary-footer{
     display:flex;justify-content:space-between;align-items:center;
     padding:8px 12px;border-bottom:1px solid var(--border);
-    font-size:12.5px;color:var(--muted);background:#fbfcfd;
+    font-size:12.5px;color:var(--muted);background:var(--row-bg);
   }
   .order-summary-footer b{color:var(--text);}
 
@@ -279,6 +325,14 @@
     padding:8px 12px;border-bottom:1px solid var(--border);font-size:12.5px;
   }
   .order-code-row .code-label{color:var(--muted);}
+  /* Nhãn + nút tải phiếu giao nằm cạnh nhau ở bên trái dòng "Mã đơn hàng". */
+  .order-code-row .code-label-wrap{display:flex;align-items:center;gap:4px;}
+  .code-dl-btn{
+    border:none;background:none;color:var(--blue);cursor:pointer;padding:2px 4px;
+    display:inline-flex;align-items:center;line-height:0;border-radius:6px;
+  }
+  .code-dl-btn:hover{background:var(--blue-bg);}
+  .code-dl-btn svg{width:16px;height:16px;}
   .order-code-row .code-value{font-weight:600;display:flex;align-items:center;gap:6px;}
   .ship-label-chip{font-size:12px;margin-left:2px;}
   /* Placeholder cho đơn chưa có mã vận đơn thật — cố tình KHÔNG dùng chuỗi
@@ -296,8 +350,11 @@
     flex:1;border:none;border-radius:8px;padding:10px 8px;font-size:13px;font-weight:600;cursor:pointer;
   }
   .order-summary-actions .ship-quick-btn{background:var(--gray-bg);color:var(--text);}
+  /* Đơn chưa có phiếu giao: nút xám nhạt để người in biết chưa in được (vẫn bấm
+     được để quản lý mở khu vực tải phiếu lên). */
+  .order-summary-actions .ship-quick-btn.no-label{background:var(--gray-bg);color:var(--muted);font-weight:500;}
   .order-summary-actions .order-primary-btn{background:var(--blue);color:#fff;}
-  .order-summary-actions .order-primary-btn.green{background:var(--green);}
+  .order-summary-actions .order-primary-btn.green{background:var(--green-solid);}
 
   /* Header đơn hàng: bấm vào để mở/đóng khu vực phiếu giao + ghi chú (thay
      cho việc mở trang chi tiết toàn màn hình như trước). */
@@ -306,7 +363,7 @@
   .header-dot{font-size:12px;line-height:1;}
   .expand-arrow{font-size:10px;color:var(--muted);margin-left:2px;}
 
-  /* ---- Tab "Đã xong": thanh chuyển chế độ xem + chip lọc theo hãng ---- */
+  /* ---- Tab "Chờ bàn giao" + "Đã bàn giao": thanh chuyển chế độ xem + chip lọc theo hãng ---- */
   .carrierBar{
     display:none;flex-direction:column;gap:8px;
     padding:10px 16px;background:var(--card);border-bottom:1px solid var(--border);
@@ -339,40 +396,6 @@
   .carrierGroupHead .expand-arrow{margin-left:2px;}
   .carrierGroupBody{padding-top:10px;}
 
-  /* ---- Chế độ "Đối soát bàn giao" (bật riêng theo từng nhóm hãng, chỉ tồn
-     tại trong bộ nhớ, KHÔNG lưu vào dữ liệu thật) — dùng tông màu amber để
-     tách biệt hẳn với xanh dương (chọn hàng loạt) / xanh lá (đã giao). ---- */
-  .reconcile-toggle-btn{
-    border:1px solid var(--amber);background:#fff;color:var(--amber);
-    border-radius:8px;padding:5px 9px;font-size:12px;font-weight:600;
-    cursor:pointer;white-space:nowrap;
-  }
-  .reconcile-toggle-btn.active{background:var(--amber);color:#fff;}
-  .reconcileBar{
-    position:sticky;top:106px;z-index:15;
-    display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;
-    background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber);
-    border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:12.5px;font-weight:600;
-  }
-  .reconcileFilterBtn{
-    border:1px solid var(--amber);background:#fff;color:var(--amber);
-    border-radius:14px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;
-  }
-  .reconcileFilterBtn.active{background:var(--amber);color:#fff;}
-  .reconcileRow{
-    display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;
-    background:var(--amber-bg);padding:9px 12px;border-bottom:1px solid var(--border);
-    cursor:default;
-  }
-  .reconcileCheckLabel{
-    display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--amber);cursor:pointer;
-  }
-  .reconcileCheckLabel input{width:19px;height:19px;accent-color:var(--amber);}
-  .reconcileBackBtn{
-    border:none;border-radius:7px;padding:6px 10px;font-size:12px;font-weight:600;
-    background:#fde8e8;color:var(--red);cursor:pointer;white-space:nowrap;
-  }
-
   /* Dòng xem trước ghi chú chung của cả đơn — luôn hiện ngay dưới header,
      không cần mở khu vực mở rộng mới thấy. */
   .order-note-preview{
@@ -382,7 +405,7 @@
 
   /* Khu vực mở rộng: phiếu giao (đính kèm PDF, dùng chung cho cả đơn, không
      theo từng sản phẩm) + ghi chú chung của đơn — chỉ hiện khi bấm header. */
-  .order-expand-panel{border-bottom:1px solid var(--border);background:#fbfcfd;}
+  .order-expand-panel{border-bottom:1px solid var(--border);background:var(--row-bg);}
   .ship-label-row{
     padding:9px 12px;
     display:flex;gap:8px;flex-wrap:wrap;justify-content:center;
@@ -395,7 +418,7 @@
   .icon-btn.attach-btn{background:var(--blue-bg);color:var(--blue);}
   .icon-btn.view-btn{background:var(--gray-bg);color:var(--text);}
   .icon-btn.download-btn{background:var(--green-bg);color:var(--green);}
-  .icon-btn.remove-btn{background:#fde8e8;color:var(--red);}
+  .icon-btn.remove-btn{background:var(--red-bg);color:var(--red);}
   .icon-btn.note-btn{background:var(--gray-bg);color:var(--text);}
   .icon-btn.note-btn.has-note{background:var(--blue-bg);color:var(--blue);}
   .icon-btn[disabled]{opacity:.6;cursor:default;}
@@ -413,7 +436,7 @@
   }
   select.order-carrier-select{
     font-size:13px;font-weight:700;border:1px solid var(--blue);border-radius:6px;
-    padding:6px 8px;flex:1;min-width:0;background:#fff;color:var(--text);
+    padding:6px 8px;flex:1;min-width:0;background:var(--input-bg);color:var(--text);
   }
 
   .note-box{padding:0 12px 10px;}
@@ -429,29 +452,57 @@
   .batchbar{
     position:fixed;
     bottom:0;left:0;right:0;
-    background:var(--text);
+    background:var(--bar-bg);
+    border-top:1px solid var(--bar-border);
     color:#fff;
-    padding:12px 14px;
+    padding:9px 14px;
     display:none;
+    /* 3 cột: [nhóm trái] [số đã chọn] [nhóm phải]. 1fr auto 1fr giúp số đếm
+       nằm ĐÚNG GIỮA thanh (2 spacer flex:1 chỉ canh giữa phần còn trống giữa
+       2 nhóm — lệch vì nhóm trái/phải rộng khác nhau). Nhóm quá rộng thì cột
+       tự nở theo nội dung, không tràn. */
+    grid-template-columns:1fr auto 1fr;
     align-items:center;
-    gap:10px;
+    gap:8px;
     z-index:30;
     max-width:var(--maxw);
     margin:0 auto;
     border-radius:12px 12px 0 0;
   }
-  .batchbar.show{display:flex;}
-  .batchbar span{flex:1;font-size:14px;}
+  .batchbar.show{display:grid;}
+  .batchbar .bb-group{display:flex;align-items:center;gap:8px;min-width:0;}
+  .batchbar .bb-left{justify-self:start;}
+  .batchbar .bb-right{justify-self:end;}
+  .batchbar #batchCount{font-size:14px;text-align:center;white-space:nowrap;}
   .batchbar button{
     border:none;
     border-radius:8px;
     padding:11px 14px;
+    min-height:44px;          /* vùng chạm tối thiểu cho ngón tay */
     font-size:14px;
     font-weight:600;
     cursor:pointer;
+    white-space:nowrap;
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;
   }
-  .batchbar .done-btn{background:var(--green);color:#fff;}
-  .batchbar .del-btn{background:var(--red);color:#fff;}
+  .batchbar .done-btn{background:var(--green-solid);color:#fff;}
+  .batchbar .del-btn{background:var(--red-solid);color:#fff;}
+  .batchbar .pdf-btn{color:#fff;}
+  .batchbar .pdf-btn.dl{background:#3b82f6;}
+  .batchbar .pdf-btn.merge{background:#8b5cf6;}
+  .batchbar .pdf-btn svg{width:16px;height:16px;flex:none;}
+  .batchbar button:disabled{opacity:.4;cursor:not-allowed;}
+  /* Điện thoại: chỉ hiện icon cho 2 nút PDF, thu gọn khoảng cách/cỡ chữ để
+     5 phần tử vẫn vừa 1 hàng ở màn hình ~360px. Nhãn chữ vẫn nằm trong
+     aria-label/title nên không mất tính truy cập. */
+  @media (max-width:520px){
+    .batchbar{padding:9px 10px;gap:6px;}
+    .batchbar .bb-group{gap:6px;}
+    .batchbar button{padding:11px 12px;font-size:13px;}
+    .batchbar .pdf-btn{width:44px;padding:0;}
+    .batchbar .pdf-btn .btn-label{display:none;}
+    .batchbar #batchCount{font-size:12px;}
+  }
 
   .listToolbar{
     display:flex;align-items:center;justify-content:space-between;gap:8px;
@@ -466,22 +517,29 @@
   .totalQtyInfo b{color:var(--text);}
   .clearAllBtn{
     border:none;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;
-    background:#fde8e8;color:var(--red);cursor:pointer;
+    background:var(--red-bg);color:var(--red);cursor:pointer;
   }
-  .download-all-wrap{padding:0 2px 10px;}
+  .download-all-wrap{padding:0 2px 10px;gap:8px;}
+  .download-all-wrap .download-all-btn{flex:1;min-width:0;line-height:1.3;}
+  .download-all-btn.merge{background:var(--blue-bg);color:var(--blue);}
+  .download-all-btn[disabled]{opacity:.6;cursor:default;}
+  /* 1 dòng chữ đỏ cảnh báo trùng mã đơn hàng — ngay dưới nút "Tải tất cả phiếu giao". */
+  .dup-warn{color:var(--warn);font-size:12.5px;font-weight:600;padding:0 4px 10px;line-height:1.4;}
   .download-all-btn{
     width:100%;border:none;border-radius:8px;padding:10px 12px;font-size:13px;font-weight:600;
     background:var(--green-bg);color:var(--green);cursor:pointer;
   }
-  .batchbar .ship-btn{background:var(--blue);color:#fff;}
-  .shipped-badge{
-    display:inline-block;margin-left:6px;font-size:11.5px;font-weight:600;
-    color:var(--blue);background:var(--blue-bg);border-radius:8px;padding:2px 7px;
-  }
   .task-linkchip{
-    display:inline-block;margin-left:6px;font-size:11.5px;font-weight:600;
+    flex:none;display:inline-flex;align-items:center;justify-content:center;gap:3px;
+    font-size:11.5px;font-weight:600;white-space:nowrap;
     color:var(--blue);background:var(--blue-bg);border-radius:8px;padding:2px 7px;
     text-decoration:none;
+  }
+  /* Điện thoại: chip chỉ còn icon 🔗 (chữ "File in" ẩn, vẫn có aria-label/title),
+     nới vùng chạm cho dễ bấm bằng ngón tay. */
+  @media (max-width:520px){
+    .task-linkchip{min-width:30px;min-height:28px;padding:3px 6px;}
+    .task-linkchip .chip-label{display:none;}
   }
 
   .status-line{
@@ -496,12 +554,14 @@
 </head>
 <body>
 
+<button class="theme-toggle" id="themeToggleBtn" type="button" title="Chuyển chế độ sáng/tối" aria-label="Chuyển chế độ sáng/tối">🌙</button>
+
 <header>
   <h1>Quản lý In &amp; Đóng gói</h1>
   <div class="tabs">
-    <div class="tab active" data-tab="in">In <span class="count-badge" id="badge-in">0</span></div>
-    <div class="tab" data-tab="dong_goi">Đóng gói <span class="count-badge" id="badge-dong_goi">0</span></div>
-    <div class="tab" data-tab="xong">Đã xong <span class="count-badge" id="badge-xong">0</span></div>
+    <div class="tab active" data-tab="in">Chờ xử lý <span class="count-badge" id="badge-in">0</span></div>
+    <div class="tab" data-tab="dong_goi">Chờ bàn giao <span class="count-badge" id="badge-dong_goi">0</span></div>
+    <div class="tab" data-tab="xong">Đã bàn giao <span class="count-badge" id="badge-xong">0</span></div>
   </div>
 </header>
 
@@ -519,7 +579,9 @@
   <div class="quicklink"><a href="catalog.html">+ Thêm danh sách công việc</a></div>
   <div class="download-all-wrap" id="downloadAllWrap" style="display:none;padding-top:8px;">
     <button class="download-all-btn" id="downloadAllBtn">⬇️ Tải tất cả phiếu giao</button>
+    <button class="download-all-btn merge" id="mergeLabelsBtn">📄 Gộp 1 file PDF</button>
   </div>
+  <div class="dup-warn" id="dupWarn" style="display:none;"></div>
   <div id="errArea"></div>
   <div class="listToolbar" id="listToolbar">
     <label class="selectAllRow"><input type="checkbox" id="selectAllBox"> Chọn tất cả</label>
@@ -533,16 +595,26 @@
     <div class="carrierChips" id="carrierChips"></div>
   </div>
   <div id="list"></div>
-  <div class="quicklink" style="padding-top:8px;"><a href="huong-dan.html" style="background:var(--green-bg);color:var(--green);">📖 Hướng dẫn sử dụng</a></div>
 </main>
 
 <div class="status-line" id="connStatus"></div>
 
 <div class="batchbar" id="batchbar">
+  <div class="bb-group bb-left" id="batchPdfGroup">
+    <button class="pdf-btn dl" id="batchDownloadPdf" type="button" title="Tải phiếu giao của các đơn đã chọn" aria-label="Tải PDF">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v8"/><path d="M4.5 7 8 10.5 11.5 7"/><path d="M2.5 13.5h11"/></svg>
+      <span class="btn-label">Tải PDF</span>
+    </button>
+    <button class="pdf-btn merge" id="batchMergePdf" type="button" title="Gộp phiếu giao của các đơn đã chọn thành 1 file" aria-label="Gộp PDF">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2" width="7" height="9" rx="1.2"/><path d="M6.5 14h6a1 1 0 0 0 1-1V6"/><path d="M5 5.5h2.5M5 8h2.5"/></svg>
+      <span class="btn-label">Gộp PDF</span>
+    </button>
+  </div>
   <span id="batchCount">0 đã chọn</span>
-  <button class="done-btn" id="batchDone"></button>
-  <button class="ship-btn" id="batchShip" style="display:none;">🚚 Đã giao</button>
-  <button class="del-btn" id="batchDel">Xóa</button>
+  <div class="bb-group bb-right">
+    <button class="done-btn" id="batchDone"></button>
+    <button class="del-btn" id="batchDel">Xóa</button>
+  </div>
 </div>
 
 <!-- jsQR: thư viện thuần JS đọc mã QR từ dữ liệu ảnh (canvas), dùng để đọc
@@ -553,6 +625,39 @@
      viện này không tải được thì code tự bỏ qua bước đọc mã vạch (vẫn còn QR +
      text layer làm dự phòng). -->
 <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
+<!-- pdf-lib: ghép nhiều phiếu giao PDF thành 1 file ngay trên trình duyệt (nút
+     "Gộp 1 file PDF"). Nếu không tải được thì chỉ nút gộp báo lỗi, phần còn lại
+     của app vẫn chạy bình thường. -->
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script>
+// ---- Chuyển chế độ sáng/tối (giống catalog.html) ----
+// Mặc định DARK; bấm nút gắn/gỡ class "light-theme" trên <body>. Lựa chọn lưu
+// localStorage khóa 'theme-preference' (chung với catalog.html) và được áp lại
+// ngay khi script chạy, trước khi trang hiện ra → không chớp sai theme. Nếu môi
+// trường chặn localStorage thì bỏ qua việc lưu, trang vẫn chạy bình thường.
+(function(){
+  var STORAGE_KEY = 'theme-preference';
+  var body = document.body;
+  var btn = document.getElementById('themeToggleBtn');
+  function readStored(){ try{ return localStorage.getItem(STORAGE_KEY); }catch(e){ return null; } }
+  function writeStored(v){ try{ localStorage.setItem(STORAGE_KEY, v); }catch(e){} }
+  var stored = readStored();
+  if(stored === 'light') body.classList.add('light-theme');
+  else if(stored === 'dark') body.classList.remove('light-theme');
+  function render(){
+    var isLight = body.classList.contains('light-theme');
+    btn.textContent = isLight ? '☀️' : '🌙';
+    btn.title = isLight ? 'Chuyển sang chế độ tối' : 'Chuyển sang chế độ sáng';
+  }
+  btn.addEventListener('click', function(){
+    body.classList.toggle('light-theme');
+    writeStored(body.classList.contains('light-theme') ? 'light' : 'dark');
+    render();
+  });
+  render();
+})();
+</script>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
@@ -587,31 +692,17 @@ let allTasks = [];
 let selected = new Set();
 let searchTerm = "";
 
-// ---- Tab "Đã xong": chế độ xem + lọc theo hãng vận chuyển ----
-// "carrier" = nhóm theo hãng (accordion), "completion" = theo thứ tự hoàn
-// tất (như cũ). Nhớ lựa chọn gần nhất qua localStorage — mặc định lần đầu là
-// "carrier" theo thống nhất, nhưng nếu người dùng từng đổi thì giữ nguyên.
-let xongViewMode = localStorage.getItem("xongViewMode") || "carrier";
+// ---- Tab "Chờ bàn giao" + "Đã bàn giao": chế độ xem + lọc theo hãng vận chuyển ----
+// "carrier" = nhóm theo hãng (accordion), "time" = theo thứ tự thời gian.
+// Dùng chung cho cả 2 tab (tab 2 để đối chiếu khi shipper tới nhận, tab 3 để
+// kiểm tra lại nếu bàn giao sai). Nhớ lựa chọn gần nhất qua localStorage.
+let carrierViewMode = localStorage.getItem("carrierViewMode") || "carrier";
+// Tab nào có thanh nhóm/lọc theo hãng.
+function hasCarrierView(){ return currentTab === "dong_goi" || currentTab === "xong"; }
 // Lọc nhanh theo 1 hãng cụ thể (áp dụng ở cả 2 chế độ xem) — "all" = không lọc.
 let carrierFilter = "all";
 // Các nhóm hãng đang mở (accordion) — mặc định TẤT CẢ đều gập.
 let expandedCarrierGroups = new Set();
-
-// ---- Tab "Đã xong": chế độ "🤝 Đối soát bàn giao" (bật riêng theo từng
-// nhóm hãng). Đây là trạng thái TẠM, chỉ tồn tại trong bộ nhớ — KHÔNG lưu
-// vào Firestore/localStorage, tự mất khi rời tab "Đã xong", tắt chế độ của
-// nhóm đó, hoặc tải lại trang. Hoàn toàn tách biệt với checkbox `selected`
-// (chọn hàng loạt) và cờ `shipped` ("Đã giao") đã có sẵn.
-let reconcileActiveGroups = new Set();   // key = carrier, nhóm đang bật đối soát
-let reconcileConfirmed = new Set();      // orderId đã tích "Đã xác nhận bàn giao"
-let reconcileFilterUnconfirmed = new Set(); // key = carrier đang bật lọc "chỉ hiện chưa xác nhận"
-
-// Reset toàn bộ trạng thái đối soát — gọi khi rời tab "Đã xong".
-function resetReconcileState(){
-  reconcileActiveGroups.clear();
-  reconcileConfirmed.clear();
-  reconcileFilterUnconfirmed.clear();
-}
 
 // UI-only ephemeral state (reset on re-render is fine; kept across snapshots via Sets keyed by id)
 let editingOrderIds = new Set();
@@ -637,7 +728,17 @@ const totalQtyInfo = document.getElementById("totalQtyInfo");
 const listToolbar = document.getElementById("listToolbar");
 const downloadAllWrap = document.getElementById("downloadAllWrap");
 const downloadAllBtn = document.getElementById("downloadAllBtn");
+const mergeLabelsBtn = document.getElementById("mergeLabelsBtn");
+const batchDownloadPdfBtn = document.getElementById("batchDownloadPdf");
+const batchMergePdfBtn = document.getElementById("batchMergePdf");
+const batchCountEl = document.getElementById("batchCount");
+let labelBusy = false; // đang tải/gộp phiếu — khóa 2 nút, không cho cập nhật chữ
 
+// Thông báo thông tin (không phải lỗi), hiện lâu hơn để kịp đọc.
+function showNotice(msg){
+  errArea.innerHTML = `<div class="noticebox">ℹ️ ${escapeHtml(msg)}</div>`;
+  setTimeout(() => { errArea.innerHTML = ""; }, 20000);
+}
 function showError(msg){
   errArea.innerHTML = `<div class="errbox">⚠️ ${escapeHtml(msg)}</div>`;
   setTimeout(() => { errArea.innerHTML = ""; }, 6000);
@@ -686,7 +787,8 @@ document.querySelectorAll(".tab").forEach(t => {
     t.classList.add("active");
     currentTab = t.dataset.tab;
     selected.clear();
-    if(currentTab !== "xong") resetReconcileState();
+    carrierFilter = "all";           // bộ lọc hãng không mang sang tab khác
+    expandedCarrierGroups.clear();   // các nhóm hãng luôn gập lại khi đổi tab
     addbar.style.display = currentTab === "in" ? "flex" : "none";
     clearAllBtn.style.display = currentTab === "xong" ? "inline-block" : "none";
     render();
@@ -703,11 +805,11 @@ selectAllBox.addEventListener("change", () => {
   render();
 });
 
-// ---- Làm sạch (xóa toàn bộ sản phẩm đã xong) ----
+// ---- Làm sạch (xóa toàn bộ sản phẩm đã bàn giao) ----
 clearAllBtn.addEventListener("click", async () => {
   const items = allTasks.filter(t => t.status === "xong");
   if(items.length === 0) return;
-  if(!confirm(`Xóa toàn bộ ${items.length} sản phẩm đã xong? Không thể hoàn tác.`)) return;
+  if(!confirm(`Xóa toàn bộ ${items.length} sản phẩm đã bàn giao? Không thể hoàn tác.`)) return;
   try{
     for(const it of items){
       await deleteDoc(doc(db, "tasks", it.id));
@@ -788,7 +890,7 @@ function formatDT(ts){
   return `${hh}:${mm}, ${dd}/${mo}`;
 }
 
-const STATUS_LABEL = { in: "Chờ in", dong_goi: "Chờ đóng gói", xong: "Đã xong" };
+const STATUS_LABEL = { in: "Chờ xử lý", dong_goi: "Chờ bàn giao", xong: "Đã bàn giao" };
 const STATUS_COLOR_CLASS = { in: "st-warn", dong_goi: "st-info", xong: "st-ready" };
 
 // ---- Đơn vị vận chuyển ----
@@ -1021,33 +1123,6 @@ function orderIdsBecomingEmpty(deletedIds){
   return result;
 }
 
-// ---- Tab "Đã xong": đơn "đã giao" tự chuyển xuống cuối danh sách, đơn vừa
-// "Bỏ đã giao" nhảy lên ĐẦU TUYỆT ĐỐI danh sách — áp dụng CHUNG cho mọi chế
-// độ xem (cả "Nhóm theo hãng" lẫn "Theo thứ tự hoàn thành"), vì hàm này chạy
-// TRƯỚC khi vào groupShown()/renderXongByCarrier() nên cả 2 nơi đều thừa
-// hưởng cùng 1 thứ tự. Cố ý ưu tiên việc "vừa bỏ đã giao" hơn cả mốc thời
-// gian hoàn thành — người dùng bấm "Bỏ đã giao" nghĩa là phát hiện SAI ngay
-// lúc đối soát, cần thấy lại đơn đó NGAY LẬP TỨC ở trên cùng, không phải tìm
-// theo đúng vị trí thời gian hoàn thành cũ của nó.
-// 3 nhóm, xếp theo đúng thứ tự này:
-//   1) "Vừa bỏ đã giao" (shipped=false NHƯNG từng có shippedAt) — lên đầu,
-//      bỏ gần đây nhất thì đứng trên cùng.
-//   2) Task bình thường, CHƯA từng đụng tới "Đã giao" lần nào — giữ nguyên
-//      thứ tự hoàn thành cũ (không đổi hành vi trước đây).
-//   3) "Đã giao" — luôn xuống cuối, giao gần đây nhất đứng đầu nhóm này.
-function sortXongByShipped(shown){
-  const ts = v => (v && typeof v.toMillis === "function") ? v.toMillis() : 0;
-  const justUnshipped = [], normal = [], shipped = [];
-  shown.forEach(t => {
-    if(t.shipped) shipped.push(t);
-    else if(t.shippedAt) justUnshipped.push(t);
-    else normal.push(t);
-  });
-  justUnshipped.sort((a, b) => ts(b.shippedAt) - ts(a.shippedAt));
-  shipped.sort((a, b) => ts(b.shippedAt) - ts(a.shippedAt));
-  return justUnshipped.concat(normal, shipped);
-}
-
 // ---- Render ----
 // Trả về danh sách task theo TAB + TỪ KHÓA TÌM KIẾM — CHƯA áp dụng lọc theo
 // hãng vận chuyển (xem applyCarrierFilter()). Tách riêng để carrierBar luôn
@@ -1059,16 +1134,68 @@ function getShown(){
   // Không giới hạn số mục ở client: tập dữ liệu status=xong không còn tự dọn
   // theo thời gian nữa (đã bỏ cơ chế hết hạn 7 ngày) — người dùng tự xóa thủ
   // công qua nút "Dọn dẹp" khi cần.
-  else shown = sortXongByShipped(allTasks.filter(t => t.status === "xong").slice().reverse());
+  else shown = allTasks.filter(t => t.status === "xong").slice().reverse(); // mới bàn giao xếp trước
 
-  if(searchTerm){
-    shown = shown.filter(t =>
-      (t.name || "").toLowerCase().includes(searchTerm) ||
-      (t.orderName || "").toLowerCase().includes(searchTerm) ||
-      (t.note || "").toLowerCase().includes(searchTerm)
-    );
-  }
+  if(searchTerm) shown = shown.filter(matchesSearch);
   return shown;
+}
+
+// 1 task có khớp từ khóa tìm kiếm hiện tại không (tên, mã đơn hoặc ghi chú).
+function matchesSearch(t){
+  return (t.name || "").toLowerCase().includes(searchTerm) ||
+    (t.orderName || "").toLowerCase().includes(searchTerm) ||
+    (t.note || "").toLowerCase().includes(searchTerm);
+}
+
+// Các đơn ĐANG XỬ LÝ có phiếu giao = tab "Chờ xử lý" + tab "Chờ bàn giao" gộp
+// chung (mỗi đơn 1 lần, đơn ở tab 1 xếp trước), có áp từ khóa tìm kiếm. Dùng
+// chung cho nút "Tải tất cả phiếu giao" và "Gộp 1 file PDF". Không áp bộ lọc
+// hãng. Tab "Đã bàn giao" không dùng 2 nút này.
+function getActiveLabelGroups(){
+  let tasks = allTasks.filter(t => t.status === "cho_in" || t.status === "cho_dong_goi");
+  tasks.sort((a, b) => (a.status === "cho_in" ? 0 : 1) - (b.status === "cho_in" ? 0 : 1)); // sort ổn định: giữ thứ tự cũ trong từng tab
+  if(searchTerm) tasks = tasks.filter(matchesSearch);
+  return groupShown(tasks).filter(g => g.shipLabelUrl);
+}
+
+// Phiếu giao của các đơn đang được TÍCH CHỌN (thanh thao tác hàng loạt). Selected
+// chứa id từng sản phẩm; groupShown gộp theo orderId nên 1 đơn nhiều sản phẩm
+// chỉ cho ra 1 phiếu (không bị tải/gộp trùng). Cùng thứ tự với
+// getActiveLabelGroups (đơn "Chờ xử lý" trước, "Chờ bàn giao" sau).
+// Trả { groups: các đơn CÓ phiếu, missing: số đơn đã chọn nhưng chưa có phiếu }.
+function getSelectedLabelGroups(){
+  const tasks = allTasks.filter(t => selected.has(t.id));
+  tasks.sort((a, b) => (a.status === "cho_in" ? 0 : 1) - (b.status === "cho_in" ? 0 : 1));
+  const all = groupShown(tasks);
+  const groups = all.filter(g => g.shipLabelUrl);
+  return { groups, missing: all.length - groups.length };
+}
+
+// Khóa/mở cả 4 nút phiếu (2 nút đầu danh sách + 2 nút trên thanh chọn) khi đang
+// tải/gộp; chữ tiến độ hiện ở nơi người dùng vừa bấm (source = "top" | "batch").
+function setLabelButtonsDisabled(on){
+  downloadAllBtn.disabled = on; mergeLabelsBtn.disabled = on;
+  batchDownloadPdfBtn.disabled = on; batchMergePdfBtn.disabled = on;
+}
+function setLabelProgress(source, kind, i, n){
+  if(source === "batch"){ // nút chỉ có icon (điện thoại) → hiện tiến độ ở ô số đếm ở giữa
+    batchCountEl.textContent = `⏳ ${kind === "merge" ? "Gộp" : "Tải"} ${i}/${n}`;
+  } else if(kind === "merge"){
+    mergeLabelsBtn.textContent = `⏳ Đang gộp (${i}/${n})...`;
+  } else {
+    downloadAllBtn.textContent = `⏳ Đang tải (${i}/${n})...`;
+  }
+}
+
+// Cập nhật 2 nút phiếu giao (hiện ở tab 1 và tab 2, ẩn ở tab 3) + số lượng.
+function updateLabelButtons(){
+  const groups = currentTab === "xong" ? [] : getActiveLabelGroups();
+  if(groups.length === 0){ downloadAllWrap.style.display = "none"; return; }
+  downloadAllWrap.style.display = "flex";
+  if(!labelBusy){
+    downloadAllBtn.textContent = `⬇️ Tải tất cả phiếu giao (${groups.length})`;
+    mergeLabelsBtn.textContent = `📄 Gộp 1 file PDF (${groups.length})`;
+  }
 }
 
 // Carrier hiệu lực của 1 task — "unknown" cho mọi giá trị lạ/rỗng, để luôn
@@ -1078,21 +1205,22 @@ function effectiveCarrier(t){
   return carrierKeyOf(t);
 }
 
-// Áp dụng lọc theo hãng (carrierFilter) — chỉ có tác dụng ở tab "Đã xong".
+// Áp dụng lọc theo hãng (carrierFilter) — chỉ có tác dụng ở tab "Chờ bàn giao"
+// và "Đã bàn giao".
 function applyCarrierFilter(tasks){
-  if(currentTab !== "xong" || carrierFilter === "all") return tasks;
+  if(!hasCarrierView() || carrierFilter === "all") return tasks;
   return tasks.filter(t => effectiveCarrier(t) === carrierFilter);
 }
 
-// Vẽ thanh chuyển chế độ xem + chip lọc theo hãng (chỉ ở tab "Đã xong").
+// Vẽ thanh chuyển chế độ xem + chip lọc theo hãng (tab "Chờ bàn giao" + "Đã bàn giao").
 // baseShown = tasks theo tab+tìm kiếm, TRƯỚC khi lọc theo hãng, để đếm số
 // lượng đúng cho từng chip.
 function renderCarrierBar(baseShown){
   const toggleBtn = document.getElementById("carrierViewToggle");
-  toggleBtn.textContent = xongViewMode === "carrier" ? "🔀 Xem theo thứ tự hoàn thành" : "🗂 Xem nhóm theo hãng";
+  toggleBtn.textContent = carrierViewMode === "carrier" ? "🔀 Xem theo thời gian" : "🗂 Xem nhóm theo hãng";
   toggleBtn.onclick = () => {
-    xongViewMode = xongViewMode === "carrier" ? "completion" : "carrier";
-    localStorage.setItem("xongViewMode", xongViewMode);
+    carrierViewMode = carrierViewMode === "carrier" ? "time" : "carrier";
+    localStorage.setItem("carrierViewMode", carrierViewMode);
     render();
   };
 
@@ -1125,34 +1253,19 @@ function renderCarrierBar(baseShown){
   });
 }
 
-// Vẽ danh sách "Đã xong" theo accordion nhóm hãng — mỗi nhóm gập mặc định,
-// bấm head mới xổ ra. Thứ tự mặc định giữa các hãng là CARRIER_ORDER (và
-// "unknown" luôn ở cuối trong số các hãng CHƯA xong hẳn) — NHƯNG áp dụng
-// thêm 1 tầng sắp xếp tương tự sortXongByShipped() ở cấp NHÓM HÃNG: hãng nào
-// mà MỌI đơn trong đó đều đã "Đã giao" thì cả nhóm hãng đó bị đẩy xuống dưới
-// CÙNG (dưới mọi hãng khác), giống cách 1 đơn "đã giao" tự nhảy xuống cuối
-// trong phạm vi 1 hãng. Chỉ cần 1 đơn trong hãng đó bị "bỏ đã giao" là ngay
-// lập tức cả hãng đó nhảy về lại đúng vị trí bình thường theo CARRIER_ORDER
-// (không còn bị đẩy xuống cuối nữa). Trả về mảng group (đơn) đã render, để
-// render() dùng tính nút "Tải tất cả phiếu giao".
-function renderXongByCarrier(shownTasks){
+// Vẽ danh sách đơn (tab "Chờ bàn giao" / "Đã bàn giao") theo accordion nhóm
+// hãng — mỗi nhóm gập mặc định, bấm head mới xổ ra. Thứ tự các hãng theo
+// sortCarrierKeys() (hãng đã biết → hãng tự nhập → "chưa rõ hãng" ở cuối).
+// Trả về mảng group (đơn) đã render, để render() dùng tính nút "Tải tất cả
+// phiếu giao".
+function renderOrdersByCarrier(shownTasks){
   const buckets = new Map();
   shownTasks.forEach(t => {
     const key = effectiveCarrier(t);
     if(!buckets.has(key)) buckets.set(key, []);
     buckets.get(key).push(t);
   });
-
-  // Tách các hãng đang có mặt thành 2 nhóm, mỗi nhóm giữ nguyên thứ tự tương
-  // đối theo CARRIER_ORDER: hãng chưa xong hẳn (còn ít nhất 1 đơn chưa giao)
-  // đứng trước, hãng đã xong hẳn (100% đơn đã giao) bị đẩy xuống cuối.
-  const notFullyShippedKeys = [], fullyShippedKeys = [];
-  sortCarrierKeys(Array.from(buckets.keys())).forEach(key => {
-    if(!buckets.has(key)) return;
-    const allShipped = buckets.get(key).every(t => t.shipped);
-    (allShipped ? fullyShippedKeys : notFullyShippedKeys).push(key);
-  });
-  const orderedKeys = notFullyShippedKeys.concat(fullyShippedKeys);
+  const orderedKeys = sortCarrierKeys(Array.from(buckets.keys()));
 
   let allGroups = [];
   orderedKeys.forEach(key => {
@@ -1161,7 +1274,6 @@ function renderXongByCarrier(shownTasks){
     allGroups = allGroups.concat(groups);
 
     const isExpanded = expandedCarrierGroups.has(key);
-    const isReconciling = reconcileActiveGroups.has(key);
     const wrap = document.createElement("div");
     wrap.className = "carrierGroup";
 
@@ -1176,23 +1288,6 @@ function renderXongByCarrier(shownTasks){
 
     const right = document.createElement("span");
     right.className = "carrierGroupHeadRight";
-    const reconcileBtn = document.createElement("button");
-    reconcileBtn.className = "reconcile-toggle-btn" + (isReconciling ? " active" : "");
-    reconcileBtn.textContent = isReconciling ? "✖ Tắt đối soát" : "🤝 Đối soát bàn giao";
-    reconcileBtn.title = "Đối soát bàn giao — tích tạm để kiểm lại từng đơn trước khi bàn giao, không ảnh hưởng dữ liệu thật";
-    reconcileBtn.addEventListener("click", e => {
-      e.stopPropagation();
-      if(isReconciling){
-        reconcileActiveGroups.delete(key);
-        groups.forEach(g => reconcileConfirmed.delete(g.orderId));
-        reconcileFilterUnconfirmed.delete(key);
-      } else {
-        reconcileActiveGroups.add(key);
-        expandedCarrierGroups.add(key); // mở nhóm ra để thấy ngay ô tích
-      }
-      render();
-    });
-    right.appendChild(reconcileBtn);
     const countSpan = document.createElement("span");
     countSpan.className = "carrierGroupCount";
     countSpan.textContent = `${groups.length} đơn`;
@@ -1209,31 +1304,7 @@ function renderXongByCarrier(shownTasks){
       const body = document.createElement("div");
       body.className = "carrierGroupBody";
 
-      if(isReconciling){
-        const confirmedCount = groups.filter(g => reconcileConfirmed.has(g.orderId)).length;
-        const totalCount = groups.length;
-        const filterOn = reconcileFilterUnconfirmed.has(key);
-
-        const bar = document.createElement("div");
-        bar.className = "reconcileBar";
-        const countLabel = document.createElement("span");
-        countLabel.textContent = `Đã xác nhận ${confirmedCount}/${totalCount} — còn ${totalCount - confirmedCount} chưa xác nhận`;
-        const filterBtn = document.createElement("button");
-        filterBtn.className = "reconcileFilterBtn" + (filterOn ? " active" : "");
-        filterBtn.textContent = filterOn ? "👁 Hiện tất cả" : "👁 Chỉ hiện chưa xác nhận";
-        filterBtn.addEventListener("click", () => {
-          if(filterOn) reconcileFilterUnconfirmed.delete(key); else reconcileFilterUnconfirmed.add(key);
-          render();
-        });
-        bar.appendChild(countLabel);
-        bar.appendChild(filterBtn);
-        body.appendChild(bar);
-      }
-
-      const bodyGroups = (isReconciling && reconcileFilterUnconfirmed.has(key))
-        ? groups.filter(g => !reconcileConfirmed.has(g.orderId))
-        : groups;
-      bodyGroups.forEach(g => body.appendChild(renderOrderBox(g, isReconciling)));
+      groups.forEach(g => body.appendChild(renderOrderBox(g)));
       wrap.appendChild(body);
     }
     list.appendChild(wrap);
@@ -1258,7 +1329,55 @@ function countOrdersByStatus(status){
   return ids.size;
 }
 
+// Cảnh báo TRÙNG MÃ ĐƠN HÀNG (orderName) — dấu hiệu điển hình của việc tải nhầm
+// cùng 1 phiếu giao cho 2 đơn khác nhau. Chỉ so sánh trong tập đơn ĐANG XỬ LÝ
+// (tab Chờ xử lý + tab Chờ bàn giao gộp chung, nên bắt được cả trường hợp 1
+// đơn ở tab 1 trùng với 1 đơn ở tab 2). KHÔNG so với tab "Đã bàn giao": tab đó dữ liệu
+// lớn, đã xử lý xong, và mã cũ có thể tái xuất hợp lệ (giao lại...) → dễ báo
+// động giả. Tính hoàn toàn trên allTasks có sẵn trong bộ nhớ (1 lượt duyệt,
+// không gọi mạng) nên rất nhanh. So sánh không phân biệt hoa/thường, bỏ qua
+// đơn chưa có mã (tên trống).
+function findDuplicateOrderCodes(){
+  const byKey = new Map(); // KEY -> { label, orderIds:Set }
+  allTasks.forEach(t => {
+    if(t.status !== "cho_in" && t.status !== "cho_dong_goi") return;
+    const name = (t.orderName || "").trim();
+    if(!name || isBlankOrderName(name)) return;
+    const key = name.toUpperCase();
+    if(!byKey.has(key)) byKey.set(key, { label: name, orderIds: new Set() });
+    byKey.get(key).orderIds.add(t.orderId || t.id);
+  });
+  const dups = [];
+  byKey.forEach(v => { if(v.orderIds.size >= 2) dups.push(v.label); });
+  return dups;
+}
+
+// Có đơn ĐANG XỬ LÝ khác (khác orderId, trạng thái Chờ xử lý/Chờ bàn giao) đang mang cùng
+// mã đơn hàng này không? (không phân biệt hoa/thường, bỏ qua mã trống)
+function isOrderNameUsedByOtherActiveOrder(orderId, name){
+  const key = (name || "").trim().toUpperCase();
+  if(!key) return false;
+  return allTasks.some(t =>
+    (t.status === "cho_in" || t.status === "cho_dong_goi") &&
+    (t.orderId || t.id) !== orderId &&
+    (t.orderName || "").trim().toUpperCase() === key);
+}
+
+function updateDupWarning(){
+  const el = document.getElementById("dupWarn");
+  const dups = (currentTab === "in" || currentTab === "dong_goi") ? findDuplicateOrderCodes() : [];
+  if(dups.length === 0){ el.style.display = "none"; el.textContent = ""; return; }
+  const MAX = 3;
+  const shownCodes = dups.slice(0, MAX).join(", ");
+  const more = dups.length > MAX ? ` và ${dups.length - MAX} mã khác` : "";
+  el.textContent = `⚠️ Trùng mã đơn hàng: ${shownCodes}${more} — kiểm tra lại phiếu giao`;
+  el.style.display = "block";
+}
+
 function render(){
+  updateDupWarning();
+  updateLabelButtons();
+  updateBatchBar();
   const badgeIn = countOrdersByStatus("cho_in");
   const badgeDG = countOrdersByStatus("cho_dong_goi");
   const badgeXong = countOrdersByStatus("xong");
@@ -1283,7 +1402,7 @@ function render(){
   list.innerHTML = "";
 
   const carrierBar = document.getElementById("carrierBar");
-  if(currentTab === "xong" && baseShown.length > 0){
+  if(hasCarrierView() && baseShown.length > 0){
     carrierBar.style.display = "flex";
     renderCarrierBar(baseShown);
   } else {
@@ -1293,37 +1412,24 @@ function render(){
   if(shown.length === 0){
     const emptyMsg = searchTerm ? "Không tìm thấy việc nào khớp."
       : currentTab === "in" ? "Chưa có việc nào. Thêm sản phẩm ở ô trên."
-      : currentTab === "dong_goi" ? "Chưa có sản phẩm nào chờ đóng gói."
       : carrierFilter !== "all" ? "Không có đơn nào thuộc hãng này."
-      : "Chưa có sản phẩm nào hoàn tất.";
+      : currentTab === "dong_goi" ? "Chưa có đơn nào chờ bàn giao."
+      : "Chưa có đơn nào đã bàn giao.";
     list.innerHTML = `<div class="empty">${emptyMsg}</div>`;
-    downloadAllWrap.style.display = "none";
     return;
   }
 
-  const groups = (currentTab === "xong" && xongViewMode === "carrier")
-    ? renderXongByCarrier(shown)
-    : groupShown(shown);
-  if(!(currentTab === "xong" && xongViewMode === "carrier")){
+  const byCarrier = hasCarrierView() && carrierViewMode === "carrier";
+  const groups = byCarrier ? renderOrdersByCarrier(shown) : groupShown(shown);
+  if(!byCarrier){
     groups.forEach(g => list.appendChild(renderOrderBox(g)));
-  }
-
-  // Nút "Tải tất cả phiếu giao" chỉ hiện khi trong danh sách đang xem (theo
-  // tab + từ khóa tìm kiếm hiện tại) có ít nhất 1 đơn đã đính kèm phiếu giao.
-  const groupsWithLabel = groups.filter(g => g.shipLabelUrl);
-  if(groupsWithLabel.length > 0){
-    downloadAllWrap.style.display = "block";
-    downloadAllBtn.textContent = `⬇️ Tải tất cả phiếu giao (${groupsWithLabel.length})`;
-  } else {
-    downloadAllWrap.style.display = "none";
   }
 }
 
 // Thẻ tóm tắt 1 đơn hàng trong danh sách — kiểu Shopee, giờ là TẦNG DUY NHẤT
 // (không còn trang "Chi tiết đơn hàng" toàn màn hình). Bấm vào header (giờ
 // tạo + trạng thái) để mở/đóng khu vực mở rộng chứa phiếu giao + ghi chú.
-function renderOrderBox(g, isReconciling){
-  isReconciling = !!isReconciling;
+function renderOrderBox(g){
   const box = document.createElement("div");
   box.className = "order-box";
 
@@ -1331,40 +1437,6 @@ function renderOrderBox(g, isReconciling){
   if(currentTab === "dong_goi"){
     info = orderPackInfo(g.orderId);
     box.classList.add(info.eligible ? "ready" : "warn");
-  }
-
-  // Hàng ô tích "Đối soát bàn giao" — tách biệt hoàn toàn với checkbox
-  // `selected` (chọn hàng loạt) và nút "🚚 Đã giao" đã có sẵn; chỉ tồn tại
-  // trong bộ nhớ (xem reconcileConfirmed), không đụng tới trạng thái thật.
-  if(isReconciling){
-    const isConfirmed = reconcileConfirmed.has(g.orderId);
-    const rrow = document.createElement("div");
-    rrow.className = "reconcileRow";
-    rrow.addEventListener("click", e => e.stopPropagation());
-
-    const label = document.createElement("label");
-    label.className = "reconcileCheckLabel";
-    const cb = document.createElement("input");
-    cb.type = "checkbox";
-    cb.checked = isConfirmed;
-    cb.addEventListener("change", () => {
-      if(cb.checked) reconcileConfirmed.add(g.orderId); else reconcileConfirmed.delete(g.orderId);
-      render();
-    });
-    label.appendChild(cb);
-    const labelText = document.createElement("span");
-    labelText.textContent = "Đã xác nhận bàn giao";
-    label.appendChild(labelText);
-    rrow.appendChild(label);
-
-    if(!isConfirmed){
-      const backBtn = document.createElement("button");
-      backBtn.className = "reconcileBackBtn";
-      backBtn.textContent = "↩ Lùi lại (chưa có hàng)";
-      backBtn.addEventListener("click", () => revertOrderItems(g.items));
-      rrow.appendChild(backBtn);
-    }
-    box.appendChild(rrow);
   }
 
   const isExpanded = expandedOrderIds.has(g.orderId);
@@ -1534,6 +1606,22 @@ function renderOrderBox(g, isReconciling){
     const labelSpan = document.createElement("span");
     labelSpan.className = "code-label";
     labelSpan.textContent = "Mã đơn hàng";
+    // Nút ⬇ tải phiếu giao ngay sau chữ "Mã đơn hàng" — có ở MỌI tab (In /
+    // Chờ bàn giao / Đã bàn giao) để người dùng không phải tìm trong header. Chỉ
+    // hiện khi đơn ĐÃ có phiếu giao đính kèm.
+    const labelWrap = document.createElement("span");
+    labelWrap.className = "code-label-wrap";
+    labelWrap.appendChild(labelSpan);
+    if(g.shipLabelUrl){
+      const dlBtn = document.createElement("button");
+      dlBtn.type = "button";
+      dlBtn.className = "code-dl-btn";
+      dlBtn.title = "Tải phiếu giao";
+      dlBtn.setAttribute("aria-label", "Tải phiếu giao");
+      dlBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 21h14"/></svg>';
+      dlBtn.addEventListener("click", () => downloadShipLabel(g.shipLabelUrl, g.orderName));
+      labelWrap.appendChild(dlBtn);
+    }
     const valueWrap = document.createElement("span");
     valueWrap.className = "code-value";
     const valueText = document.createElement("span");
@@ -1545,7 +1633,7 @@ function renderOrderBox(g, isReconciling){
     editBtn.addEventListener("click", () => { editingOrderIds.add(g.orderId); render(); });
     valueWrap.appendChild(valueText);
     valueWrap.appendChild(editBtn);
-    codeRow.appendChild(labelSpan);
+    codeRow.appendChild(labelWrap);
     codeRow.appendChild(valueWrap);
   }
   box.appendChild(codeRow);
@@ -1554,7 +1642,7 @@ function renderOrderBox(g, isReconciling){
     const line = document.createElement("div");
     line.className = "order-status-line " + (info.eligible ? "ready" : "warn");
     line.textContent = info.eligible
-      ? "Đủ hàng — có thể đóng gói cả đơn"
+      ? "Đủ hàng — sẵn sàng bàn giao"
       : `Đơn chưa đủ — còn ${info.pending} sản phẩm đang in`;
     box.appendChild(line);
   }
@@ -1564,8 +1652,9 @@ function renderOrderBox(g, isReconciling){
 
   if(currentTab === "in"){
     const shipBtn = document.createElement("button");
-    shipBtn.className = "ship-quick-btn";
-    shipBtn.textContent = "📦 In phiếu giao";
+    shipBtn.className = "ship-quick-btn" + (g.shipLabelUrl ? "" : " no-label");
+    shipBtn.textContent = g.shipLabelUrl ? "📦 In phiếu giao" : "⚠️ Chưa có phiếu giao";
+    shipBtn.title = g.shipLabelUrl ? "Tải phiếu giao để in" : "Chưa có phiếu giao — chờ quản lý tải lên";
     shipBtn.addEventListener("click", () => {
       if(g.shipLabelUrl) downloadShipLabel(g.shipLabelUrl, g.orderName);
       else { expandedOrderIds.add(g.orderId); render(); }
@@ -1587,8 +1676,8 @@ function renderOrderBox(g, isReconciling){
     if(info && info.eligible){
       const btn = document.createElement("button");
       btn.className = "order-primary-btn green";
-      btn.textContent = "📦 Đóng gói cả đơn";
-      btn.addEventListener("click", () => packWholeOrder(g.orderId));
+      btn.textContent = "🚚 Đã bàn giao";
+      btn.addEventListener("click", () => handOverWholeOrder(g.orderId));
       actionsRow.appendChild(btn);
     }
   } else if(currentTab === "xong"){
@@ -1597,13 +1686,6 @@ function renderOrderBox(g, isReconciling){
     revBtn.textContent = "↩ Lùi lại";
     revBtn.addEventListener("click", () => revertOrderItems(g.items));
     actionsRow.appendChild(revBtn);
-
-    const allShipped = g.items.every(t => t.shipped);
-    const btn = document.createElement("button");
-    btn.className = "order-primary-btn" + (allShipped ? "" : " green");
-    btn.textContent = allShipped ? "↩ Bỏ đã giao" : "🚚 Đã giao";
-    btn.addEventListener("click", () => g.items.forEach(t => markShipped(t.id, !allShipped)));
-    actionsRow.appendChild(btn);
   }
   box.appendChild(actionsRow);
 
@@ -1648,22 +1730,27 @@ function renderItemSummary(t){
   const nameDiv = document.createElement("div");
   nameDiv.className = "name-summary";
   nameDiv.title = t.name;
-  nameDiv.textContent = title;
+  const nameText = document.createElement("span");
+  nameText.className = "name-text";
+  nameText.textContent = title;
+  nameDiv.appendChild(nameText);
   if(t.link){
     const linkA = document.createElement("a");
     linkA.className = "task-linkchip";
     linkA.href = t.link;
     linkA.target = "_blank";
     linkA.rel = "noopener";
-    linkA.textContent = "🔗 File in";
+    linkA.title = "Mở file in";
+    linkA.setAttribute("aria-label", "Mở file in");
+    const icon = document.createElement("span");
+    icon.textContent = "🔗";
+    const label = document.createElement("span");
+    label.className = "chip-label";
+    label.textContent = "File in";
+    linkA.appendChild(icon);
+    linkA.appendChild(label);
     linkA.addEventListener("click", e => e.stopPropagation());
     nameDiv.appendChild(linkA);
-  }
-  if(currentTab === "xong" && t.shipped){
-    const badge = document.createElement("span");
-    badge.className = "shipped-badge";
-    badge.textContent = "🚚 Đã giao";
-    nameDiv.appendChild(badge);
   }
   const metaDiv = document.createElement("div");
   metaDiv.className = "meta-row-summary";
@@ -1690,7 +1777,7 @@ async function advanceOrderItems(items){
 }
 
 // Lùi cả đơn (mọi sản phẩm đang hiện ở tab hiện tại) về 1 bước trước — dùng
-// cho nút "↩ Lùi lại" trên thẻ tóm tắt ở tab "Đóng gói" / "Đã xong".
+// cho nút "↩ Lùi lại" trên thẻ tóm tắt ở tab "Chờ bàn giao" / "Đã bàn giao".
 async function revertOrderItems(items){
   for(const t of items) await revertStatus(t);
 }
@@ -1737,7 +1824,8 @@ function renderOrderExpandPanel(g){
     // duyệt tự render), không tải file về máy như nút tải xuống.
     rowEl.appendChild(mkIconBtn("👁", "view-btn", "Xem phiếu giao", () => window.open(g.shipLabelUrl, "_blank", "noopener")));
     rowEl.appendChild(mkIconBtn("⬇️", "download-btn", "Tải phiếu giao", () => downloadShipLabel(g.shipLabelUrl, g.orderName)));
-    rowEl.appendChild(mkIconBtn("🔄", "attach-btn", "Thay file", () => fileInput.click()));
+    // Không còn nút "Thay file" riêng: tải lên lần nữa = thay phiếu hiện tại.
+    rowEl.appendChild(mkIconBtn("⬆️", "attach-btn", "Tải lên phiếu mới (thay phiếu hiện tại)", () => fileInput.click()));
     rowEl.appendChild(mkIconBtn("🗑", "remove-btn", "Xóa phiếu giao", () => removeShipLabel(g.orderId)));
   } else {
     rowEl.appendChild(mkIconBtn("⬆️", "attach-btn", "Tải lên phiếu giao", () => fileInput.click()));
@@ -1790,37 +1878,20 @@ async function advanceStatus(t){
 async function revertStatus(t){
   const prev = t.status === "cho_dong_goi" ? "cho_in" : t.status === "xong" ? "cho_dong_goi" : null;
   if(!prev) return;
-  const patch = { status: prev, updatedAt: serverTimestamp() };
-  if(t.status === "xong"){
-    // Đồng thời reset "đã giao" — nếu không, khi item hoàn tất LẠI lần sau
-    // (thật sự), nhãn "🚚 Đã giao" cũ sẽ tự hiện sẵn dù chưa ai bấm, gây sai
-    // lệch dữ liệu đối soát.
-    patch.shipped = false;
-    // Xoá luôn shippedAt (mốc sắp xếp "vừa bỏ đã giao" lên đầu) — vì đơn đang
-    // RỜI HẲN khỏi "xong", không phải kiểu "bỏ đã giao để sửa lại" nữa, nên
-    // không nên giữ ưu tiên lên đầu cho lần "xong" kế tiếp của nó.
-    patch.shippedAt = deleteField();
-  }
   try{
-    await updateDoc(doc(db, "tasks", t.id), patch);
+    await updateDoc(doc(db, "tasks", t.id), { status: prev, updatedAt: serverTimestamp() });
   }catch(e){ showError("Không lùi được trạng thái: " + e.message); }
 }
 
-async function markShipped(id, value){
-  try{
-    // shippedAt ghi lại MỌI LẦN bấm (cả bật lẫn tắt) — dùng làm mốc sắp xếp
-    // cho quy tắc "đã giao xuống cuối / bỏ đã giao lên đầu" (sortXongByShipped()).
-    await updateDoc(doc(db, "tasks", id), { shipped: value, shippedAt: serverTimestamp(), updatedAt: serverTimestamp() });
-  }catch(e){ showError("Không cập nhật được trạng thái đã giao: " + e.message); }
-}
-
-async function packWholeOrder(orderId){
+// Bàn giao cả đơn cho shipper: chuyển mọi sản phẩm của đơn đang ở tab "Chờ bàn
+// giao" sang tab "Đã bàn giao". Nút chỉ hiện khi đơn đủ hàng (orderPackInfo).
+async function handOverWholeOrder(orderId){
   const items = allTasks.filter(t => t.orderId === orderId && t.status === "cho_dong_goi");
   try{
     for(const it of items){
       await updateDoc(doc(db, "tasks", it.id), { status: "xong", updatedAt: serverTimestamp() });
     }
-  }catch(e){ showError("Không đóng gói được cả đơn: " + e.message); }
+  }catch(e){ showError("Không bàn giao được cả đơn: " + e.message); }
 }
 
 // Ghi chú giờ là CHUNG CHO CẢ ĐƠN (không còn riêng từng sản phẩm) — ghi cùng
@@ -2096,7 +2167,14 @@ async function uploadShipLabel(orderId, file){
     // đổi giữa các lần tải lên). Chỉ TÊN FILE GỐC (display name trên
     // Cloudinary) mới đổi theo mã vận đơn khi đọc được, để tiện tìm kiếm
     // trong Media Library — tách biệt hoàn toàn khỏi URL thật.
-    const publicId = `ship-labels/${orderId}`;
+    // QUAN TRỌNG: public_id MỚI cho MỖI LẦN tải lên (orderId + dấu thời gian).
+    // Trước đây dùng public_id cố định theo orderId để "ghi đè", nhưng ghi đè
+    // trên unsigned upload phụ thuộc cài đặt Overwrite của preset — nếu tắt,
+    // Cloudinary âm thầm trả về FILE CŨ (app vẫn báo thành công, nội dung tải
+    // về vẫn là phiếu cũ — đã gặp thật). Public_id mới thì không bao giờ trùng
+    // nên luôn lấy đúng file vừa chọn, không phụ thuộc cài đặt nào. Đổi lại
+    // file cũ nằm lại trên Cloudinary (vô hại, không còn được tham chiếu).
+    const publicId = `ship-labels/${orderId}-${Date.now().toString(36)}`;
     const currentItem = allTasks.find(t => t.orderId === orderId);
     const currentName = (currentItem && currentItem.orderName) || "";
     let uploadFile = file;
@@ -2113,18 +2191,32 @@ async function uploadShipLabel(orderId, file){
     // dù QR/mã vận đơn không đọc được. Chỉ bỏ qua khi đọc PDF LỖI THẬT SỰ
     // (readErrorMsg) — còn "đọc được nhưng không khớp mẫu nào" vẫn ghi nhận
     // là "unknown" (khác với "chưa từng thử đọc").
+    // Tải lại phiếu (thay file): nhận diện được hãng thì ghi đè; KHÔNG nhận
+    // diện được thì giữ nguyên hãng người dùng đã chọn tay trước đó (chỉ ghi
+    // "unknown" nếu đơn chưa có hãng nào).
     if(!readErrorMsg){
-      await setOrderCarrier(orderId, carrier || "unknown");
+      if(carrier) await setOrderCarrier(orderId, carrier);
+      else if(!currentItem || carrierKeyOf(currentItem) === "unknown") await setOrderCarrier(orderId, "unknown");
     }
     if(trackingCode){
       const safeCode = trackingCode.replace(/[^A-Za-z0-9]/g, "");
       uploadFile = new File([file], `${safeCode}.pdf`, { type: file.type });
       const newTitle = trackingCode;
-      // Đơn chưa có tên (trước đây là kiểu "#ABC123XYZ" tự sinh, giờ là
-      // trống hẳn) thì tự đổi tên luôn, không cần hỏi lại.
-      const shouldRename = isBlankOrderName(currentName) ||
+      // Tự đổi tên (không hỏi) khi: đơn chưa có tên; HOẶC tên hiện tại đã đúng
+      // bằng mã mới (không có gì để đổi); HOẶC tên hiện tại đang TRÙNG với 1
+      // đơn đang xử lý khác (tên đó đã bị nghi sai do tải nhầm phiếu — mã đọc
+      // từ chính file PDF mới đáng tin hơn). Các trường hợp còn lại (tên do
+      // người dùng đặt riêng, không trùng ai) vẫn hỏi lại cho chắc.
+      const sameName = currentName.trim().toUpperCase() === newTitle.trim().toUpperCase();
+      const shouldRename = isBlankOrderName(currentName) || sameName ||
+        isOrderNameUsedByOtherActiveOrder(orderId, currentName) ||
         confirm(`Đơn đang có tên "${currentName}".\nĐổi tên đơn thành "${newTitle}"?`);
-      if(shouldRename) await renameOrder(orderId, newTitle);
+      if(shouldRename && !sameName) await renameOrder(orderId, newTitle);
+      // Mã vừa đọc được đã thuộc về 1 đơn đang xử lý khác → nhắc ngay (dòng đỏ
+      // cảnh báo trùng ở đầu danh sách cũng sẽ hiện).
+      if(isOrderNameUsedByOtherActiveOrder(orderId, newTitle)){
+        showError(`Mã "${newTitle}" đang trùng với 1 đơn khác — có thể đã tải nhầm phiếu giao, hãy kiểm tra lại.`);
+      }
     } else {
       if(readErrorMsg){
         showError("Không đọc được file PDF này để tự nhận diện mã vận đơn — vẫn tải phiếu lên bình thường, bạn có thể tự đổi tên đơn nếu cần.");
@@ -2146,6 +2238,13 @@ async function uploadShipLabel(orderId, file){
     });
     const data = await res.json();
     if(!res.ok) throw new Error((data && data.error && data.error.message) || ("HTTP " + res.status));
+    if(data.existing) throw new Error("Cloudinary trả về file cũ thay vì file mới — thử tải lên lại.");
+    // Kiểm tra chéo: dung lượng file Cloudinary báo lại phải bằng file vừa chọn.
+    // Lệch = file lưu trên Cloudinary KHÔNG phải file vừa tải (như vụ trả về
+    // phiếu cũ) → báo ngay thay vì để phát hiện muộn lúc tải xuống.
+    if(typeof data.bytes === "number" && data.bytes !== uploadFile.size){
+      showError("Cảnh báo: file lưu trên Cloudinary có dung lượng khác file bạn vừa chọn — hãy bấm tải xuống kiểm tra lại nội dung phiếu giao.");
+    }
     const url = data.secure_url;
     const items = allTasks.filter(t => t.orderId === orderId);
     for(const it of items){
@@ -2206,26 +2305,220 @@ async function downloadShipLabel(url, orderName){
 // Tải lần lượt (tuần tự, không đồng thời) mọi phiếu giao của các đơn ĐANG
 // HIỂN THỊ trong danh sách hiện tại (theo tab + tìm kiếm) — tránh trình
 // duyệt chặn khi kích hoạt quá nhiều tải xuống cùng lúc.
-async function downloadAllShipLabels(){
-  // Dùng applyCarrierFilter() giống render() — để "Tải tất cả" luôn khớp
-  // đúng những gì đang hiển thị trên màn hình (nếu đang lọc theo 1 hãng cụ
-  // thể ở tab "Đã xong" thì chỉ tải phiếu của hãng đó, không tải hết).
-  const groups = groupShown(applyCarrierFilter(getShown())).filter(g => g.shipLabelUrl);
+// groups: danh sách đơn cần tải; opts.source = "top" (nút đầu danh sách, tải
+// MỌI đơn đang xử lý, có hỏi xác nhận) | "batch" (nút trên thanh chọn, chỉ các
+// đơn đã tích — không hỏi vì người dùng đã chủ động chọn); opts.skipNote = ghi
+// chú số đơn bị bỏ qua vì chưa có phiếu.
+async function downloadShipLabels(groups, opts = {}){
+  const source = opts.source || "top";
   if(groups.length === 0){
-    showError("Không có phiếu giao nào trong danh sách đang xem để tải.");
+    showError("Không có phiếu giao nào để tải.");
     return;
   }
-  if(!confirm(`Tải xuống ${groups.length} phiếu giao đang hiển thị?`)) return;
-  downloadAllBtn.disabled = true;
-  const originalText = downloadAllBtn.textContent;
+  if(source === "top" && !confirm(`Tải xuống ${groups.length} phiếu giao (Chờ xử lý + Chờ bàn giao)?`)) return;
+  labelBusy = true;
+  setLabelButtonsDisabled(true);
   for(let i = 0; i < groups.length; i++){
-    downloadAllBtn.textContent = `⏳ Đang tải (${i + 1}/${groups.length})...`;
+    setLabelProgress(source, "download", i + 1, groups.length);
     await downloadShipLabel(groups[i].shipLabelUrl, groups[i].orderName);
   }
-  downloadAllBtn.disabled = false;
-  downloadAllBtn.textContent = originalText;
+  labelBusy = false;
+  setLabelButtonsDisabled(false);
+  updateLabelButtons();
+  updateBatchBar();
+  if(opts.skipNote) showNotice(`Đã tải ${groups.length} phiếu giao. ${opts.skipNote}`);
 }
-downloadAllBtn.addEventListener("click", downloadAllShipLabels);
+downloadAllBtn.addEventListener("click", () => downloadShipLabels(getActiveLabelGroups(), { source: "top" }));
+
+// ---- Gộp phiếu giao thành MỘT DẢI DỌC để in 1 lần ----
+// Mỗi phiếu được CẮT SÁT phần nội dung thật (bỏ phần giấy trắng — vd phiếu
+// Shopee nằm gọn ở góc 1/4 trang A4), xếp nối tiếp thành 1 cột dọc, canh trái,
+// giữ 100% kích thước gốc (mã vạch quét được) — NGOẠI LỆ DUY NHẤT: phiếu khổ A4
+// (TikTok in A4 = đúng bản A6 phóng 200%) được THU VỀ 50% = khổ A6 thật, để cả
+// dải luôn cùng 1 cỡ A6 (~104 mm) thay vì bị 1 phiếu A4 làm cả cột rộng gấp đôi.
+// Chiều rộng cột = phiếu RỘNG NHẤT sau khi đã quy về A6 (tính lại mỗi lần).
+// Giữa 2 phiếu có 1 đường kẻ nét đứt nằm giữa khe để cắt bằng kéo. Chiều cao
+// để TỰ NHIÊN theo số phiếu (máy in dùng cuộn, không giới hạn chiều dài); chỉ
+// khi chạm trần kỹ thuật STRIP_MAX_H_MM mới sang trang mới.
+const STRIP_PAD_MM = 1.5;    // viền chừa quanh nội dung khi cắt sát
+const STRIP_GAP_MM = 4;      // khe giữa 2 phiếu (đường kẻ cắt nằm chính giữa khe)
+// Trần kỹ thuật của định dạng PDF: tối đa 14400 đơn vị = 200 inch ≈ 5080 mm mỗi
+// cạnh trang (Acrobat và nhiều RIP/phần mềm xem không mở nổi trang dài hơn).
+// Để 5000 mm cho an toàn — khoảng 35 phiếu khổ A6 mới chạm; đây KHÔNG phải giới
+// hạn của máy in và không làm co dãn phiếu (phiếu luôn giữ 100%).
+const STRIP_MAX_H_MM = 5000;
+// Phiếu sau khi cắt sát mà rộng hơn ngưỡng này = khổ A4 (A6 chỉ ~102-105 mm,
+// A4 ~205 mm) → thu về A4_TO_A6_SCALE. A4 → A6 đúng bằng 1/2 nên 0.5 là chính xác.
+const A4_MIN_WIDTH_MM = 150;
+const A4_TO_A6_SCALE = 0.5;
+const STRIP_SCAN_SCALE = 2;  // độ phân giải khi dò vùng nội dung (2 = 144 dpi ≈ 0,18 mm/điểm ảnh)
+const PT_PER_MM = 72 / 25.4;
+
+// Vùng bao các điểm KHÔNG TRẮNG của 1 ảnh (px, x1/y1 loại trừ). null nếu trang trắng.
+function contentBoxFromImageData(img){
+  const w = img.width, h = img.height, d = img.data;
+  let x0 = w, y0 = h, x1 = -1, y1 = -1;
+  for(let y = 0; y < h; y++){
+    const row = y * w * 4;
+    for(let x = 0; x < w; x++){
+      const i = row + x * 4;
+      if(d[i+3] > 0 && (d[i] < 235 || d[i+1] < 235 || d[i+2] < 235)){
+        if(x < x0) x0 = x;
+        if(x > x1) x1 = x;
+        if(y < y0) y0 = y;
+        y1 = y;
+      }
+    }
+  }
+  return x1 < 0 ? null : { x0, y0, x1: x1 + 1, y1: y1 + 1 };
+}
+
+// Chia các khối (mỗi khối cao sizes[i].h mm) vào các trang: mỗi khối nối tiếp
+// khối trước cách GAP; vượt maxH thì sang trang mới. Trả về
+// [{ items:[{index, top}], height }] — top = khoảng cách (mm) từ mép trên trang.
+function layoutStrips(sizes, gapMm, maxHMm){
+  const pages = [];
+  let cur = { items: [], height: 0 };
+  sizes.forEach((sz, index) => {
+    const need = (cur.items.length ? gapMm : 0) + sz.h;
+    if(cur.items.length && cur.height + need > maxHMm){
+      pages.push(cur);
+      cur = { items: [], height: 0 };
+    }
+    const top = cur.items.length ? cur.height + gapMm : 0;
+    cur.items.push({ index, top });
+    cur.height = top + sz.h;
+  });
+  if(cur.items.length) pages.push(cur);
+  return pages;
+}
+
+// Đọc 1 file PDF phiếu: dò vùng nội dung của từng trang bằng pdf.js rồi nhúng
+// đúng vùng đó vào outDoc (pdf-lib). Trả về các khối { embedded, wMm, hMm }.
+async function extractLabelBlocks(arrayBuffer, outDoc, PDFDocument){
+  const src = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+  const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer.slice(0)) }).promise;
+  const blocks = [];
+  try{
+    for(let i = 1; i <= pdf.numPages; i++){
+      const page = await pdf.getPage(i);
+      const [vx0, vy0, vx1, vy1] = page.view; // khung trang (hệ tọa độ PDF, gốc dưới-trái)
+      let left = vx0, right = vx1, top = vy1, bottom = vy0; // mặc định: cả trang
+      if(!page.rotate){ // trang bị xoay thì giữ nguyên cả trang, không cắt (hiếm gặp)
+        const canvas = await renderPdfPageToCanvas(page, STRIP_SCAN_SCALE);
+        const box = contentBoxFromImageData(canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height));
+        if(!box) continue; // trang trắng hoàn toàn → bỏ qua
+        const pad = STRIP_PAD_MM * PT_PER_MM, S = STRIP_SCAN_SCALE;
+        left = Math.max(vx0, vx0 + box.x0 / S - pad);
+        right = Math.min(vx1, vx0 + box.x1 / S + pad);
+        top = Math.min(vy1, vy1 - box.y0 / S + pad);
+        bottom = Math.max(vy0, vy1 - box.y1 / S - pad);
+      }
+      const embedded = await outDoc.embedPage(src.getPage(i - 1), { left, right, top, bottom });
+      const rawW = (right - left) / PT_PER_MM, rawH = (top - bottom) / PT_PER_MM;
+      const k = rawW > A4_MIN_WIDTH_MM ? A4_TO_A6_SCALE : 1; // A4 → A6
+      // wMm/hMm là kích thước SAU khi quy về A6; drawPage bên dưới tự co theo đó.
+      blocks.push({ embedded, wMm: rawW * k, hMm: rawH * k, scaled: k !== 1 });
+    }
+  } finally {
+    pdf.destroy();
+  }
+  return blocks;
+}
+
+// groups/opts giống downloadShipLabels (source "top" = mọi đơn đang xử lý,
+// "batch" = chỉ các đơn đã tích).
+async function mergeShipLabels(groups, opts = {}){
+  const source = opts.source || "top";
+  if(groups.length === 0){ showError("Không có phiếu giao nào để gộp."); return; }
+  if(!window.PDFLib){
+    showError("Chưa tải được thư viện ghép PDF (cần mạng) — hãy tải lại trang rồi thử lại.");
+    return;
+  }
+  const { PDFDocument, rgb } = window.PDFLib;
+  labelBusy = true;
+  setLabelButtonsDisabled(true);
+  const failed = [];
+  try{
+    const out = await PDFDocument.create();
+    const blocks = [];
+    for(let i = 0; i < groups.length; i++){
+      setLabelProgress(source, "merge", i + 1, groups.length);
+      try{
+        const res = await fetch(groups[i].shipLabelUrl);
+        if(!res.ok) throw new Error("HTTP " + res.status);
+        blocks.push(...await extractLabelBlocks(await res.arrayBuffer(), out, PDFDocument));
+      }catch(e){
+        failed.push(groups[i].orderName || "(đơn chưa có mã)");
+      }
+    }
+    if(blocks.length === 0) throw new Error("không ghép được phiếu nào");
+
+    const stripWmm = Math.max(...blocks.map(b => b.wMm)); // rộng = phiếu rộng nhất của lần gộp này
+    const pages = layoutStrips(blocks.map(b => ({ h: b.hMm })), STRIP_GAP_MM, STRIP_MAX_H_MM);
+    pages.forEach(pg => {
+      const page = out.addPage([stripWmm * PT_PER_MM, pg.height * PT_PER_MM]);
+      pg.items.forEach((it, n) => {
+        const b = blocks[it.index];
+        page.drawPage(b.embedded, {
+          x: 0,
+          y: (pg.height - it.top - b.hMm) * PT_PER_MM,
+          width: b.wMm * PT_PER_MM,
+          height: b.hMm * PT_PER_MM,
+        });
+        if(n > 0){ // đường kẻ cắt nét đứt, nằm GIỮA khe giữa phiếu này và phiếu ngay trên
+          const yLine = (pg.height - it.top + STRIP_GAP_MM / 2) * PT_PER_MM;
+          page.drawLine({
+            start: { x: 0, y: yLine },
+            end: { x: stripWmm * PT_PER_MM, y: yLine },
+            thickness: 0.6,
+            color: rgb(0.25, 0.25, 0.25),
+            dashArray: [4, 3],
+          });
+        }
+      });
+    });
+
+    const bytes = await out.save();
+    const blobUrl = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
+    const d = new Date(), pad2 = n => String(n).padStart(2, "0");
+    const stamp = `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}-${pad2(d.getHours())}${pad2(d.getMinutes())}`;
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.download = `phieu-giao-gop-${stamp}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 4000);
+
+    let msg = `Đã gộp ${blocks.length} phiếu thành ${pages.length} trang, rộng ${Math.round(stripWmm)} mm, cao ${pages.map(p => Math.round(p.height)).join(" + ")} mm. Đường kẻ nét đứt giữa các phiếu là đường cắt.`;
+    const nScaled = blocks.filter(b => b.scaled).length;
+    if(nScaled){
+      msg += ` Có ${nScaled} phiếu khổ A4 (thường là TikTok) đã tự thu về 50% = khổ A6 để cả dải cùng cỡ; in đúng kích thước thực (100%), không chọn "vừa trang".`;
+    }
+    if(failed.length) msg += ` Không ghép được: ${failed.join(", ")}.`;
+    if(opts.skipNote) msg += ` ${opts.skipNote}`;
+    showNotice(msg);
+  }catch(e){
+    showError("Không gộp được phiếu giao: " + e.message);
+  }finally{
+    labelBusy = false;
+    setLabelButtonsDisabled(false);
+    updateLabelButtons();
+    updateBatchBar();
+  }
+}
+mergeLabelsBtn.addEventListener("click", () => mergeShipLabels(getActiveLabelGroups(), { source: "top" }));
+
+// Nút trên thanh chọn: chỉ xử lý phiếu của các đơn đang tích.
+function batchLabelJob(run){
+  const { groups, missing } = getSelectedLabelGroups();
+  const skipNote = missing ? `${missing} đơn đã chọn chưa có phiếu giao nên bị bỏ qua.` : "";
+  if(groups.length === 0){ showError("Các đơn đã chọn chưa có phiếu giao nào."); return; }
+  run(groups, { source: "batch", skipNote });
+}
+batchDownloadPdfBtn.addEventListener("click", () => batchLabelJob(downloadShipLabels));
+batchMergePdfBtn.addEventListener("click", () => batchLabelJob(mergeShipLabels));
 
 async function renameOrder(orderId, newName){
   // Để trống là hợp lệ — không còn ép về mã tự sinh nữa, đơn trống tên sẽ
@@ -2261,30 +2554,28 @@ async function setOrderCarrier(orderId, carrier, customName){
 // ---- Batch actions ----
 function updateBatchBar(){
   const n = selected.size;
-  document.getElementById("batchCount").textContent = n + " đã chọn";
+  if(!labelBusy) batchCountEl.textContent = n + " đã chọn"; // đang tải/gộp thì ô này đang hiện tiến độ
   const doneBtn = document.getElementById("batchDone");
-  const shipBtn = document.getElementById("batchShip");
+  // Tab "Đã bàn giao" là bước cuối nên không có thao tác chuyển tiếp hàng loạt.
   if(currentTab === "xong"){
     doneBtn.style.display = "none";
-    shipBtn.style.display = "inline-block";
   } else {
-    doneBtn.style.display = "inline-block";
-    doneBtn.textContent = currentTab === "in" ? "Đã in xong" : "Đã đóng gói";
-    shipBtn.style.display = "none";
+    doneBtn.style.display = "inline-flex";
+    doneBtn.textContent = currentTab === "in" ? "Đã in xong" : "Đã bàn giao";
+  }
+  // 2 nút PDF: chỉ ở 2 tab đang xử lý (giống 2 nút đầu danh sách), mờ đi khi
+  // các đơn đã chọn chưa có phiếu giao nào.
+  const pdfGroup = document.getElementById("batchPdfGroup");
+  pdfGroup.style.display = currentTab === "xong" ? "none" : "flex";
+  if(currentTab !== "xong" && n > 0){
+    const { groups } = getSelectedLabelGroups();
+    const has = groups.length > 0;
+    if(!labelBusy){ batchDownloadPdfBtn.disabled = !has; batchMergePdfBtn.disabled = !has; }
+    batchDownloadPdfBtn.title = has ? `Tải ${groups.length} phiếu giao đã chọn` : "Các đơn đã chọn chưa có phiếu giao";
+    batchMergePdfBtn.title = has ? `Gộp ${groups.length} phiếu giao đã chọn thành 1 file` : "Các đơn đã chọn chưa có phiếu giao";
   }
   batchbar.classList.toggle("show", n > 0);
 }
-
-document.getElementById("batchShip").addEventListener("click", async () => {
-  const ids = Array.from(selected);
-  try{
-    for(const id of ids){
-      await markShipped(id, true);
-    }
-  }catch(e){ showError("Lỗi khi đánh dấu đã giao theo lô: " + e.message); }
-  selected.clear();
-  updateBatchBar();
-});
 
 document.getElementById("batchDone").addEventListener("click", async () => {
   const ids = Array.from(selected);
