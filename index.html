@@ -548,6 +548,22 @@
   @media (max-width: 767px){
     div#downloadAllWrap{ display:none !important; }
   }
+
+  /* Điện thoại: số đếm luôn nằm hàng 2 ở cả 3 tab (không phụ thuộc độ dài chữ) */
+  @media (max-width: 767px){
+    .tabs .tab{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:flex-start;
+      gap:4px;
+      text-align:center;
+    }
+    .tabs .tab .count-badge{
+      margin-left:0;
+      margin-top:0;
+    }
+  }
 </style>
 </head>
 <body>
