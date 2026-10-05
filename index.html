@@ -220,6 +220,14 @@
     font-size:12.5px;
   }
   .order-time{color:var(--muted);}
+  /* Header đơn = lưới 3 cột: [checkbox chọn đơn | ngày giờ | trạng thái + mũi tên].
+     Hai cột ngoài rộng bằng nhau (1fr) nên ngày giờ luôn nằm đúng giữa thanh,
+     dù cột trái/phải dài hay ngắn. */
+  .order-summary-header{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;column-gap:10px;}
+  .order-summary-header .order-select-cb{justify-self:start;}
+  .order-summary-header .order-time{justify-self:center;text-align:center;font-weight:600;}
+  .order-summary-header .order-header-right{justify-self:end;}
+  .order-select-cb{width:20px;height:20px;margin:0;flex-shrink:0;accent-color:var(--blue);cursor:pointer;}
   .order-status-badge{font-weight:700;}
   .order-status-badge.st-warn{color:var(--amber);}
   .order-status-badge.st-info{color:var(--blue);}
@@ -798,13 +806,26 @@ document.querySelectorAll(".tab").forEach(t => {
 addbar.style.display = "flex";
 
 // ---- Chọn tất cả ----
+// "selected" giờ lưu orderId (chọn theo KIỆN HÀNG), không phải id từng sản phẩm.
+// Chọn tất cả = chọn mọi đơn đang hiển thị (đúng tab + tìm kiếm + lọc hãng).
 selectAllBox.addEventListener("change", () => {
-  const shown = getShown();
-  if(selectAllBox.checked) shown.forEach(t => selected.add(t.id));
-  else shown.forEach(t => selected.delete(t.id));
+  const shown = applyCarrierFilter(getShown());
+  if(selectAllBox.checked) shown.forEach(t => selected.add(orderKey(t)));
+  else shown.forEach(t => selected.delete(orderKey(t)));
   updateBatchBar();
   render();
 });
+
+function orderKey(t){ return t.orderId || t.id; }
+// Trạng thái task ứng với tab hiện tại.
+function currentTabStatus(){
+  return currentTab === "in" ? "cho_in" : currentTab === "dong_goi" ? "cho_dong_goi" : "xong";
+}
+// Các sản phẩm (task) của những đơn đang được chọn, trong tab hiện tại.
+function getSelectedTasks(){
+  const st = currentTabStatus();
+  return allTasks.filter(t => t.status === st && selected.has(orderKey(t)));
+}
 
 // ---- Làm sạch (xóa toàn bộ sản phẩm đã bàn giao) ----
 clearAllBtn.addEventListener("click", async () => {
@@ -1165,8 +1186,7 @@ function getActiveLabelGroups(){
 // getActiveLabelGroups (đơn "Chờ xử lý" trước, "Chờ bàn giao" sau).
 // Trả { groups: các đơn CÓ phiếu, missing: số đơn đã chọn nhưng chưa có phiếu }.
 function getSelectedLabelGroups(){
-  const tasks = allTasks.filter(t => selected.has(t.id));
-  tasks.sort((a, b) => (a.status === "cho_in" ? 0 : 1) - (b.status === "cho_in" ? 0 : 1));
+  const tasks = getSelectedTasks();
   const all = groupShown(tasks);
   const groups = all.filter(g => g.shipLabelUrl);
   return { groups, missing: all.length - groups.length };
@@ -1317,8 +1337,10 @@ function renderOrdersByCarrier(shownTasks){
 }
 
 function updateSelectAllBox(shown){
-  const n = shown.length;
-  const nSel = shown.filter(t => selected.has(t.id)).length;
+  const ids = new Set(shown.map(orderKey));
+  const n = ids.size;
+  let nSel = 0;
+  ids.forEach(id => { if(selected.has(id)) nSel++; });
   selectAllBox.checked = n > 0 && nSel === n;
   selectAllBox.indeterminate = nSel > 0 && nSel < n;
 }
@@ -1384,6 +1406,13 @@ function updateDupWarning(){
 }
 
 function render(){
+  // Bỏ khỏi danh sách chọn những đơn không còn ở tab hiện tại (vừa chuyển
+  // trạng thái / bị xóa) để số "đã chọn" luôn đúng.
+  {
+    const st = currentTabStatus();
+    const valid = new Set(allTasks.filter(t => t.status === st).map(orderKey));
+    selected.forEach(id => { if(!valid.has(id)) selected.delete(id); });
+  }
   updateDupWarning();
   updateLabelButtons();
   updateBatchBar();
@@ -1490,8 +1519,20 @@ function renderOrderBox(g){
   arrow.textContent = isExpanded ? "▾" : "▸";
   rightWrap.appendChild(arrow);
 
-  header.appendChild(timeSpan);
-  header.appendChild(rightWrap);
+  // Ô chọn theo KIỆN HÀNG: cột trái của header (lưới 3 cột, xem CSS).
+  const cb = document.createElement("input");
+  cb.type = "checkbox";
+  cb.className = "order-select-cb";
+  cb.checked = selected.has(g.orderId);
+  cb.addEventListener("click", e => e.stopPropagation());
+  cb.addEventListener("change", () => {
+    if(cb.checked) selected.add(g.orderId); else selected.delete(g.orderId);
+    updateSelectAllBox(applyCarrierFilter(getShown()));
+    updateBatchBar();
+  });
+  header.appendChild(cb);        // cột 1 (trái)
+  header.appendChild(timeSpan);  // cột 2 (giữa)
+  header.appendChild(rightWrap); // cột 3 (phải)
   box.appendChild(header);
 
   // Xem trước ghi chú chung của đơn — luôn hiện nếu có, không cần mở rộng.
@@ -1720,16 +1761,6 @@ function splitProductName(name){
 function renderItemSummary(t){
   const row = document.createElement("div");
   row.className = "order-item-summary";
-
-  const cb = document.createElement("input");
-  cb.type = "checkbox";
-  cb.checked = selected.has(t.id);
-  cb.addEventListener("click", e => e.stopPropagation());
-  cb.addEventListener("change", () => {
-    if(cb.checked) selected.add(t.id); else selected.delete(t.id);
-    updateBatchBar();
-  });
-  row.appendChild(cb);
 
   row.appendChild(renderThumb(t));
 
@@ -2587,20 +2618,17 @@ function updateBatchBar(){
 }
 
 document.getElementById("batchDone").addEventListener("click", async () => {
-  const ids = Array.from(selected);
+  const tasks = getSelectedTasks();
   try{
-    for(const id of ids){
-      const t = allTasks.find(x => x.id === id);
-      if(t) await advanceStatus(t);
-    }
+    for(const t of tasks) await advanceStatus(t);
   }catch(e){ showError("Lỗi khi xử lý theo lô: " + e.message); }
   selected.clear();
   updateBatchBar();
 });
 
 document.getElementById("batchDel").addEventListener("click", async () => {
-  if(!confirm("Xóa " + selected.size + " mục đã chọn?")) return;
-  const ids = Array.from(selected);
+  if(!confirm("Xóa " + selected.size + " đơn đã chọn?")) return;
+  const ids = getSelectedTasks().map(t => t.id);
   const emptiedOrders = orderIdsBecomingEmpty(ids);
   try{
     for(const id of ids){
