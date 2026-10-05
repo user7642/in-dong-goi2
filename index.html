@@ -1225,10 +1225,13 @@ function renderCarrierBar(baseShown){
     render();
   };
 
+  // Đếm theo KIỆN HÀNG (số đơn/orderId khác nhau), không đếm số sản phẩm —
+  // đơn gộp nhiều sản phẩm chỉ tính 1.
   const counts = new Map();
   baseShown.forEach(t => {
     const key = effectiveCarrier(t);
-    counts.set(key, (counts.get(key) || 0) + 1);
+    if(!counts.has(key)) counts.set(key, new Set());
+    counts.get(key).add(t.orderId || t.id);
   });
 
   const chipsEl = document.getElementById("carrierChips");
@@ -1237,12 +1240,12 @@ function renderCarrierBar(baseShown){
   const allChip = document.createElement("button");
   allChip.type = "button";
   allChip.className = "carrierChip" + (carrierFilter === "all" ? " active" : "");
-  allChip.innerHTML = `Tất cả <span class="n">${baseShown.length}</span>`;
+  allChip.innerHTML = `Tất cả <span class="n">${countOrders(baseShown)}</span>`;
   allChip.addEventListener("click", () => { carrierFilter = "all"; render(); });
   chipsEl.appendChild(allChip);
 
   sortCarrierKeys(Array.from(counts.keys())).forEach(key => {
-    const n = counts.get(key) || 0;
+    const n = counts.has(key) ? counts.get(key).size : 0;
     if(n === 0) return; // ẩn hãng hiện không có đơn nào để đỡ rối chip
     const chip = document.createElement("button");
     chip.type = "button";
@@ -1324,6 +1327,11 @@ function updateSelectAllBox(shown){
 // badge số trên tab (thay vì đếm số dòng sản phẩm/task như trước). Nhiều sản
 // phẩm cùng orderId chỉ tính là 1 kiện. Không phụ thuộc từ khóa tìm kiếm,
 // giống cách badge cũ luôn phản ánh TOÀN BỘ dữ liệu chứ không theo bộ lọc.
+// Số kiện hàng (đơn/orderId khác nhau) trong 1 danh sách task bất kỳ.
+function countOrders(tasks){
+  return new Set(tasks.map(t => t.orderId || t.id)).size;
+}
+
 function countOrdersByStatus(status){
   const ids = new Set();
   allTasks.forEach(t => { if(t.status === status) ids.add(t.orderId || t.id); });
@@ -1394,8 +1402,8 @@ function render(){
   // HIỂN THỊ — theo đúng tab + tìm kiếm + lọc hãng hiện tại, nằm cùng hàng với
   // "Chọn tất cả" (căn phải) — đây là con số "số lượng" cũ từng nằm cạnh tên
   // tab, giờ chuyển xuống đây; số cạnh tên tab đổi thành số kiện hàng.
-  const totalQtyShown = shown.reduce((s, t) => s + (t.qty || 1), 0);
-  totalQtyInfo.innerHTML = `Số lượng: <b>${totalQtyShown}</b>`;
+  // Tính theo KIỆN HÀNG (số đơn), không cộng số lượng sản phẩm.
+  totalQtyInfo.innerHTML = `Số lượng: <b>${countOrders(shown)}</b>`;
   // Ẩn hẳn hàng "Chọn tất cả" + "Số lượng" khi danh sách đang hiển thị rỗng —
   // đỡ rối vì lúc đó chọn/số lượng đều vô nghĩa (0).
   listToolbar.style.display = shown.length === 0 ? "none" : "flex";
