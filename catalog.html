@@ -436,7 +436,7 @@
   }
   .editor-overlay.show{display:flex;}
   .editor-overlay h3{font-size:16px;margin:0 0 8px 0;}
-  .editor-overlay p.muted{margin:0 0 10px 0;}
+  .editor-overlay p.muted, .editor-overlay #editorDesc{margin:0 0 10px 0;}
   .editor-overlay textarea{flex:1;min-height:200px;font-size:15px;}
   .editor-overlay .editor-actions{display:flex;gap:8px;margin-top:12px;}
   .editor-overlay .editor-actions button{flex:1;padding:13px;font-size:15px;}
@@ -488,6 +488,26 @@
     }
     #selectedOverlay #selectedListBody{max-height:calc(70vh - 120px);}
     #selectedOverlay .editor-actions{margin-top:10px;}
+  }
+
+  /* ---- Khung sửa sản phẩm (#editorOverlay) trên MÁY TÍNH ----
+     Giữ position:fixed (che đúng trang, không phải dựng trang riêng, không
+     phải ẩn/hiện main hay nhớ lại vị trí cuộn). Chỉ đổi kích thước/màu:
+     - Rộng bằng main (800px, tối đa 95vw) và canh giữa; trên/dưới chừa
+       24px như margin của main.
+     - Nhìn như 1 card (nền --card, viền, bo 16px) giống main > section.
+     - Vùng xung quanh phủ nền --bg của body bằng box-shadow spread lớn:
+       không cần thêm phần tử HTML, tự đổi theo sáng/tối.
+     Chỉ áp cho #editorOverlay — #selectedOverlay có bố cục riêng ở trên.
+     Mobile (<=800px) giữ nguyên toàn màn hình như cũ. */
+  @media (min-width:801px){
+    #editorOverlay{
+      top:24px;bottom:24px;left:0;right:0;
+      width:800px;max-width:95vw;margin:0 auto;box-sizing:border-box;
+      padding:24px;
+      background:var(--card);border:1px solid var(--border);border-radius:16px;
+      box-shadow:0 4px 6px -1px var(--shadow),0 0 0 100vmax var(--bg);
+    }
   }
 
   footer{text-align:center;padding:18px 14px 28px;max-width:var(--maxw);margin:0 auto;}
@@ -751,6 +771,17 @@ body[data-current-mode="manage"].has-floating-bar main{padding-bottom:90px;}
 #manageSectionContent{display:grid;grid-template-rows:1fr;transition:grid-template-rows .3s ease;}
 #manageSection.collapsed #manageSectionContent{grid-template-rows:0fr;}
 #manageSectionContent > .collapse-inner{overflow:hidden;min-height:0;}
+
+/* ---- Khung "Hướng dẫn sử dụng / Chi tiết" (details/summary, mặc định gập) ----
+   Dùng biến theme (--border, --input-bg, --text...) để hợp cả sáng/tối. */
+.bulk-help{margin:0 0 12px;border:1px solid var(--border);border-radius:10px;background:var(--input-bg);}
+.bulk-help > summary{cursor:pointer;user-select:none;font-weight:700;font-size:15px;color:var(--text);padding:10px 14px;list-style:none;display:flex;align-items:center;gap:8px;}
+.bulk-help > summary::-webkit-details-marker{display:none;}
+.bulk-help > summary::before{content:"\25B6";font-size:11px;color:var(--muted);display:inline-block;transition:transform .2s ease;}
+.bulk-help[open] > summary::before{transform:rotate(90deg);}
+.bulk-help > summary:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:8px;}
+.bulk-help > p.muted{margin:0 !important;padding:0 14px 12px;line-height:1.6;}
+@media (prefers-reduced-motion:reduce){.bulk-help > summary::before{transition:none;}}
 #manageSection.collapsed #manageSectionTitle{margin-bottom:0;}
 @media (prefers-reduced-motion:reduce){
   #manageSectionContent,#manageSectionTitle .collapse-arrow{transition:none;}
@@ -787,10 +818,44 @@ body[data-current-mode="task"] #viewSwitch { display: flex !important; }
 .mmenu .danger{color:var(--red);}
 #editorTools{display:none;gap:8px;margin:8px 0 0;}
 #editorPreview{display:none;margin:8px 0;max-height:22vh;overflow:auto;font-size:12px;}
-#editorPreview .pv{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
-#editorPreview img{width:36px;height:36px;object-fit:cover;border-radius:6px;border:1px solid var(--border);}
-#editorPreview .tg{background:var(--gray-bg);border-radius:10px;padding:2px 8px;}
+/* Mỗi phân loại 1 hàng: ảnh (trái) | link (phải). Thiếu 1 bên -> ô "thiếu"
+   nét đứt màu cam để dễ thấy. CHỈ dùng trong khung xem trước này, không
+   ghi vào dữ liệu và không hiện ở index. */
+#editorPreview .pv{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);align-items:center;gap:8px;margin-bottom:6px;}
+#editorPreview .pc{display:flex;align-items:center;gap:8px;min-width:0;min-height:36px;}
+#editorPreview img{width:36px;height:36px;flex-shrink:0;object-fit:cover;border-radius:6px;border:1px solid var(--border);}
+#editorPreview .tg{background:var(--gray-bg);border-radius:10px;padding:2px 8px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#editorPreview .miss{box-sizing:border-box;width:100%;min-height:36px;padding:0 10px;border:1px dashed var(--amber);border-radius:8px;background:var(--amber-bg);color:var(--amber);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 #editorPreview .pe{color:var(--red);margin-bottom:4px;}
+/* Chế độ "Mở rộng" của ô Nhập danh sách: xem trước từng dòng + 2 nút dọn dẹp.
+   Không đụng tới ô nhập thường ở đầu trang. */
+#bulkTools{display:none;gap:8px;margin:8px 0 0;}
+#bulkTools button:disabled{opacity:.5;cursor:not-allowed;}
+#editorPreview.bulk{max-height:30vh;}
+#editorPreview .bsum{font-weight:600;margin-bottom:6px;color:var(--text);}
+#editorPreview .bv{display:grid;grid-template-columns:84px minmax(0,1fr) minmax(0,1fr);gap:8px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border);}
+#editorPreview .bv:last-child{border-bottom:none;}
+#editorPreview .bs{border-radius:10px;padding:2px 8px;font-weight:600;text-align:center;white-space:nowrap;}
+#editorPreview .bn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#editorPreview .bd{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#editorPreview .k-new .bs{background:var(--green-bg);color:var(--green);}
+#editorPreview .k-merge .bs{background:var(--blue-bg);color:var(--blue);}
+#editorPreview .k-same .bs{background:var(--gray-bg);color:var(--muted);}
+#editorPreview .k-miss .bs{background:var(--amber-bg);color:var(--amber);}
+#editorPreview .k-bad .bs{background:var(--red-bg);color:var(--red);}
+/* Xem trước nhập danh sách theo KHỐI: 1 khối = dòng sản phẩm + các dòng ảnh/link ngay dưới. */
+#editorPreview .bblk{padding:3px 0;border-bottom:1px solid var(--border);}
+#editorPreview .bblk:last-child{border-bottom:none;}
+#editorPreview .bblk .bv{border-bottom:none;padding:0 0 4px;}
+#editorPreview .bblk .pv{margin-bottom:4px;}
+/* Hộp thoại hỏi khi nhập trùng sản phẩm đã có. */
+.dup-overlay{position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px;}
+.dup-overlay.show{display:flex;}
+.dup-box{background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:14px;padding:16px;max-width:460px;width:100%;max-height:85vh;overflow:auto;}
+.dup-box h3{margin:0 0 8px;font-size:16px;}
+.dup-box p{margin:0 0 8px;font-size:13px;color:var(--muted);line-height:1.45;}
+.dup-box ul{margin:0 0 4px;padding-left:18px;font-size:13px;}
+.dup-actions{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
 </style>
 </head>
 <body>
@@ -812,14 +877,18 @@ body[data-current-mode="task"] #viewSwitch { display: flex !important; }
   <section id="manageSection" class="collapsed" style="display:none;">
     <h2 id="manageSectionTitle" role="button" tabindex="0" aria-expanded="false" aria-controls="manageSectionContent"><span class="collapse-arrow" aria-hidden="true">▼</span> Nhập / sửa danh sách (dán vào đây)</h2>
     <div id="manageSectionContent"><div class="collapse-inner">
-    <p class="muted" style="margin-top:0;">
+    <details class="bulk-help" id="bulkHelp">
+    <summary>Hướng dẫn sử dụng / Chi tiết</summary>
+    <p class="muted">
       Mỗi dòng 1 sản phẩm, hỗ trợ 3 kiểu:<br>
       1) Không phân loại: <b>Tên sản phẩm</b><br>
       2) 1 tầng phân loại: <b>Tên sản phẩm | lựa chọn 1, lựa chọn 2</b><br>
       3) 2 tầng phân loại: <b>Tên sản phẩm | giá trị tầng 1a, giá trị tầng 1b | giá trị tầng 2a, giá trị tầng 2b</b><br>
-      Sản phẩm đã có sẽ được gộp thêm lựa chọn mới vào đúng tầng, không tạo trùng.<br>
-      ⚠️ Dấu <b>|</b> và <b>,</b> luôn được hiểu là dấu phân cách — không dùng chúng bên trong tên sản phẩm hay tên 1 lựa chọn (kể cả số thập phân, vd viết "21.5" thay vì "21,5" để tránh bị tách thành 2 lựa chọn riêng).
+      Ảnh / link (tùy chọn): ghi ngay dưới dòng sản phẩm, mỗi dòng <b>![Tên](URL ảnh)</b> hoặc <b>[Tên](URL link file in)</b>. Tên để trống hoặc = tên sản phẩm → gắn <b>chung</b>; = tên phân loại (vd MS1) → gắn <b>riêng</b>. Bấm <b>⤢ Mở rộng</b> để dùng ✨ Auto, ＋ Ảnh, ＋ Link.<br>
+      Ô này <b>chỉ tạo sản phẩm mới</b>: sản phẩm đã có không bị gộp hay ghi đè (nếu trùng tên sẽ hỏi Thêm mới / Bỏ qua / Hủy). Muốn sửa sản phẩm đã có, dùng nút ✏️ trong danh sách.<br>
+      ⚠️ Dấu <b>|</b> và <b>,</b> luôn được hiểu là dấu phân cách ở dòng sản phẩm — không dùng chúng bên trong tên sản phẩm hay tên 1 lựa chọn (kể cả số thập phân, vd viết "21.5" thay vì "21,5" để tránh bị tách thành 2 lựa chọn riêng).
     </p>
+    </details>
     <textarea id="bulkInput" placeholder="Bút chì màu 12 màu&#10;Lược sử Việt Nam | A0, A1, A2, A3&#10;Bộ tranh kỹ năng an toàn | An toàn trong nhà, An toàn ngoài trời | A2 (60x42 cm), A3 (42x30 cm)"></textarea>
     <div class="row row-nowrap" style="margin-top:8px;">
       <button class="btn-blue" id="bulkBtn" style="flex:1;">Nhập danh sách</button>
@@ -890,9 +959,10 @@ body[data-current-mode="task"] #viewSwitch { display: flex !important; }
 
 <div class="editor-overlay" id="editorOverlay">
   <h3 id="editorTitle">Sửa sản phẩm</h3>
-  <p class="muted" id="editorDesc">Định dạng: <b>Tên</b> (không phân loại) · <b>Tên | a, b</b> (1 tầng) · <b>Tên | a, b | c, d</b> (2 tầng)</p>
+  <div class="muted" id="editorDesc">Định dạng: <b>Tên</b> (không phân loại) · <b>Tên | a, b</b> (1 tầng) · <b>Tên | a, b | c, d</b> (2 tầng)</div>
   <textarea id="editorTextarea"></textarea>
-  <div class="row" id="editorTools"><button class="btn-outline" id="insImgBtn" type="button">＋ Ảnh</button><button class="btn-outline" id="insLinkBtn" type="button">＋ Link</button></div>
+  <div class="row" id="editorTools"><button class="btn-outline" id="autoFillBtn" type="button" title="Tự thêm các dòng ![tên]() và [tên]() còn thiếu cho Chung + mọi phân loại, rồi nhảy tới ô trống kế tiếp để dán URL">✨ Auto</button><button class="btn-outline" id="fixBtn" type="button" title="Đã đổi tên tiêu đề / phân loại ở dòng đầu? Bấm để đổi tên ở các dòng ảnh/link bên dưới theo đúng vị trí (giữ nguyên URL)">🔧 Fix</button><button class="btn-outline" id="insImgBtn" type="button">＋ Ảnh</button><button class="btn-outline" id="insLinkBtn" type="button">＋ Link</button></div>
+  <div class="row" id="bulkTools"><button class="btn-outline" id="bulkCleanBtn" type="button" title="Dọn gọn: bỏ dòng trống, gộp khoảng trắng thừa, chuẩn hóa dấu | và ,, bỏ lựa chọn trùng trong 1 tầng và dòng trùng hệt nhau">🧹 Dọn</button><button class="btn-outline" id="bulkDropBadBtn" type="button" title="Xóa các dòng sai định dạng (sẽ bị bỏ qua khi nhập)">🗑 Bỏ dòng lỗi</button></div>
   <div id="editorPreview"></div>
   <div class="editor-actions">
     <button class="btn-outline" id="editorCancel">Hủy</button>
@@ -906,6 +976,20 @@ body[data-current-mode="task"] #viewSwitch { display: flex !important; }
   <div id="selectedListBody" style="flex:1;overflow:auto;"></div>
   <div class="editor-actions">
     <button class="btn-outline" id="selectedCloseBtn">Đóng</button>
+  </div>
+</div>
+
+<div class="dup-overlay" id="dupOverlay">
+  <div class="dup-box">
+    <h3>⚠️ Có sản phẩm bị trùng tên</h3>
+    <p id="dupDesc"></p>
+    <ul id="dupList"></ul>
+    <p>Sản phẩm đã có chỉ được chỉnh sửa qua nút ✏️ (nhập danh sách không gộp hay ghi đè).</p>
+    <div class="dup-actions">
+      <button class="btn-blue" id="dupAddBtn" type="button">➕ Thêm mới (tạo sản phẩm riêng, tự thêm "(2)" vào tên)</button>
+      <button class="btn-outline" id="dupSkipBtn" type="button">⏭ Bỏ qua các sản phẩm trùng, nhập phần còn lại</button>
+      <button class="btn-outline" id="dupCancelBtn" type="button">↩ Hủy, quay lại chỉnh</button>
+    </div>
   </div>
 </div>
 
@@ -1829,35 +1913,414 @@ function parseEditorText(text, oldName){
     const dup = common ? (isImg ? r.image : r.link) : store[lab];
     if(dup){ r.errors.push(`Trùng ${isImg ? "ảnh" : "link"} cho "${common ? "cả sản phẩm" : lab}"`); return; }
     if(common){ if(isImg) r.image = url; else r.link = url; } else store[lab] = url;
-    r.items.push({ isImg, target: common ? "Chung" : lab, url });
+    r.items.push({ isImg, common, target: common ? "Chung" : lab, url });
   });
   return r;
 }
-function setEditorExtras(on){
-  document.getElementById("editorTools").style.display = on ? "flex" : "none";
-  document.getElementById("editorPreview").style.display = on ? "block" : "none";
+// mode: false = ẩn hết; true = sửa 1 sản phẩm (Auto/Fix/＋Ảnh/＋Link + xem trước
+// ảnh-link); "bulk" = khung Mở rộng của ô Nhập danh sách (Dọn/Bỏ dòng lỗi + xem
+// trước từng dòng).
+function setEditorExtras(mode){
+  editorBulk = (mode === "bulk");
+  // Khung Mở rộng (nhập mới) dùng chung Auto / ＋Ảnh / ＋Link với khung Sửa, tác
+  // động lên SẢN PHẨM ĐANG CÓ CON TRỎ. Không có Fix vì sản phẩm mới chưa có tên cũ để so.
+  document.getElementById("editorTools").style.display = (mode === true || editorBulk) ? "flex" : "none";
+  document.getElementById("fixBtn").style.display = editorBulk ? "none" : "";
+  document.getElementById("bulkTools").style.display = editorBulk ? "flex" : "none";
+  const pv = document.getElementById("editorPreview");
+  pv.style.display = mode ? "block" : "none";
+  pv.classList.toggle("bulk", editorBulk);
 }
-let editorPreviewOn = false, editorOldName = "";
+// Các hàng xem trước ảnh (trái) + link (phải) theo từng phân loại — dùng chung
+// cho khung Sửa và khung Mở rộng của ô Nhập danh sách.
+function itemRowsHtml(r){
+  // Gom theo phân loại: mỗi hàng = ảnh (trái) + link (phải). Thứ tự: Chung
+  // trước, rồi theo thứ tự phân loại ở dòng đầu. Phân loại không có ảnh lẫn
+  // link riêng thì bỏ qua (sẽ dùng bản chung).
+  const byT = new Map();
+  r.items.forEach(it => {
+    const k = it.common ? "\u0000chung" : it.target;
+    if(!byT.has(k)) byT.set(k, { name: it.target, img: "", link: "" });
+    byT.get(k)[it.isImg ? "img" : "link"] = it.url;
+  });
+  const order = ["\u0000chung", ...labelsOf(r.parsed)];
+  return [...new Set(order)].filter(k => byT.has(k)).map(k => {
+    const g = byT.get(k), nm = escapeHtml(g.name);
+    const left = g.img
+      ? `<div class="pc"><img src="${escapeHtml(g.img)}" alt=""><span class="tg" title="${nm}">🖼 ${nm}</span></div>`
+      : `<div class="pc"><span class="miss" title="Chưa có ảnh cho ${nm}">⚠️ ${nm}: thiếu ảnh</span></div>`;
+    const right = g.link
+      ? `<div class="pc"><span class="tg" title="${escapeHtml(g.link)}">🔗 ${nm} — ${escapeHtml(g.link.replace(/^https?:\/\//,"").slice(0,40))}</span></div>`
+      : `<div class="pc"><span class="miss" title="Chưa có link cho ${nm}">⚠️ ${nm}: thiếu link</span></div>`;
+    return `<div class="pv">${left}${right}</div>`;
+  }).join("");
+}
+let editorPreviewOn = false, editorOldName = "", editorOldLabels = [], editorBulk = false;
 function refreshEditorPreview(){
   if(!editorPreviewOn) return;
+  if(editorBulk){ renderBulkPreview(); return; }
   const r = parseEditorText(document.getElementById("editorTextarea").value, editorOldName);
   const box = document.getElementById("editorPreview");
   if(r.error){ box.innerHTML = `<div class="pe">⚠️ ${escapeHtml(r.error)}</div>`; return; }
   let h = r.errors.map(e => `<div class="pe">⚠️ ${escapeHtml(e)}</div>`).join("");
-  h += r.items.map(it => it.isImg
-    ? `<div class="pv"><img src="${escapeHtml(it.url)}" alt=""><span class="tg">🖼 ${escapeHtml(it.target)}</span></div>`
-    : `<div class="pv"><span class="tg">🔗 ${escapeHtml(it.target)} — ${escapeHtml(it.url.replace(/^https?:\/\//,"").slice(0,40))}</span></div>`).join("");
+  h += itemRowsHtml(r);
   box.innerHTML = h || '<span class="muted">Chưa gắn ảnh / link nào.</span>';
 }
-function insertEditorLine(prefix){
-  const ta = document.getElementById("editorTextarea");
+function insertEditorLine(prefix, ta){
+  ta = ta || document.getElementById("editorTextarea");
   ta.value = ta.value.replace(/\s*$/, "") + `\n${prefix}[]()`;
   ta.focus();
   ta.setSelectionRange(ta.value.length - 1, ta.value.length - 1);
   refreshEditorPreview();
 }
-document.getElementById("insImgBtn").addEventListener("click", () => insertEditorLine("!"));
-document.getElementById("insLinkBtn").addEventListener("click", () => insertEditorLine(""));
+// ===== Khung "Mở rộng" của ô Nhập danh sách: xem trước + dọn dẹp =====
+// Văn bản nhập = nhiều KHỐI. 1 khối = 1 dòng sản phẩm ("Tên | a, b | c, d") + các
+// dòng ![Tên](URL ảnh) / [Tên](URL link) ngay bên dưới (cú pháp y hệt khung Sửa).
+// Nhập danh sách CHỈ TẠO MỚI: sản phẩm đã có không bị gộp/ghi đè (chỉ sửa qua ✏️).
+const MD_LINE = /^(!?)\[(.*)\]\((.*)\)$/;
+function nameExists(name, extra){
+  const k = name.toLowerCase();
+  return allProducts.some(p => p.name.toLowerCase() === k) || (extra && extra.has(k));
+}
+// Tách văn bản thành các khối + kiểm tra từng dòng ảnh/link.
+// Trả về { blocks, orphans }: orphans = dòng ảnh/link đứng trước mọi dòng sản phẩm.
+function parseBulkBlocks(text){
+  const lines = text.replace(/\r\n?/g, "\n").split("\n");
+  const blocks = [], orphans = [];
+  let cur = null;
+  lines.forEach((raw, i) => {
+    const t = raw.trim();
+    if(!t) return;
+    if(MD_LINE.test(t)){
+      if(cur) cur.mdLines.push({ i, t }); else orphans.push({ i, t });
+      return;
+    }
+    cur = { i, t, parsed: parseLine(t), mdLines: [], badLines: [], r: null };
+    blocks.push(cur);
+  });
+  blocks.forEach(b => {
+    if(!b.parsed) return;
+    const kept = [];
+    b.mdLines.forEach(m => {
+      const test = parseEditorText([b.t, ...kept.map(k => k.t), m.t].join("\n"), "");
+      if(test.error || test.errors.length) b.badLines.push({ i: m.i, msg: (test.errors && test.errors[test.errors.length - 1]) || test.error });
+      else kept.push(m);
+    });
+    b.r = parseEditorText([b.t, ...kept.map(k => k.t)].join("\n"), "");
+  });
+  // Đánh dấu trùng: với danh mục hiện có hoặc với khối hợp lệ phía trên.
+  const seen = new Set();
+  blocks.forEach(b => {
+    if(!b.parsed) return;
+    const k = b.parsed.name.toLowerCase();
+    b.dupCatalog = allProducts.some(p => p.name.toLowerCase() === k);
+    b.dupPaste = seen.has(k);
+    b.dup = b.dupCatalog || b.dupPaste;
+    seen.add(k);
+  });
+  return { blocks, orphans };
+}
+// Khối chứa vị trí con trỏ (ký tự) -> { start, end } theo offset ký tự, hoặc null.
+function findBlockRange(text, caret){
+  const lines = text.split("\n"), offs = [];
+  let o = 0;
+  lines.forEach(l => { offs.push(o); o += l.length + 1; });
+  const prod = [];
+  lines.forEach((l, i) => { const t = l.trim(); if(t && !MD_LINE.test(t)) prod.push(i); });
+  if(!prod.length) return null;
+  let L = 0;
+  for(let i = 0; i < lines.length; i++){ if(offs[i] <= caret) L = i; else break; }
+  let p = -1;
+  prod.forEach(i => { if(i <= L) p = i; });
+  if(p < 0) p = prod[0];
+  const next = prod.find(i => i > p);
+  let last = (next === undefined ? lines.length : next) - 1;
+  while(last > p && !lines[last].trim()) last--;
+  return { start: offs[p], end: offs[last] + lines[last].length };
+}
+function renderBulkPreview(){
+  const box = document.getElementById("editorPreview");
+  const dropBtn = document.getElementById("bulkDropBadBtn");
+  const { blocks, orphans } = parseBulkBlocks(document.getElementById("editorTextarea").value);
+  const badCount = blocks.filter(b => !b.parsed).length + blocks.reduce((n, b) => n + b.badLines.length, 0) + orphans.length;
+  dropBtn.disabled = !badCount;
+  dropBtn.textContent = badCount ? `🗑 Bỏ dòng lỗi (${badCount})` : "🗑 Bỏ dòng lỗi";
+  if(!blocks.length && !orphans.length){ box.innerHTML = '<span class="muted">Chưa có sản phẩm nào. Mỗi sản phẩm 1 dòng, ảnh/link ghi ngay dưới.</span>'; return; }
+  const nNew = blocks.filter(b => b.parsed && !b.dup).length;
+  const nDup = blocks.filter(b => b.parsed && b.dup).length;
+  const parts = [];
+  if(nNew) parts.push(`${nNew} mới`);
+  if(nDup) parts.push(`${nDup} trùng`);
+  if(badCount) parts.push(`${badCount} lỗi`);
+  const describe = pr => pr.tiers ? `${pr.tiers.map(a => a.length).join(" × ")} lựa chọn (2 tầng)`
+    : (pr.variants.length ? `${pr.variants.length} lựa chọn` : "không phân loại");
+  const MAX = 300;
+  let h = `<div class="bsum">${blocks.length} sản phẩm → ${parts.join(" · ") || "—"}</div>`;
+  h += orphans.map(o => `<div class="pe">⚠️ Dòng ảnh/link không thuộc sản phẩm nào (nằm trước dòng sản phẩm đầu): ${escapeHtml(o.t.slice(0, 50))}</div>`).join("");
+  h += blocks.slice(0, MAX).map(b => {
+    if(!b.parsed) return `<div class="bblk"><div class="bv k-bad"><span class="bs">⚠️ Lỗi</span><span class="bn" title="${escapeHtml(b.t)}">${escapeHtml(b.t)}</span><span class="bd">sai định dạng — sẽ bị bỏ qua</span></div></div>`;
+    const kind = b.dup ? "miss" : "new";
+    const label = b.dup ? "⚠️ Trùng" : "➕ Mới";
+    const note = b.dupCatalog ? "đã có trong danh mục — chỉ sửa qua ✏️"
+      : b.dupPaste ? "trùng với sản phẩm phía trên trong danh sách"
+      : describe(b.parsed);
+    const errs = b.badLines.map(x => `<div class="pe">⚠️ ${escapeHtml(x.msg)}</div>`).join("");
+    return `<div class="bblk"><div class="bv k-${kind}"><span class="bs">${label}</span><span class="bn" title="${escapeHtml(b.parsed.name)}">${escapeHtml(b.parsed.name)}</span><span class="bd" title="${escapeHtml(note)}">${escapeHtml(note)}</span></div>${errs}${itemRowsHtml(b.r)}</div>`;
+  }).join("");
+  if(blocks.length > MAX) h += `<div class="muted">… và ${blocks.length - MAX} sản phẩm nữa</div>`;
+  box.innerHTML = h;
+}
+// 🧹 Dọn: bỏ dòng trống, gộp khoảng trắng thừa ở dòng sản phẩm, viết lại theo chuẩn
+// "Tên | a, b | c, d" (bỏ lựa chọn trùng trong cùng 1 tầng). Dòng ảnh/link chỉ được
+// cắt khoảng trắng đầu/cuối (không đụng vào URL) và bỏ dòng trùng hệt trong cùng khối.
+// Khối sản phẩm trùng hệt khối trước mà không có ảnh/link thì bị bỏ.
+// Dòng sai định dạng chỉ được gọn khoảng trắng, không bị xóa.
+function bulkCleanText(){
+  const ta = document.getElementById("editorTextarea");
+  const flash = msg => flashBtn(document.getElementById("bulkCleanBtn"), msg);
+  const dedupe = arr => { const s = new Set(); return arr.filter(x => { const k = x.toLowerCase(); if(s.has(k)) return false; s.add(k); return true; }); };
+  const rawLines = ta.value.replace(/\r\n?/g, "\n").split("\n").map(l => l.trim()).filter(Boolean);
+  // Gom thành khối: [dòng sản phẩm, ...dòng ảnh/link]
+  const groups = [];
+  rawLines.forEach(t => {
+    if(MD_LINE.test(t) && groups.length) groups[groups.length - 1].md.push(t);
+    else if(MD_LINE.test(t)) groups.push({ head: t, md: [], orphan: true });
+    else groups.push({ head: t.replace(/\s+/g, " "), md: [] });
+  });
+  const out = [], seen = new Set();
+  let dup = 0;
+  groups.forEach(g => {
+    let head = g.head;
+    if(!g.orphan){
+      const pr = parseLine(head);
+      if(pr) head = productToLine({ name: pr.name, variants: dedupe(pr.variants || []), tiers: pr.tiers ? pr.tiers.map(dedupe) : null });
+    }
+    const md = []; const ms = new Set();
+    g.md.forEach(x => { const k = x.toLowerCase(); if(ms.has(k)){ dup++; return; } ms.add(k); md.push(x); });
+    const key = head.toLowerCase();
+    if(!g.orphan && seen.has(key) && !md.length){ dup++; return; }
+    seen.add(key);
+    out.push(head, ...md);
+  });
+  const after = out.join("\n");
+  if(after === ta.value){ flash("✓ Đã gọn rồi"); return; }
+  ta.value = after;
+  refreshEditorPreview();
+  flash(dup ? `✓ Đã dọn (−${dup} dòng trùng)` : "✓ Đã dọn");
+}
+// 🗑 Bỏ dòng lỗi: xóa dòng sản phẩm sai định dạng (kèm các dòng ảnh/link của nó), dòng
+// ảnh/link sai cú pháp / sai tên phân loại / URL không hợp lệ / trùng, và dòng ảnh/link
+// mồ côi — có xác nhận. Những dòng này khi nhập sẽ bị bỏ qua.
+function bulkDropBadLines(){
+  const ta = document.getElementById("editorTextarea");
+  const lines = ta.value.replace(/\r\n?/g, "\n").split("\n");
+  const { blocks, orphans } = parseBulkBlocks(ta.value);
+  const drop = new Map();   // chỉ số dòng -> nội dung (để liệt kê)
+  orphans.forEach(o => drop.set(o.i, o.t));
+  blocks.forEach(b => {
+    if(!b.parsed){ drop.set(b.i, b.t); b.mdLines.forEach(m => drop.set(m.i, m.t)); }
+    else b.badLines.forEach(x => drop.set(x.i, lines[x.i].trim()));
+  });
+  if(!drop.size) return;
+  const list = [...drop.values()];
+  const sh = list.slice(0, 5).map(l => "• " + l.slice(0, 60)).join("\n") + (list.length > 5 ? `\n• … và ${list.length - 5} dòng nữa` : "");
+  if(!confirm(`Xóa ${list.length} dòng lỗi?\n\n${sh}`)) return;
+  ta.value = lines.filter((l, i) => !drop.has(i)).join("\n");
+  refreshEditorPreview();
+  flashBtn(document.getElementById("bulkDropBadBtn"), `✓ Đã bỏ ${list.length} dòng`);
+}
+document.getElementById("bulkCleanBtn").addEventListener("click", bulkCleanText);
+document.getElementById("bulkDropBadBtn").addEventListener("click", bulkDropBadLines);
+
+// Đổi nhãn nút trong chốc lát để báo kết quả (dùng chung cho Auto / Fix).
+function flashBtn(btn, msg){
+  if(!btn.dataset.label) btn.dataset.label = btn.textContent;
+  btn.textContent = msg;
+  clearTimeout(btn._t);
+  btn._t = setTimeout(() => { btn.textContent = btn.dataset.label; }, 1800);
+}
+
+// 🔧 Fix: đã đổi tên tiêu đề / phân loại ở dòng đầu -> đổi tên ở các dòng ảnh/
+// link bên dưới cho khớp. Ghép THEO VỊ TRÍ (không so nội dung chữ): phân loại
+// thứ i của danh sách gốc (lúc mở khung sửa) -> phân loại thứ i hiện tại; chỗ
+// nào khác nhau thì dòng mang tên cũ được đổi sang tên mới, URL giữ nguyên.
+// Luôn hiện hộp xác nhận liệt kê cặp đổi + cảnh báo trước khi ghi vào ô nhập.
+function fixEditorNames(){
+  const ta = document.getElementById("editorTextarea");
+  const btn = document.getElementById("fixBtn");
+  const flash = msg => flashBtn(btn, msg);
+  const lines = ta.value.replace(/\r\n?/g, "\n").split("\n");
+  const fi = lines.findIndex(l => l.trim());
+  if(fi < 0){ flash("⚠️ Chưa có dòng đầu"); return; }
+  const first = parseLine(lines[fi].trim());
+  if(!first){ flash("⚠️ Dòng đầu chưa đúng"); return; }
+
+  const lc = x => String(x).toLowerCase();
+  const newTitle = first.name, oldTitle = editorOldName || "";
+  const newLabels = labelsOf(first), oldLabels = editorOldLabels || [];
+  const titleChanged = !!oldTitle && lc(oldTitle) !== lc(newTitle);
+
+  // Cặp đổi tên theo vị trí (chỉ những vị trí có tên khác nhau).
+  const n = Math.min(oldLabels.length, newLabels.length);
+  const pairs = new Map();                       // tên cũ (thường) -> {from,to,count}
+  if(titleChanged) pairs.set(lc(oldTitle), { from: oldTitle, to: newTitle, count: 0, title: true });
+  for(let i = 0; i < n; i++){
+    const k = lc(oldLabels[i]);
+    if(k !== lc(newLabels[i]) && !pairs.has(k)) pairs.set(k, { from: oldLabels[i], to: newLabels[i], count: 0 });
+  }
+
+  // Quét các dòng ảnh/link; dòng nào sẽ đổi, dòng nào giữ.
+  const items = [];
+  lines.forEach((l, i) => {
+    if(i <= fi) return;
+    const m = l.trim().match(/^(!?)\[(.*)\]\((.*)\)$/);
+    if(m) items.push({ i, bang: m[1], name: m[2].trim(), url: m[3] });
+  });
+  const stay = new Set();                        // dòng giữ nguyên: loại+tên
+  const todo = [];
+  items.forEach(it => {
+    const pr = it.name ? pairs.get(lc(it.name)) : null;
+    if(pr) todo.push({ it, pr }); else stay.add(it.bang + "|" + lc(it.name));
+  });
+  // Tránh tạo dòng trùng: nếu đã có sẵn dòng cùng loại mang đúng tên mới thì bỏ qua dòng đó.
+  const skipped = [], apply = [];
+  todo.forEach(t => (stay.has(t.it.bang + "|" + lc(t.pr.to)) ? skipped : apply).push(t));
+  apply.forEach(t => t.pr.count++);
+
+  // Dòng còn lại không khớp tên sản phẩm / phân loại nào (Fix không tự xóa).
+  const valid = new Set([lc(newTitle), ...newLabels.map(lc)]);
+  const applied = new Set(apply.map(t => t.it.i));
+  const orphans = [...new Set(items
+    .filter(it => !applied.has(it.i) && it.name && !valid.has(lc(it.name)))
+    .map(it => it.name))];
+
+  const notes = [];
+  if(oldLabels.length !== newLabels.length){
+    notes.push(`⚠️ Số phân loại đổi ${oldLabels.length} → ${newLabels.length}: chỉ ghép theo vị trí 1…${n}. Nếu bạn thêm/xóa ở GIỮA danh sách thì kết quả có thể lệch — kiểm tra kỹ các cặp trên.`);
+  }
+  if(skipped.length){
+    notes.push(`⚠️ Bỏ qua ${skipped.length} dòng vì đã có dòng cùng loại mang tên mới: ${[...new Set(skipped.map(t => t.it.bang + "[" + t.pr.to + "]"))].join(", ")}`);
+  }
+  if(orphans.length){
+    const sh = orphans.slice(0, 6).map(x => `"${x}"`).join(", ") + (orphans.length > 6 ? ", …" : "");
+    notes.push(`⚠️ ${orphans.length} tên không khớp phân loại nào (giữ nguyên, cần sửa/xóa tay): ${sh}`);
+  }
+
+  if(!apply.length){
+    if(notes.length) alert("Không có dòng nào để đổi tên.\n\n" + notes.join("\n"));
+    else flash("✓ Khớp rồi");
+    return;
+  }
+  const used = [...pairs.values()].filter(pr => pr.count > 0);
+  const list = used.slice(0, 10).map(pr => `• ${pr.title ? "Tiêu đề: " : ""}"${pr.from}" → "${pr.to}" (${pr.count} dòng)`);
+  if(used.length > 10) list.push(`• … và ${used.length - 10} cặp nữa`);
+  const msg = "Đổi tên theo vị trí (URL giữ nguyên):\n" + list.join("\n")
+    + (notes.length ? "\n\n" + notes.join("\n") : "") + "\n\nĐồng ý đổi?";
+  if(!confirm(msg)) return;
+
+  apply.forEach(t => { lines[t.it.i] = `${t.it.bang}[${t.pr.to}](${t.it.url})`; });
+  ta.value = lines.join("\n");
+  editorOldLabels = newLabels.slice();           // mốc mới: các dòng giờ mang tên hiện tại
+  editorOldName = newTitle;
+  refreshEditorPreview();
+  ta.focus();
+  flash(`✓ Đã đổi ${apply.length} dòng`);
+}
+document.getElementById("fixBtn").addEventListener("click", fixEditorNames);
+
+// ✨ Auto: thêm các dòng mẫu còn THIẾU cho "Chung" + mọi phân loại, rồi đặt
+// con trỏ vào ô () trống kế tiếp để dán URL. Không cần chọn chế độ từ đầu:
+// dòng nào đã có (kể cả ![MS1]() còn trống) thì giữ nguyên, chỉ bổ sung phần
+// thiếu — bấm lặp lại an toàn. "Chung" dùng dạng tên trống: ![]() / []().
+function autoFillEditorLines(ta){
+  ta = ta || document.getElementById("editorTextarea");
+  const btn = document.getElementById("autoFillBtn");
+  const flash = msg => flashBtn(btn, msg);
+  const lines = ta.value.replace(/\r\n?/g, "\n").split("\n");
+  const fi = lines.findIndex(l => l.trim());
+  if(fi < 0){ flash("⚠️ Chưa có dòng đầu"); return; }
+  const first = parseLine(lines[fi].trim());
+  if(!first){ flash("⚠️ Dòng đầu chưa đúng"); return; }
+
+  const labels = labelsOf(first);
+  const fname = first.name.toLowerCase(), oname = (editorOldName || "").toLowerCase();
+  const labMap = new Map(labels.map(x => [x.toLowerCase(), x]));
+  const have = { img: new Set(), link: new Set() };   // khóa "" = Chung
+  let lastImg = -1, lastLink = -1;
+  lines.forEach((l, i) => {
+    if(i <= fi) return;
+    const m = l.trim().match(/^(!?)\[(.*)\]\((.*)\)$/);
+    if(!m) return;
+    const isImg = m[1] === "!";
+    if(isImg) lastImg = i; else lastLink = i;
+    const low = m[2].trim().toLowerCase();
+    const key = (!low || low === fname || (oname && low === oname)) ? "" : labMap.get(low);
+    if(key !== undefined) (isImg ? have.img : have.link).add(key);
+  });
+
+  const keys = ["", ...new Set(labels)];
+  const missing = isImg => keys.filter(k => !(isImg ? have.img : have.link).has(k)).map(k => `${isImg ? "!" : ""}[${k}]()`);
+  const addImg = missing(true), addLink = missing(false);
+  const total = addImg.length + addLink.length;
+
+  if(total){
+    // Khối ảnh nối sau dòng ảnh cuối (chưa có -> ngay dưới dòng đầu, cách 1 dòng
+    // trống); khối link nối sau dòng link cuối (chưa có -> cuối văn bản).
+    const plans = [];
+    if(addImg.length){
+      if(lastImg >= 0) plans.push({ pos: lastImg + 1, rows: addImg, ord: 0 });
+      else if(fi + 1 < lines.length && !lines[fi + 1].trim()) plans.push({ pos: fi + 2, rows: addImg, ord: 0 });
+      else plans.push({ pos: fi + 1, rows: ["", ...addImg], ord: 0 });
+    }
+    if(addLink.length){
+      let end = lines.length;
+      while(end > fi + 1 && !lines[end - 1].trim()) end--;
+      plans.push({ pos: lastLink >= 0 ? lastLink + 1 : end, rows: addLink, ord: 1 });
+    }
+    // Chèn từ dưới lên để chỉ số dòng không bị lệch; cùng vị trí thì link
+    // chèn trước để ảnh nằm trên link.
+    plans.sort((a, b) => b.pos - a.pos || b.ord - a.ord)
+         .forEach(pl => lines.splice(pl.pos, 0, ...pl.rows));
+    ta.value = lines.join("\n");
+  }
+
+  // Tìm ô () trống kế tiếp (sau con trỏ, quay vòng; vừa thêm dòng thì tìm từ đầu).
+  const text = ta.value, re = /\(\s*\)[ \t]*$/gm, slots = [];
+  let mm;
+  while((mm = re.exec(text))) slots.push(mm.index + 1);
+  const from = total ? 0 : ta.selectionStart;
+  const next = slots.find(x => x >= from) ?? slots[0];
+  ta.focus();
+  if(next !== undefined){
+    ta.blur();                          // blur -> focus để trình duyệt cuộn tới con trỏ
+    ta.setSelectionRange(next, next);
+    ta.focus();
+  }
+  refreshEditorPreview();
+  flash(total ? `✓ +${total} dòng` : (next !== undefined ? "→ ô trống kế" : "✓ Đã đủ"));
+}
+// Ở khung Mở rộng (nhập nhiều sản phẩm), các nút chỉ tác động lên KHỐI chứa con
+// trỏ: tách khối ra 1 "ô giả", chạy đúng hàm của khung Sửa trên đó rồi ghép lại.
+function runEditorTool(fn){
+  if(!editorBulk){ fn(); return; }
+  const real = document.getElementById("editorTextarea");
+  const val = real.value, caret = real.selectionStart;
+  const rng = findBlockRange(val, caret);
+  if(!rng){ flashBtn(document.getElementById("autoFillBtn"), "⚠️ Chưa có dòng sản phẩm"); return; }
+  const fake = {
+    value: val.slice(rng.start, rng.end),
+    selectionStart: Math.min(Math.max(0, caret - rng.start), rng.end - rng.start),
+    sel: null, focus(){}, blur(){}, setSelectionRange(a){ this.sel = a; }
+  };
+  fn(fake);
+  real.value = val.slice(0, rng.start) + fake.value + val.slice(rng.end);
+  const pos = rng.start + (fake.sel !== null ? fake.sel : fake.selectionStart);
+  real.blur(); real.setSelectionRange(pos, pos); real.focus();
+  refreshEditorPreview();
+}
+document.getElementById("autoFillBtn").addEventListener("click", () => runEditorTool(ta => autoFillEditorLines(ta)));
+document.getElementById("insImgBtn").addEventListener("click", () => runEditorTool(ta => insertEditorLine("!", ta)));
+document.getElementById("insLinkBtn").addEventListener("click", () => runEditorTool(ta => insertEditorLine("", ta)));
 document.getElementById("editorTextarea").addEventListener("input", refreshEditorPreview);
 
 function openUrl(u){ if(u) window.open(u, "_blank", "noopener"); }
@@ -2402,71 +2865,79 @@ document.getElementById("topDelBtn").addEventListener("click", async () => {
   }
 });
 
+// Hộp thoại hỏi khi có sản phẩm trùng tên: trả về "add" | "skip" | "cancel".
+function askDuplicateChoice(names){
+  return new Promise(resolve => {
+    const ov = document.getElementById("dupOverlay");
+    document.getElementById("dupDesc").textContent = `${names.length} sản phẩm trong danh sách đã có trong danh mục (hoặc bị trùng tên trong chính danh sách này):`;
+    const ul = document.getElementById("dupList");
+    ul.innerHTML = names.slice(0, 8).map(n => `<li>${escapeHtml(n)}</li>`).join("")
+      + (names.length > 8 ? `<li>… và ${names.length - 8} sản phẩm nữa</li>` : "");
+    const done = v => {
+      ov.classList.remove("show");
+      document.getElementById("dupAddBtn").onclick = null;
+      document.getElementById("dupSkipBtn").onclick = null;
+      document.getElementById("dupCancelBtn").onclick = null;
+      resolve(v);
+    };
+    document.getElementById("dupAddBtn").onclick = () => done("add");
+    document.getElementById("dupSkipBtn").onclick = () => done("skip");
+    document.getElementById("dupCancelBtn").onclick = () => done("cancel");
+    ov.classList.add("show");
+  });
+}
+
+// Nhập danh sách CHỈ TẠO MỚI sản phẩm (kèm ảnh/link nếu có dòng ![]() / []() bên dưới).
+// Sản phẩm đã có không bị gộp hay ghi đè — trùng tên thì hỏi: thêm mới / bỏ qua / hủy.
 document.getElementById("bulkBtn").addEventListener("click", async () => {
   const raw = document.getElementById("bulkInput").value;
   const statusEl = document.getElementById("bulkStatus");
-  const lines = raw.split("\n").map(l => l.trim()).filter(Boolean);
-  if(lines.length === 0){
+  const { blocks, orphans } = parseBulkBlocks(raw);
+  if(blocks.length === 0 && orphans.length === 0){
     statusEl.textContent = "Chưa có nội dung để nhập.";
     statusEl.className = "status err";
     return;
   }
-  let created = 0, merged = 0, skipped = 0, mismatched = 0;
-  await ensureOrderMigration();
-  let nextOrder = getMaxOrder() + ORDER_STEP;
-  // Bản sao làm việc trong bộ nhớ: allProducts chỉ được cập nhật qua onSnapshot
-  // (bất đồng bộ), nên nếu không theo dõi riêng, 2 dòng trùng tên sản phẩm MỚI
-  // trong cùng 1 lượt dán sẽ không thấy nhau -> bị tạo thành 2 sản phẩm trùng.
-  // workingList luôn phản ánh đúng trạng thái "sau khi xử lý xong các dòng
-  // trước đó", kể cả sản phẩm vừa mới tạo trong chính lượt dán này.
-  const workingList = allProducts.map(p => ({
-    id: p.id, name: p.name,
-    variants: p.variants ? [...p.variants] : [],
-    tiers: p.tiers ? p.tiers.map(arr => [...arr]) : null
-  }));
+  const valid = blocks.filter(b => b.parsed);
+  const badBlocks = blocks.length - valid.length;
+  const badLines = blocks.reduce((n, b) => n + b.badLines.length, 0) + orphans.length;
+  let created = 0, skippedDup = 0;
   try{
-    for(const line of lines){
-      const parsed = parseLine(line);
-      if(!parsed){ skipped++; continue; }
-      const existing = workingList.find(p => p.name.toLowerCase() === parsed.name.toLowerCase());
-      if(existing){
-        const existingHasTiers = existing.tiers && existing.tiers.length >= 2;
-        const existingHasFlat = existing.variants && existing.variants.length > 0;
-        const parsedIsTiered = !!parsed.tiers;
-        const parsedIsFlat = parsed.variants && parsed.variants.length > 0;
-
-        if(parsedIsTiered && existingHasFlat && !existingHasTiers){
-          // Sản phẩm đang ở dạng 1 tầng (phẳng) mà dòng mới lại đưa dạng 2 tầng
-          // -> không tự đổi cấu trúc ngầm, tránh mất/ẩn dữ liệu variants cũ.
-          mismatched++;
-        } else if(parsedIsFlat && existingHasTiers){
-          // Ngược lại: sản phẩm đã có 2 tầng mà dòng mới chỉ đưa danh sách phẳng.
-          mismatched++;
-        } else if(parsedIsTiered){
-          const mergedTiers = mergeTiers(existing.tiers, parsed.tiers);
-          await updateDoc(doc(db, "catalog", existing.id), { tiers: tiersToFirestore(mergedTiers) });
-          existing.tiers = mergedTiers;
-          merged++;
-        } else if(parsedIsFlat){
-          const mergedVariants = Array.from(new Set([...(existing.variants || []), ...parsed.variants]));
-          await updateDoc(doc(db, "catalog", existing.id), { variants: mergedVariants });
-          existing.variants = mergedVariants;
-          merged++;
-        } else {
-          // Dòng chỉ có tên, không phân loại -> sản phẩm đã tồn tại thì giữ nguyên.
-          merged++;
-        }
-      } else {
-        // Sản phẩm mới mặc định xếp ở cuối danh sách hiện có (order lớn nhất + bước nhảy)
-        const ref = await addDoc(catalogCol, { name: parsed.name, variants: parsed.variants, tiers: tiersToFirestore(parsed.tiers), order: nextOrder });
-        nextOrder += ORDER_STEP;
-        workingList.push({ id: ref.id, name: parsed.name, variants: [...parsed.variants], tiers: parsed.tiers ? parsed.tiers.map(arr => [...arr]) : null });
-        created++;
+    let choice = "add";
+    const dups = valid.filter(b => b.dup);
+    if(dups.length){
+      choice = await askDuplicateChoice(dups.map(b => b.parsed.name));
+      if(choice === "cancel"){
+        statusEl.textContent = "Đã hủy nhập — chưa có gì được thêm. Chỉnh lại danh sách rồi nhập lại.";
+        statusEl.className = "status err";
+        return;
       }
     }
-    const parts = [`${created} sp mới`, `${merged} sp gộp thêm phân loại`];
-    if(mismatched > 0) parts.push(`${mismatched} dòng bỏ qua (khác cấu trúc phân loại với sản phẩm đã có, cần sửa tay qua nút ✏️ Sửa)`);
-    parts.push(`${skipped} dòng bỏ qua (sai định dạng)`);
+    await ensureOrderMigration();
+    let nextOrder = getMaxOrder() + ORDER_STEP;
+    // Tên đã dùng (danh mục hiện có + sản phẩm vừa tạo trong lượt này) để tạo tên "(2)" không trùng.
+    const used = new Set(allProducts.map(p => p.name.toLowerCase()));
+    for(const b of valid){
+      if(b.dup && choice === "skip"){ skippedDup++; continue; }
+      let name = b.parsed.name;
+      if(used.has(name.toLowerCase())){
+        let n = 2;
+        while(used.has(`${name} (${n})`.toLowerCase())) n++;
+        name = `${name} (${n})`;
+      }
+      used.add(name.toLowerCase());
+      const r = b.r;
+      await addDoc(catalogCol, {
+        name, variants: b.parsed.variants, tiers: tiersToFirestore(b.parsed.tiers), order: nextOrder,
+        image: r.image, link: r.link, variantImages: r.variantImages, variantLinks: r.variantLinks
+      });
+      nextOrder += ORDER_STEP;
+      created++;
+    }
+    const parts = [`${created} sp mới`];
+    if(skippedDup) parts.push(`${skippedDup} sp trùng bị bỏ qua`);
+    if(badBlocks) parts.push(`${badBlocks} dòng sản phẩm bỏ qua (sai định dạng)`);
+    if(badLines) parts.push(`${badLines} dòng ảnh/link bỏ qua (sai cú pháp hoặc không khớp)`);
     statusEl.textContent = "Xong: " + parts.join(", ") + ".";
     statusEl.className = "status ok";
     document.getElementById("bulkInput").value = "";
@@ -2477,14 +2948,15 @@ document.getElementById("bulkBtn").addEventListener("click", async () => {
   }
 });
 
-// Giữ nguyên nội dung này khớp với đoạn <p class="muted"> tĩnh nằm dưới
-// ô #bulkInput ở trên — nếu sửa 1 chỗ thì nhớ sửa luôn chỗ kia.
+// Giữ nguyên nội dung này khớp với đoạn <p class="muted"> tĩnh nằm trong
+// khung <details id="bulkHelp"> phía trên ô #bulkInput — nếu sửa 1 chỗ thì nhớ sửa luôn chỗ kia.
 const BULK_FORMAT_HELP = `Mỗi dòng 1 sản phẩm, hỗ trợ 3 kiểu:<br>
       1) Không phân loại: <b>Tên sản phẩm</b><br>
       2) 1 tầng phân loại: <b>Tên sản phẩm | lựa chọn 1, lựa chọn 2</b><br>
       3) 2 tầng phân loại: <b>Tên sản phẩm | giá trị tầng 1a, giá trị tầng 1b | giá trị tầng 2a, giá trị tầng 2b</b><br>
-      Sản phẩm đã có sẽ được gộp thêm lựa chọn mới vào đúng tầng, không tạo trùng.<br>
-      ⚠️ Dấu <b>|</b> và <b>,</b> luôn được hiểu là dấu phân cách — không dùng chúng bên trong tên sản phẩm hay tên 1 lựa chọn (kể cả số thập phân, vd viết "21.5" thay vì "21,5" để tránh bị tách thành 2 lựa chọn riêng).`;
+      Ảnh / link (tùy chọn): ghi ngay dưới dòng sản phẩm, mỗi dòng <b>![Tên](URL ảnh)</b> hoặc <b>[Tên](URL link file in)</b>. Tên để trống hoặc = tên sản phẩm → gắn <b>chung</b>; = tên phân loại (vd MS1) → gắn <b>riêng</b>. Dùng ✨ Auto / ＋ Ảnh / ＋ Link bên dưới (tác động lên sản phẩm đang có con trỏ).<br>
+      Ô này <b>chỉ tạo sản phẩm mới</b>: sản phẩm đã có không bị gộp hay ghi đè (nếu trùng tên sẽ hỏi Thêm mới / Bỏ qua / Hủy). Muốn sửa sản phẩm đã có, dùng nút ✏️ trong danh sách.<br>
+      ⚠️ Dấu <b>|</b> và <b>,</b> luôn được hiểu là dấu phân cách ở dòng sản phẩm — không dùng chúng bên trong tên sản phẩm hay tên 1 lựa chọn (kể cả số thập phân, vd viết "21.5" thay vì "21,5" để tránh bị tách thành 2 lựa chọn riêng).`;
 
 document.getElementById("exportBtn").addEventListener("click", () => {
   if(allProducts.length === 0){
@@ -2504,7 +2976,12 @@ document.getElementById("expandBtn").addEventListener("click", () => {
   openEditorRaw("Nhập / sửa danh sách", bulkTextarea.value, async (text) => {
     bulkTextarea.value = text;
     return true;
-  }, BULK_FORMAT_HELP, "Dùng nội dung này");
+  }, `<details class="bulk-help" style="margin:0;"><summary>Hướng dẫn sử dụng / Chi tiết</summary><p class="muted">${BULK_FORMAT_HELP}</p></details>`, "Dùng nội dung này");
+  // Chỉ khung Mở rộng mới có xem trước + nút Auto/＋Ảnh/＋Link/Dọn/Bỏ dòng lỗi; ô nhập thường giữ nguyên.
+  editorOldName = ""; editorOldLabels = [];   // sản phẩm mới: không có tên cũ (tránh dính dữ liệu của lần Sửa trước)
+  editorPreviewOn = true;
+  setEditorExtras("bulk");
+  refreshEditorPreview();
 });
 
 function closeFullscreen(){
@@ -2547,6 +3024,7 @@ function openEditor(product){
     }
   }, 'Dòng đầu: <b>Tên | a, b | c, d</b>. Các dòng dưới (tùy chọn): <b>![Tên](URL ảnh)</b> và <b>[Tên](URL link file in)</b>.<br>Tên để trống hoặc = tên sản phẩm → gắn <b>chung</b>; = tên phân loại (vd MS1) → gắn <b>riêng</b>. Phân loại không có riêng sẽ dùng bản chung. Xóa dòng = gỡ.', "Lưu");
   editorOldName = product.name;
+  editorOldLabels = labelsOf(product);   // mốc để nút Fix so sánh theo vị trí
   editorPreviewOn = true;
   setEditorExtras(true);
   refreshEditorPreview();
