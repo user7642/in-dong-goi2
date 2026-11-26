@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xuất &amp; Tra cứu Đã bàn giao</title>
+<style>
+  :root{
+    --bg:#0f1115; --card:#1a1d23; --border:#2d3138; --text:#e8eaed; --muted:#9aa3af;
+    --blue:#3b82f6; --blue-bg:#1e3a5f; --green:#34d399; --green-solid:#15803d;
+    --amber:#fbbf24; --amber-bg:#3a2f14;
+    --red:#f87171; --red-bg:#3a1a1a; --input-bg:#20242b; --row-bg:#171a20;
+    --pill-bg:#22262f; --pill-border:#343a46; --pill-text:#e2e8f0;
+    --pill-qty-bg:#1e3a5f; --pill-qty-text:#93c5fd;
+    --san-bg:#16302b; --san-text:#5eead4; --san-border:#1f4e45;
+    --maxw:1080px;
+  }
+  body.light-theme{
+    --bg:#f5f6f7; --card:#ffffff; --border:#e2e4e7; --text:#1a1d21; --muted:#6b7280;
+    --blue:#2563eb; --blue-bg:#eaf1ff; --green:#15803d; --green-solid:#15803d;
+    --amber:#b45309; --amber-bg:#fef3e0;
+    --red:#dc2626; --red-bg:#fde8e8; --input-bg:#ffffff; --row-bg:#fafbfc;
+    --pill-bg:#f8fafc; --pill-border:#cbd5e1; --pill-text:#334155;
+    --pill-qty-bg:#dbeafe; --pill-qty-text:#1d4ed8;
+    --san-bg:#ecfdf5; --san-text:#047857; --san-border:#a7f3d0;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);color:var(--text);padding:16px;
+  }
+  .wrap{max-width:var(--maxw);margin:0 auto;}
+  header{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    background:var(--card);border:1px solid var(--border);border-radius:12px;
+    padding:12px 16px;margin-bottom:14px;flex-wrap:wrap;
+  }
+  h1{font-size:17px;margin:0;font-weight:600;}
+  h2{font-size:14.5px;margin:0 0 10px 0;font-weight:600;}
+  a.back{color:var(--blue);text-decoration:none;font-size:13.5px;font-weight:600;}
+  .card{
+    background:var(--card);border:1px solid var(--border);border-radius:12px;
+    padding:14px 16px;margin-bottom:14px;
+  }
+  .source-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between;}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;}
+  .tab-btn{
+    background:transparent;color:var(--muted);border:1px solid var(--border);
+    border-radius:8px;padding:8px 13px;font-size:13.5px;font-weight:600;cursor:pointer;
+  }
+  .tab-btn.active{background:var(--blue-bg);color:var(--blue);border-color:var(--blue);}
+  .source-badge{
+    font-size:12.5px;padding:5px 10px;border-radius:8px;
+    background:var(--row-bg);border:1px solid var(--border);color:var(--muted);
+  }
+  .source-badge b{color:var(--text);}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;}
+  .stat-box{background:var(--row-bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;}
+  .stat-label{font-size:12px;color:var(--muted);margin-bottom:4px;}
+  .stat-val{font-size:19px;font-weight:700;color:var(--text);}
+  /* Thanh thống kê & lọc nhanh theo Sàn / Đơn vị VC */
+  .channel-bar{
+    display:flex;flex-wrap:wrap;align-items:center;gap:8px;
+    margin-top:12px;padding-top:10px;border-top:1px solid var(--border);
+  }
+  .channel-title{font-size:12.5px;font-weight:600;color:var(--muted);white-space:nowrap;}
+  .channel-pill{
+    display:inline-flex;align-items:stretch;border-radius:7px;overflow:hidden;
+    border:1px solid var(--san-border);background:var(--row-bg);font-size:12.5px;line-height:1.35;
+    padding:0;gap:0;cursor:pointer;transition:transform .1s ease, border-color .15s ease, box-shadow .15s ease;
+  }
+  .channel-pill:hover{transform:translateY(-1px);border-color:var(--blue);}
+  .channel-pill.carrier-mode{border-color:var(--pill-border);}
+  .channel-name{padding:4px 9px;color:var(--text);font-weight:600;}
+  .channel-cnt{
+    padding:4px 8px;background:var(--san-bg);color:var(--san-text);
+    font-weight:700;border-left:1px solid var(--san-border);
+    font-variant-numeric:tabular-nums;
+  }
+  .channel-pill.carrier-mode .channel-cnt{
+    background:var(--pill-qty-bg);color:var(--pill-qty-text);border-left-color:var(--pill-border);
+  }
+  .channel-pill.active{
+    border-color:var(--blue);background:var(--blue);
+    box-shadow:0 0 0 2px var(--blue-bg);
+  }
+  .channel-pill.active .channel-name{color:#fff;}
+  .channel-pill.active .channel-cnt{
+    background:rgba(0,0,0,.22);color:#fff;border-left-color:rgba(255,255,255,.25);
+  }
+  .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+  .row-between{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;}
+  .toolbar-row1{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px;}
+  .toolbar-row2{
+    display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;
+    padding-top:10px;border-top:1px solid var(--border);
+  }
+  .col-toggles{display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
+  .action-group{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+  label.inline{display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--text);cursor:pointer;white-space:nowrap;}
+  input[type=text],input[type=password],input[type=date],select{
+    background:var(--input-bg);color:var(--text);border:1px solid var(--border);
+    border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;
+  }
+  input[type=checkbox]{width:16px;height:16px;accent-color:var(--blue);cursor:pointer;margin:0;}
+  button{
+    border:none;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;
+    cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;
+  }
+  .btn-primary{background:var(--green-solid);color:#fff;}
+  .btn-blue{background:var(--blue);color:#fff;}
+  .btn-secondary{background:var(--blue-bg);color:var(--blue);}
+  .btn-outline{background:transparent;color:var(--text);border:1px solid var(--border);}
+  .btn-danger{background:var(--red-bg);color:var(--red);}
+  button:disabled{opacity:.42;cursor:not-allowed;}
+  .status{font-size:13px;color:var(--muted);margin-top:10px;line-height:1.45;}
+  .status.ok{color:var(--green);}
+  .status.err{color:var(--red);background:var(--red-bg);padding:8px 10px;border-radius:8px;}
+  .hint-box{
+    margin-top:8px;padding:8px 11px;border-radius:8px;font-size:13px;
+    background:var(--amber-bg);color:var(--amber);border:1px solid var(--border);
+  }
+  .drive-list{
+    border:1px solid var(--border);border-radius:10px;overflow:hidden;
+    max-height:260px;overflow-y:auto;margin-top:10px;
+  }
+  .drive-item{
+    display:flex;align-items:center;gap:10px;padding:9px 12px;
+    border-bottom:1px solid var(--border);font-size:13px;
+  }
+  .drive-item:last-child{border-bottom:none;}
+  .drive-item:hover{background:var(--row-bg);}
+  .drive-item.live-row{
+    background:var(--blue-bg);
+    border-bottom:1px solid var(--blue);
+  }
+  .drive-item.live-row .fname{color:var(--blue);}
+  .drive-item .fname{flex:1;min-width:0;font-weight:600;word-break:break-all;}
+  .drive-item .fmeta{font-size:12px;color:var(--muted);white-space:nowrap;}
+  /* Chiều cao bảng dữ liệu & thống kê: tối đa 70% chiều cao cửa sổ trình duyệt khả dụng */
+  .table-wrap{
+    overflow:auto;
+    max-height:70vh;
+    max-height:70dvh;
+    border-top:1px solid var(--border);
+  }
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th,td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top;}
+  th{position:sticky;top:0;background:var(--row-bg);color:var(--muted);font-weight:600;white-space:nowrap;z-index:2;}
+  tbody tr:hover{background:var(--row-bg);}
+  .num{text-align:right;font-variant-numeric:tabular-nums;}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;white-space:nowrap;}
+  .subtabs{display:flex;gap:6px;padding:10px 14px;background:var(--row-bg);border-bottom:1px solid var(--border);}
+  .var-list{display:flex;flex-wrap:wrap;gap:6px;}
+  .var-pill{
+    display:inline-flex;align-items:stretch;
+    border:1px solid var(--pill-border);border-radius:6px;overflow:hidden;
+    background:var(--pill-bg);font-size:12px;line-height:1.35;
+  }
+  .var-name{padding:2px 7px;color:var(--pill-text);font-weight:500;}
+  .var-qty{
+    padding:2px 7px;background:var(--pill-qty-bg);color:var(--pill-qty-text);
+    font-weight:700;border-left:1px solid var(--pill-border);
+    font-variant-numeric:tabular-nums;
+  }
+  .san-badge{
+    display:inline-block;padding:2px 8px;border-radius:6px;font-size:12px;font-weight:600;
+    background:var(--san-bg);color:var(--san-text);border:1px solid var(--san-border);
+    white-space:nowrap;
+  }
+  .rule-table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px;}
+  .rule-table th,.rule-table td{padding:6px 8px;border-bottom:1px solid var(--border);}
+  .rule-table input,.rule-table select{width:100%;padding:5px 8px;}
+  .rule-note{font-size:12.5px;color:var(--muted);margin:0 0 8px 0;line-height:1.45;}
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>📦 Xuất &amp; Tra cứu Lịch sử Đã bàn giao</h1>
+    <div class="row">
+      <button type="button" class="btn-outline" id="themeBtn" style="padding:6px 10px;">🌙</button>
+      <a class="back" href="index.html">← Về trang chính</a>
+    </div>
+  </header>
+
+  <!-- Thanh chọn nguồn dữ liệu -->
+  <div class="card">
+    <div class="source-bar">
+      <div class="tabs">
+        <button type="button" class="tab-btn active" id="tabLive">📡 Firestore (Hiện tại)</button>
+        <button type="button" class="tab-btn" id="tabDrive">☁️ Kho Google Drive</button>
+        <label class="tab-btn" style="display:inline-flex;align-items:center;gap:6px;">
+          📂 Mở CSV từ máy
+          <input type="file" id="localFileInput" accept=".csv,text/csv" multiple style="display:none;">
+        </label>
+      </div>
+      <div class="source-badge">Đang xem: <b id="activeSourceLabel">Firestore (Đã bàn giao)</b></div>
+    </div>
+  </div>
+
+  <!-- Khối kết nối & duyệt kho Google Drive -->
+  <div class="card hidden" id="drivePanel">
+    <div class="row-between" style="margin-bottom:8px;">
+      <h2 style="margin:0;">☁️ Kho lưu trữ Google Drive (Hỗ trợ gộp kèm Firestore hiện tại)</h2>
+      <div class="row">
+        <button type="button" class="btn-outline hidden" id="editHintBtn">✏️ Sửa gợi ý PIN</button>
+        <button type="button" class="btn-outline hidden" id="lockBtn">🔒 Khóa lại</button>
+      </div>
+    </div>
+
+    <div class="row" id="gasUrlRow" style="margin-bottom:8px;">
+      <input type="text" id="gasUrlInput" placeholder="Dán link Web App Google Apps Script (https://script.google.com/macros/s/.../exec)" style="flex:1;min-width:240px;">
+      <button type="button" class="btn-outline" id="saveGasUrlBtn">Lưu link</button>
+    </div>
+
+    <div id="pinLockBox">
+      <div class="row">
+        <input type="password" id="pinInput" placeholder="Nhập mã PIN bí mật..." style="width:220px;">
+        <button type="button" class="btn-blue" id="unlockBtn">🔓 Mở khóa Drive</button>
+      </div>
+      <div class="hint-box hidden" id="pinHintBox"></div>
+    </div>
+
+    <div id="driveUnlockedBox" class="hidden">
+      <div class="row-between">
+        <span style="font-size:13px;color:var(--muted);" id="driveCountLabel">Đang tải danh sách file...</span>
+        <div class="row">
+          <button type="button" class="btn-outline" id="refreshDriveBtn">🔄 Làm mới</button>
+          <button type="button" class="btn-secondary" id="loadSelectedFilesBtn" disabled>📥 Nạp các mục đã chọn</button>
+        </div>
+      </div>
+      <div class="drive-list" id="driveFileList"></div>
+    </div>
+    <div class="status" id="driveStatus"></div>
+  </div>
+
+  <!-- Bảng quy tắc chuyển đổi Đơn vị VC / Mã vận đơn -> Sàn -->
+  <div class="card hidden" id="rulesPanel">
+    <div class="row-between" style="margin-bottom:6px;">
+      <h2 style="margin:0;">⚙️ Bảng chuyển đổi sang Sàn (Tự động lưu trên trình duyệt)</h2>
+      <div class="row">
+        <button type="button" class="btn-secondary" id="addRuleBtn">+ Thêm dòng</button>
+        <button type="button" class="btn-outline" id="resetRulesBtn">↺ Mặc định</button>
+        <button type="button" class="btn-outline" id="closeRulesBtn">Đóng</button>
+      </div>
+    </div>
+    <p class="rule-note">
+      Hệ thống dò từ trên xuống dưới, khớp dòng nào trước sẽ lấy kết quả dòng đó. Mọi thay đổi tự động ghi nhớ, áp dụng trực tiếp lên GUI và file <b>Copy CSV / Tải CSV</b> — <b>không tác động tới file gốc lưu trên Google Drive</b> (file gốc trên Drive luôn lưu đầy đủ <code>order_id</code>, <code>ma_van_don</code> và <code>don_vi_vc</code>).
+    </p>
+    <div style="overflow-x:auto;">
+      <table class="rule-table">
+        <thead>
+          <tr>
+            <th style="width:185px;">Kiểu nhận diện</th>
+            <th>Từ khóa / Tiền tố khớp</th>
+            <th style="width:180px;">Đổi thành Sàn</th>
+            <th style="width:52px;text-align:center;">Xóa</th>
+          </tr>
+        </thead>
+        <tbody id="rulesTbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Thống kê tổng quan + Thanh lọc nhanh theo Sàn / Đơn vị VC -->
+  <div class="card">
+    <div class="stats">
+      <div class="stat-box"><div class="stat-label">Số kiện hàng (Đơn)</div><div class="stat-val" id="stOrders">—</div></div>
+      <div class="stat-box"><div class="stat-label">Số dòng sản phẩm</div><div class="stat-val" id="stRows">—</div></div>
+      <div class="stat-box"><div class="stat-label">Tổng số lượng (SL)</div><div class="stat-val" id="stQty">—</div></div>
+      <div class="stat-box"><div class="stat-label">Khoảng thời gian</div><div class="stat-val" id="stRange" style="font-size:14px;padding-top:4px;">—</div></div>
+    </div>
+    <div class="channel-bar hidden" id="channelBar"></div>
+  </div>
+
+  <!-- Bộ lọc, hiển thị cột & nút thao tác -->
+  <div class="card">
+    <div class="toolbar-row1">
+      <input type="text" id="searchInput" placeholder="🔍 Lọc sản phẩm, phân loại, sàn, hãng VC, mã vận đơn..." style="flex:1;min-width:220px;">
+      <label class="inline">Từ: <input type="date" id="dateFrom"></label>
+      <label class="inline">Đến: <input type="date" id="dateTo"></label>
+    </div>
+
+    <div class="toolbar-row2">
+      <div class="col-toggles">
+        <label class="inline" title="Bật/tắt hiển thị cột order_id trên GUI & CSV xuất ra"><input type="checkbox" id="showOrderId"> order_id</label>
+        <label class="inline" title="Bật/tắt hiển thị cột ma_van_don trên GUI & CSV xuất ra"><input type="checkbox" id="showCode"> ma_van_don</label>
+        <label class="inline" title="Chuyển cột don_vi_vc thành cột Sàn trên GUI & CSV xuất ra"><input type="checkbox" id="useConvert"> Quy đổi sang Sàn</label>
+        <button type="button" class="btn-outline" id="toggleRulesBtn" style="padding:5px 9px;font-size:12.5px;">⚙️ Quy đổi</button>
+      </div>
+      <div class="action-group">
+        <button type="button" class="btn-outline" id="reloadLiveBtn">🔄 Tải lại</button>
+        <button type="button" class="btn-blue" id="saveDriveBtn" disabled title="Chỉ khả dụng khi xem nguồn Firestore (Hiện tại). Luôn lưu đầy đủ toàn bộ cột gốc lên Drive.">☁️ Lưu gốc lên Drive</button>
+        <button type="button" class="btn-secondary" id="copyBtn" disabled title="Copy đúng các cột đang hiển thị trên GUI">📋 Copy CSV</button>
+        <button type="button" class="btn-primary" id="downloadBtn" disabled title="Tải CSV đúng các cột đang hiển thị trên GUI">⬇️ Tải CSV</button>
+      </div>
+    </div>
+
+    <div class="status" id="statusMsg">Đang kết nối Firestore...</div>
+  </div>
+
+  <!-- Bảng dữ liệu & Thống kê nhanh -->
+  <div class="card" style="padding:0;overflow:hidden;">
+    <div class="subtabs">
+      <button type="button" class="tab-btn active" id="viewDetailBtn">📋 Chi tiết đơn hàng</button>
+      <button type="button" class="tab-btn" id="viewSummaryBtn">📊 Thống kê nhanh theo sản phẩm</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead id="tblHead"></thead>
+        <tbody id="tblBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+// Đồng bộ theme với index.html & catalog.html
+(function(){
+  const KEY = "theme-preference";
+  const body = document.body, btn = document.getElementById("themeBtn");
+  try{ if(localStorage.getItem(KEY) === "light") body.classList.add("light-theme"); }catch(e){}
+  const paint = () => { btn.textContent = body.classList.contains("light-theme") ? "☀️" : "🌙"; };
+  btn.addEventListener("click", () => {
+    body.classList.toggle("light-theme");
+    try{ localStorage.setItem(KEY, body.classList.contains("light-theme") ? "light" : "dark"); }catch(e){}
+    paint();
+  });
+  paint();
+})();
+</script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbzpo8tLZ_CCfE1gM6flCFdbeDf2WAcpZcJDq3qIrIq95UPcvpQepUt-LYcpbkmFTGbBCw/exec";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD7KyouXCw0dgRJK8pUiHkay8sUjqhGM3g",
+  authDomain: "in-dong-goi.firebaseapp.com",
+  projectId: "in-dong-goi",
+  storageBucket: "in-dong-goi.firebasestorage.app",
+  messagingSenderId: "532007763879",
+  appId: "1:532007763879:web:8d752aa4d86fd317ca0082"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const CARRIER_LABEL = {
+  jt: "J&T Express",
+  spx: "SPX Express",
+  ghn: "Giao Hàng Nhanh",
+  best: "BEST Express",
+  unknown: "Chưa rõ hãng"
+};
+
+const DEFAULT_RULES = [
+  { type: "prefix",  match: "SPXVN",           target: "Shopee" },
+  { type: "prefix",  match: "GY",              target: "Shopee" },
+  { type: "prefix",  match: "SHOPEEVTP",       target: "Shopee" },
+  { type: "prefix",  match: "TTVN",            target: "TikTok" },
+  { type: "prefix",  match: "86",              target: "TikTok" },
+  { type: "prefix",  match: "JNT",             target: "Lazada" },
+  { type: "carrier", match: "SPX",             target: "Shopee" },
+  { type: "carrier", match: "Giao Hàng Nhanh", target: "Shopee" },
+  { type: "carrier", match: "BEST",            target: "TikTok" },
+  { type: "carrier", match: "J&T",             target: "TikTok" }
+];
+
+const LS_GAS_URL = "export_gas_url";
+const LS_PIN     = "export_gas_pin";
+const LS_RULES   = "export_carrier_rules_v1";
+const LS_COLS    = "export_ui_cols_v1";
+const LIVE_SOURCE_ID = "__LIVE_FIRESTORE__";
+
+let liveRecords = [];
+let activeRecords = [];
+let activeSourceType = "live"; // "live" | "drive" | "local"
+let activeChannelFilter = "";  // "" = tất cả; hoặc tên Sàn / Đơn vị VC đang chọn lọc
+let viewMode = "detail";       // "detail" | "summary"
+let driveFiles = [];
+let driveUnlocked = false;
+let currentHint = "";
+let convertRules = loadRules();
+
+const statusMsg = document.getElementById("statusMsg");
+const driveStatus = document.getElementById("driveStatus");
+const activeSourceLabel = document.getElementById("activeSourceLabel");
+const channelBar = document.getElementById("channelBar");
+const searchInput = document.getElementById("searchInput");
+const dateFromEl = document.getElementById("dateFrom");
+const dateToEl = document.getElementById("dateTo");
+const showOrderIdEl = document.getElementById("showOrderId");
+const showCodeEl = document.getElementById("showCode");
+const useConvertEl = document.getElementById("useConvert");
+const downloadBtn = document.getElementById("downloadBtn");
+const copyBtn = document.getElementById("copyBtn");
+const saveDriveBtn = document.getElementById("saveDriveBtn");
+const reloadLiveBtn = document.getElementById("reloadLiveBtn");
+
+const tabLive = document.getElementById("tabLive");
+const tabDrive = document.getElementById("tabDrive");
+const drivePanel = document.getElementById("drivePanel");
+const rulesPanel = document.getElementById("rulesPanel");
+const rulesTbody = document.getElementById("rulesTbody");
+const gasUrlRow = document.getElementById("gasUrlRow");
+const gasUrlInput = document.getElementById("gasUrlInput");
+const pinLockBox = document.getElementById("pinLockBox");
+const pinInput = document.getElementById("pinInput");
+const pinHintBox = document.getElementById("pinHintBox");
+const driveUnlockedBox = document.getElementById("driveUnlockedBox");
+const driveFileList = document.getElementById("driveFileList");
+const driveCountLabel = document.getElementById("driveCountLabel");
+const loadSelectedFilesBtn = document.getElementById("loadSelectedFilesBtn");
+const editHintBtn = document.getElementById("editHintBtn");
+const lockBtn = document.getElementById("lockBtn");
+
+function escapeHtml(s){
+  return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+function loadColPrefs(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(LS_COLS) || "{}");
+    showOrderIdEl.checked = !!saved.showOrderId;
+    showCodeEl.checked    = !!saved.showCode;
+    useConvertEl.checked  = !!saved.useConvert;
+  }catch(e){
+    showOrderIdEl.checked = false;
+    showCodeEl.checked    = false;
+    useConvertEl.checked  = false;
+  }
+}
+
+function saveColPrefs(){
+  try{
+    localStorage.setItem(LS_COLS, JSON.stringify({
+      showOrderId: showOrderIdEl.checked,
+      showCode: showCodeEl.checked,
+      useConvert: useConvertEl.checked
+    }));
+  }catch(e){}
+}
+
+function loadRules(){
+  try{
+    const raw = localStorage.getItem(LS_RULES);
+    if(raw){
+      const arr = JSON.parse(raw);
+      if(Array.isArray(arr)) return arr;
+    }
+  }catch(e){}
+  return DEFAULT_RULES.map(r => ({ ...r }));
+}
+
+function saveRules(){
+  try{ localStorage.setItem(LS_RULES, JSON.stringify(convertRules)); }catch(e){}
+}
+
+function resolvePlatform(rec){
+  const code = String(rec.ma_van_don || "").trim().toUpperCase();
+  const carrier = String(rec.don_vi_vc || "").trim().toLowerCase();
+  for(const rule of convertRules){
+    const m = String(rule.match || "").trim();
+    const target = String(rule.target || "").trim();
+    if(!m || !target) continue;
+    if(rule.type === "prefix"){
+      if(code && code.startsWith(m.toUpperCase())) return target;
+    } else {
+      if(carrier && carrier.includes(m.toLowerCase())) return target;
+    }
+  }
+  return rec._presetSan || "Khác";
+}
+
+function getChannelLabel(rec){
+  return useConvertEl.checked ? resolvePlatform(rec) : (rec.don_vi_vc || "Chưa rõ hãng");
+}
+
+function renderRulesEditor(){
+  rulesTbody.innerHTML = convertRules.map((r, i) => `
+    <tr>
+      <td>
+        <select class="rule-type" data-idx="${i}">
+          <option value="prefix"${r.type === "prefix" ? " selected" : ""}>Tiền tố mã vận đơn</option>
+          <option value="carrier"${r.type === "carrier" ? " selected" : ""}>Tên Đơn vị VC</option>
+        </select>
+      </td>
+      <td><input type="text" class="rule-match" data-idx="${i}" value="${escapeHtml(r.match)}" placeholder="Vd: JNT hoặc BEST"></td>
+      <td><input type="text" class="rule-target" data-idx="${i}" value="${escapeHtml(r.target)}" placeholder="Vd: TikTok, Shopee, Lazada"></td>
+      <td style="text-align:center;">
+        <button type="button" class="btn-danger rule-del" data-idx="${i}" style="padding:5px 8px;" title="Xóa quy tắc">🗑</button>
+      </td>
+    </tr>
+  `).join("");
+
+  rulesTbody.querySelectorAll(".rule-type").forEach(el => {
+    el.addEventListener("change", () => {
+      convertRules[+el.dataset.idx].type = el.value;
+      saveRules();
+      render();
+    });
+  });
+  rulesTbody.querySelectorAll(".rule-match").forEach(el => {
+    el.addEventListener("input", () => {
+      convertRules[+el.dataset.idx].match = el.value;
+      saveRules();
+      render();
+    });
+  });
+  rulesTbody.querySelectorAll(".rule-target").forEach(el => {
+    el.addEventListener("input", () => {
+      convertRules[+el.dataset.idx].target = el.value;
+      saveRules();
+      render();
+    });
+  });
+  rulesTbody.querySelectorAll(".rule-del").forEach(el => {
+    el.addEventListener("click", () => {
+      convertRules.splice(+el.dataset.idx, 1);
+      saveRules();
+      renderRulesEditor();
+      render();
+    });
+  });
+}
+
+function getGasUrl(){
+  if(DEFAULT_GAS_URL.trim()) return DEFAULT_GAS_URL.trim();
+  try{ return (localStorage.getItem(LS_GAS_URL) || "").trim(); }catch(e){ return ""; }
+}
+
+function getSavedPin(){
+  try{ return localStorage.getItem(LS_PIN) || ""; }catch(e){ return ""; }
+}
+
+function setSavedPin(pin){
+  try{
+    if(pin) localStorage.setItem(LS_PIN, pin);
+    else localStorage.removeItem(LS_PIN);
+  }catch(e){}
+}
+
+function setStatus(el, msg, cls = ""){
+  el.className = "status" + (cls ? " " + cls : "");
+  el.textContent = msg;
+}
+
+function fmtDate(d){
+  if(!d) return "";
+  const p = n => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+function splitProductName(name){
+  const s = name || "";
+  const idx = s.indexOf("—");
+  if(idx === -1) return { title: s.trim(), classification: "" };
+  const title = s.slice(0, idx).trim();
+  const classification = s.slice(idx + 1).trim();
+  return title ? { title, classification } : { title: classification, classification: "" };
+}
+
+function getCarrierLabel(t){
+  if(t.carrier === "custom" && (t.carrierName || "").trim()) return t.carrierName.trim();
+  return CARRIER_LABEL[t.carrier] || CARRIER_LABEL.unknown;
+}
+
+// ===== CSV Builder & Parser (RFC-4180) =====
+function buildViewCsvData(items){
+  const headers = ["ngay_tao"];
+  if(showOrderIdEl.checked) headers.push("order_id");
+  if(showCodeEl.checked)    headers.push("ma_van_don");
+  headers.push(useConvertEl.checked ? "san" : "don_vi_vc");
+  headers.push("san_pham", "phan_loai", "so_luong");
+
+  const rows = items.map(r => headers.map(h => h === "san" ? resolvePlatform(r) : (r[h] ?? "")));
+  return { headers, rows };
+}
+
+function buildFullRawCsvData(items){
+  const headers = ["ngay_tao", "order_id", "ma_van_don", "don_vi_vc", "san_pham", "phan_loai", "so_luong"];
+  const rows = items.map(r => headers.map(h => r[h] ?? ""));
+  return { headers, rows };
+}
+
+function toCsvText(headers, rows){
+  const cell = v => {
+    const s = String(v ?? "");
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  return [headers.join(","), ...rows.map(r => r.map(cell).join(","))].join("\n");
+}
+
+function parseCsvText(text){
+  const clean = text.replace(/^\uFEFF/, "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  const rows = [];
+  let row = [], field = "", inQuotes = false;
+  for(let i = 0; i < clean.length; i++){
+    const ch = clean[i];
+    if(inQuotes){
+      if(ch === '"'){
+        if(clean[i + 1] === '"'){ field += '"'; i++; }
+        else inQuotes = false;
+      } else {
+        field += ch;
+      }
+    } else {
+      if(ch === '"') inQuotes = true;
+      else if(ch === ","){ row.push(field); field = ""; }
+      else if(ch === "\n"){ row.push(field); rows.push(row); row = []; field = ""; }
+      else field += ch;
+    }
+  }
+  if(field.length > 0 || row.length > 0){ row.push(field); rows.push(row); }
+  const nonEmpty = rows.filter(r => r.some(c => c.trim() !== ""));
+  if(nonEmpty.length < 2) return [];
+
+  const headers = nonEmpty[0].map(h => h.trim().toLowerCase());
+  const idx = name => headers.indexOf(name);
+  const iDate = idx("ngay_tao"), iOid = idx("order_id"), iCode = idx("ma_van_don");
+  const iCarrier = idx("don_vi_vc"), iSan = idx("san");
+  const iProd = idx("san_pham"), iClass = idx("phan_loai"), iQty = idx("so_luong");
+
+  return nonEmpty.slice(1).map((r, n) => {
+    const rawOid = iOid >= 0 ? (r[iOid] || "").trim() : "";
+    return {
+      ngay_tao: iDate >= 0 ? (r[iDate] || "").trim() : "",
+      order_id: rawOid || `row_${n}`,
+      _hasOid: !!rawOid,
+      ma_van_don: iCode >= 0 ? (r[iCode] || "").trim() : "",
+      don_vi_vc: iCarrier >= 0 ? (r[iCarrier] || "").trim() : "",
+      _presetSan: iSan >= 0 ? (r[iSan] || "").trim() : "",
+      san_pham: iProd >= 0 ? (r[iProd] || "").trim() : "",
+      phan_loai: iClass >= 0 ? (r[iClass] || "").trim() : "",
+      so_luong: iQty >= 0 ? (parseInt(r[iQty], 10) || 1) : 1
+    };
+  });
+}
+
+// ===== Gộp nhiều file CSV & Chống trùng (Live Firestore ưu tiên cao nhất -> file mới -> file cũ) =====
+function mergeAndDedupeFiles(fileEntries){
+  const ordered = fileEntries.slice().sort((a, b) => {
+    if(a.isLive && !b.isLive) return -1;
+    if(!a.isLive && b.isLive) return 1;
+    return (b.name || "").localeCompare(a.name || "");
+  });
+  const seenKeys = new Set();
+  const merged = [];
+  let removed = 0;
+
+  for(const entry of ordered){
+    const perFileOcc = new Map();
+    for(const rec of entry.records){
+      const norm = s => String(s || "").trim().toLowerCase();
+      const baseKey = rec._hasOid
+        ? `oid|${norm(rec.order_id)}|${norm(rec.san_pham)}|${norm(rec.phan_loai)}`
+        : `fb|${norm(rec.ngay_tao)}|${norm(rec.ma_van_don)}|${norm(rec.san_pham)}|${norm(rec.phan_loai)}|${rec.so_luong}`;
+      const occ = perFileOcc.get(baseKey) || 0;
+      perFileOcc.set(baseKey, occ + 1);
+      const uniqueKey = `${baseKey}#${occ}`;
+
+      if(seenKeys.has(uniqueKey)){
+        removed++;
+        continue;
+      }
+      seenKeys.add(uniqueKey);
+      merged.push(rec);
+    }
+  }
+
+  merged.sort((a, b) => (b.ngay_tao || "").localeCompare(a.ngay_tao || ""));
+  return { merged, removed };
+}
+
+function makeAutoFilename(items, channelSuffix = ""){
+  const dates = items.map(r => r.ngay_tao).filter(Boolean).sort();
+  const base = dates.length
+    ? `don-hang_${dates[0]}_${dates[dates.length - 1]}`
+    : `don-hang_${fmtDate(new Date())}_${fmtDate(new Date())}`;
+  if(channelSuffix){
+    const safe = channelSuffix.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-|-$/g, "");
+    if(safe) return `${base}_${safe}.csv`;
+  }
+  return `${base}.csv`;
+}
+
+// ===== Lọc 2 tầng: (1) Ngày + Từ khóa -> (2) Thẻ Sàn / Đơn vị VC =====
+function getBaseFiltered(){
+  const from = dateFromEl.value;
+  const to = dateToEl.value;
+  const kw = searchInput.value.trim().toLowerCase();
+  return activeRecords.filter(r => {
+    if(from && (!r.ngay_tao || r.ngay_tao < from)) return false;
+    if(to && (!r.ngay_tao || r.ngay_tao > to)) return false;
+    if(kw){
+      const san = resolvePlatform(r);
+      const hay = `${r.san_pham} ${r.phan_loai} ${r.don_vi_vc} ${san} ${r.ma_van_don} ${r.order_id}`.toLowerCase();
+      if(!hay.includes(kw)) return false;
+    }
+    return true;
+  });
+}
+
+function getFiltered(){
+  const base = getBaseFiltered();
+  if(!activeChannelFilter) return base;
+  return base.filter(r => getChannelLabel(r) === activeChannelFilter);
+}
+
+function renderChannelBar(baseItems){
+  if(baseItems.length === 0){
+    channelBar.classList.add("hidden");
+    channelBar.innerHTML = "";
+    return;
+  }
+  const isSan = useConvertEl.checked;
+  const totalBaseOrders = new Set(baseItems.map(r => r.order_id)).size;
+  const map = new Map();
+  baseItems.forEach(r => {
+    const label = getChannelLabel(r);
+    if(!map.has(label)) map.set(label, { label, orders: new Set(), qty: 0 });
+    const g = map.get(label);
+    g.orders.add(r.order_id);
+    g.qty += (r.so_luong || 1);
+  });
+
+  if(activeChannelFilter && !map.has(activeChannelFilter)){
+    activeChannelFilter = "";
+  }
+
+  const sorted = Array.from(map.values()).sort((a, b) => b.orders.size - a.orders.size || b.qty - a.qty);
+  const modeCls = isSan ? "" : " carrier-mode";
+
+  const allPill = `<button type="button" class="channel-pill${modeCls}${activeChannelFilter === "" ? " active" : ""}" data-ch="" title="Hiển thị tất cả (${totalBaseOrders} đơn)">
+    <span class="channel-name">Tất cả</span><span class="channel-cnt">${totalBaseOrders}</span>
+  </button>`;
+
+  const pills = sorted.map(g => {
+    const n = g.orders.size;
+    const pct = totalBaseOrders ? ((n / totalBaseOrders) * 100).toFixed(1) : "0.0";
+    const isActive = activeChannelFilter === g.label;
+    return `<button type="button" class="channel-pill${modeCls}${isActive ? " active" : ""}" data-ch="${escapeHtml(g.label)}" title="Bấm để lọc riêng ${escapeHtml(g.label)}: ${n} đơn (${pct}%) · ${g.qty} SL">
+      <span class="channel-name">${escapeHtml(g.label)}</span><span class="channel-cnt">${n}</span>
+    </button>`;
+  }).join("");
+
+  channelBar.innerHTML = `<span class="channel-title">${isSan ? "📊 Lọc theo Sàn:" : "🚚 Lọc theo Đơn vị VC:"}</span>${allPill}${pills}`;
+  channelBar.classList.remove("hidden");
+
+  channelBar.querySelectorAll(".channel-pill").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const ch = btn.dataset.ch;
+      activeChannelFilter = (ch === "" || activeChannelFilter === ch) ? "" : ch;
+      render();
+    });
+  });
+}
+
+function render(){
+  const baseItems = getBaseFiltered();
+  renderChannelBar(baseItems);
+
+  const items = activeChannelFilter
+    ? baseItems.filter(r => getChannelLabel(r) === activeChannelFilter)
+    : baseItems;
+
+  const orderSet = new Set(items.map(r => r.order_id));
+  const totalQty = items.reduce((s, r) => s + (r.so_luong || 1), 0);
+  const dates = items.map(r => r.ngay_tao).filter(Boolean).sort();
+
+  document.getElementById("stOrders").textContent = orderSet.size;
+  document.getElementById("stRows").textContent = items.length;
+  document.getElementById("stQty").textContent = totalQty;
+  document.getElementById("stRange").textContent = dates.length
+    ? `${dates[0]} → ${dates[dates.length - 1]}` : "—";
+
+  const thead = document.getElementById("tblHead");
+  const tbody = document.getElementById("tblBody");
+
+  if(viewMode === "detail"){
+    const { headers, rows } = buildViewCsvData(items);
+    thead.innerHTML = `<tr>${headers.map(h => `<th>${escapeHtml(h)}</th>`).join("")}</tr>`;
+    if(rows.length === 0){
+      tbody.innerHTML = `<tr><td colspan="${headers.length}" style="text-align:center;color:var(--muted);padding:24px;">Không có dữ liệu phù hợp.</td></tr>`;
+    } else {
+      tbody.innerHTML = rows.map(r => `<tr>${r.map((val, i) => {
+        const h = headers[i];
+        if(h === "san") return `<td><span class="san-badge">${escapeHtml(val)}</span></td>`;
+        const cls = h === "so_luong" ? "num" : (h === "order_id" || h === "ma_van_don" || h === "ngay_tao") ? "mono" : "";
+        return `<td class="${cls}">${escapeHtml(val)}</td>`;
+      }).join("")}</tr>`).join("");
+    }
+  } else {
+    const map = new Map();
+    items.forEach(r => {
+      const name = r.san_pham || "(Không tên)";
+      if(!map.has(name)) map.set(name, { name, orders: new Set(), qty: 0, variants: new Map() });
+      const g = map.get(name);
+      g.orders.add(r.order_id);
+      g.qty += (r.so_luong || 1);
+      const v = r.phan_loai || "Mặc định";
+      g.variants.set(v, (g.variants.get(v) || 0) + (r.so_luong || 1));
+    });
+    const list = Array.from(map.values()).sort((a, b) => b.orders.size - a.orders.size || b.qty - a.qty);
+    thead.innerHTML = `<tr><th>#</th><th>Sản phẩm</th><th class="num">Số đơn</th><th class="num">Tổng SL</th><th>Chi tiết phân loại (SL)</th></tr>`;
+    if(list.length === 0){
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px;">Không có dữ liệu phù hợp.</td></tr>`;
+    } else {
+      tbody.innerHTML = list.map((g, idx) => {
+        const vHtml = Array.from(g.variants.entries())
+          .sort((a, b) => b[1] - a[1])
+          .map(([k, v]) => `<span class="var-pill"><span class="var-name">${escapeHtml(k)}</span><span class="var-qty">${v}</span></span>`)
+          .join("");
+        return `<tr>
+          <td class="num">${idx + 1}</td>
+          <td><b>${escapeHtml(g.name)}</b></td>
+          <td class="num">${g.orders.size}</td>
+          <td class="num">${g.qty}</td>
+          <td><div class="var-list">${vHtml}</div></td>
+        </tr>`;
+      }).join("");
+    }
+  }
+
+  const noData = items.length === 0;
+  downloadBtn.disabled = noData;
+  copyBtn.disabled = noData;
+  saveDriveBtn.disabled = noData || activeSourceType !== "live";
+}
+
+// ===== Firestore (Live) =====
+async function loadLiveFirestore(){
+  setStatus(statusMsg, "Đang tải dữ liệu Đã bàn giao từ Firestore...");
+  reloadLiveBtn.disabled = true;
+  try{
+    const snap = await getDocs(collection(db, "tasks"));
+    const raw = [];
+    snap.forEach(d => {
+      const data = d.data();
+      if(data.status !== "xong") return;
+      const dt = (data.createdAt && typeof data.createdAt.toDate === "function") ? data.createdAt.toDate() : null;
+      const { title, classification } = splitProductName(data.name);
+      raw.push({
+        _ms: dt ? dt.getTime() : 0,
+        ngay_tao: fmtDate(dt),
+        order_id: data.orderId || d.id,
+        _hasOid: true,
+        ma_van_don: (data.orderName || "").trim(),
+        don_vi_vc: getCarrierLabel(data),
+        _presetSan: "",
+        san_pham: title,
+        phan_loai: classification,
+        so_luong: data.qty || 1
+      });
+    });
+    raw.sort((a, b) => b._ms - a._ms);
+    liveRecords = raw;
+    activeRecords = liveRecords;
+    activeSourceType = "live";
+    activeChannelFilter = "";
+    tabLive.classList.add("active");
+    tabDrive.classList.remove("active");
+    drivePanel.classList.add("hidden");
+    activeSourceLabel.textContent = "Firestore (Đã bàn giao)";
+    setStatus(statusMsg, `Đã tải ${liveRecords.length} dòng từ Firestore. Tên file đề xuất: ${makeAutoFilename(liveRecords)}`, "ok");
+    if(driveUnlocked) renderDriveFileList();
+    render();
+  }catch(e){
+    setStatus(statusMsg, "Lỗi tải Firestore: " + e.message, "err");
+  }finally{
+    reloadLiveBtn.disabled = false;
+  }
+}
+
+// ===== Google Apps Script (Drive + PIN + Hint) =====
+async function fetchPinHint(){
+  const url = getGasUrl();
+  if(!url){ pinHintBox.classList.add("hidden"); return; }
+  try{
+    const res = await fetch(`${url}?action=hint`);
+    const data = await res.json();
+    if(data.ok && data.hint){
+      currentHint = data.hint;
+      pinHintBox.textContent = "💡 Gợi ý PIN: " + currentHint;
+      pinHintBox.classList.remove("hidden");
+    }
+  }catch(e){
+    pinHintBox.classList.add("hidden");
+  }
+}
+
+async function loadDriveFileList(pin){
+  const url = getGasUrl();
+  if(!url){
+    setStatus(driveStatus, "Chưa có link Google Apps Script. Hãy dán link vào ô phía trên.", "err");
+    return false;
+  }
+  setStatus(driveStatus, "Đang kết nối Google Drive...");
+  try{
+    const res = await fetch(`${url}?action=list&pin=${encodeURIComponent(pin)}`);
+    const data = await res.json();
+    if(!data.ok){
+      if(data.authError){
+        driveUnlocked = false;
+        setSavedPin("");
+        updateDriveLockUI();
+        fetchPinHint();
+      }
+      setStatus(driveStatus, data.error || "Không mở khóa được Drive.", "err");
+      return false;
+    }
+    driveUnlocked = true;
+    setSavedPin(pin);
+    if(data.hint) currentHint = data.hint;
+    driveFiles = data.files || [];
+    updateDriveLockUI();
+    renderDriveFileList();
+    setStatus(driveStatus, `Đã kết nối Drive (${driveFiles.length} file CSV).`, "ok");
+    return true;
+  }catch(e){
+    setStatus(driveStatus, "Lỗi kết nối GAS: " + e.message, "err");
+    return false;
+  }
+}
+
+function updateDriveLockUI(){
+  gasUrlRow.classList.toggle("hidden", !!DEFAULT_GAS_URL.trim());
+  if(!DEFAULT_GAS_URL.trim()) gasUrlInput.value = getGasUrl();
+  pinLockBox.classList.toggle("hidden", driveUnlocked);
+  driveUnlockedBox.classList.toggle("hidden", !driveUnlocked);
+  editHintBtn.classList.toggle("hidden", !driveUnlocked);
+  lockBtn.classList.toggle("hidden", !driveUnlocked);
+}
+
+function renderDriveFileList(){
+  const liveOrderCnt = new Set(liveRecords.map(r => r.order_id)).size;
+  driveCountLabel.textContent = `1 nguồn trực tiếp + ${driveFiles.length} file CSV trên Drive (tích nhiều mục để xem gộp)`;
+
+  const liveRowHtml = `<div class="drive-item live-row">
+    <input type="checkbox" class="drive-chk" value="${LIVE_SOURCE_ID}" data-name="Firestore (Hiện tại)">
+    <span class="fname">📡 Firestore (Hiện tại) — Dữ liệu mới chưa dọn</span>
+    <span class="fmeta">${liveOrderCnt} đơn · ${liveRecords.length} dòng</span>
+    <button type="button" class="btn-secondary drive-open-one" data-id="${LIVE_SOURCE_ID}" data-name="Firestore (Hiện tại)" style="padding:5px 10px;font-size:12px;">Xem</button>
+  </div>`;
+
+  const filesHtml = driveFiles.length === 0
+    ? `<div style="padding:16px;text-align:center;color:var(--muted);font-size:13px;">Thư mục Drive chưa có file CSV nào.</div>`
+    : driveFiles.map(f => {
+        const kb = Math.max(1, Math.round((f.size || 0) / 1024));
+        return `<div class="drive-item">
+          <input type="checkbox" class="drive-chk" value="${escapeHtml(f.id)}" data-name="${escapeHtml(f.name)}">
+          <span class="fname mono">${escapeHtml(f.name)}</span>
+          <span class="fmeta">${kb} KB · ${escapeHtml(f.updated || "")}</span>
+          <button type="button" class="btn-secondary drive-open-one" data-id="${escapeHtml(f.id)}" data-name="${escapeHtml(f.name)}" style="padding:5px 10px;font-size:12px;">Xem</button>
+        </div>`;
+      }).join("");
+
+  driveFileList.innerHTML = liveRowHtml + filesHtml;
+
+  const syncBtn = () => {
+    const n = driveFileList.querySelectorAll(".drive-chk:checked").length;
+    loadSelectedFilesBtn.disabled = n === 0;
+    loadSelectedFilesBtn.textContent = n ? `📥 Nạp ${n} mục đã chọn` : "📥 Nạp các mục đã chọn";
+  };
+  driveFileList.querySelectorAll(".drive-chk").forEach(cb => cb.addEventListener("change", syncBtn));
+  driveFileList.querySelectorAll(".drive-open-one").forEach(btn => {
+    btn.addEventListener("click", () => loadFilesFromDrive([{ id: btn.dataset.id, name: btn.dataset.name }]));
+  });
+  syncBtn();
+}
+
+async function loadFilesFromDrive(fileSpecs){
+  const url = getGasUrl(), pin = getSavedPin();
+  const hasLive = fileSpecs.some(f => f.id === LIVE_SOURCE_ID);
+  const driveOnlySpecs = fileSpecs.filter(f => f.id !== LIVE_SOURCE_ID);
+
+  if(driveOnlySpecs.length > 0 && (!url || !pin)) return;
+  setStatus(driveStatus, `Đang nạp ${fileSpecs.length} nguồn dữ liệu...`);
+  try{
+    const fileEntries = [];
+    if(hasLive){
+      fileEntries.push({ name: "9999-99-99_LIVE", isLive: true, records: liveRecords });
+    }
+    for(const f of driveOnlySpecs){
+      const res = await fetch(`${url}?action=read&id=${encodeURIComponent(f.id)}&pin=${encodeURIComponent(pin)}`);
+      const data = await res.json();
+      if(!data.ok) throw new Error(data.error || `Lỗi đọc ${f.name}`);
+      fileEntries.push({ name: f.name, isLive: false, records: parseCsvText(data.content || "") });
+    }
+
+    const { merged, removed } = mergeAndDedupeFiles(fileEntries);
+    activeRecords = merged;
+    activeChannelFilter = "";
+
+    let label;
+    if(hasLive && driveOnlySpecs.length === 0){
+      label = "Firestore (Hiện tại)";
+      activeSourceType = "live";
+    } else if(hasLive){
+      label = `Firestore + ${driveOnlySpecs.length} file Drive (gộp)`;
+      activeSourceType = "drive"; // Khóa nút Lưu gốc khi đang xem bản gộp
+    } else {
+      label = driveOnlySpecs.length === 1 ? driveOnlySpecs[0].name : `${driveOnlySpecs.length} file Drive (gộp)`;
+      activeSourceType = "drive";
+    }
+
+    const dedupeNote = removed > 0 ? ` — đã tự lọc bỏ ${removed} dòng trùng lặp (ưu tiên bản mới hơn)` : "";
+    activeSourceLabel.textContent = label;
+    setStatus(driveStatus, `Đã nạp xong ${merged.length} dòng từ ${label}${dedupeNote}.`, "ok");
+    setStatus(statusMsg, `Đang xem: ${label} (${merged.length} dòng${dedupeNote}).`, "ok");
+    render();
+  }catch(e){
+    setStatus(driveStatus, "Không nạp được dữ liệu: " + e.message, "err");
+  }
+}
+
+async function saveCurrentToDrive(){
+  if(activeSourceType !== "live") return;
+  const isFiltered = !!(activeChannelFilter || searchInput.value.trim() || dateFromEl.value || dateToEl.value);
+  const items = getFiltered();
+  if(!items.length) return;
+
+  if(isFiltered){
+    if(!confirm(`Bạn đang bật bộ lọc (${items.length}/${liveRecords.length} dòng).\nBạn có chắc chỉ muốn lưu phần đang lọc này lên Drive không?\n(Bấm Cancel để bỏ lọc rồi lưu đủ toàn bộ bản gốc)`)){
+      return;
+    }
+  }
+
+  const url = getGasUrl();
+  if(!url){
+    tabDrive.click();
+    setStatus(driveStatus, "Chưa có link Google Apps Script. Hãy cấu hình trước khi lưu lên Drive.", "err");
+    return;
+  }
+  let pin = getSavedPin();
+  if(!pin || !driveUnlocked){
+    if(pin){
+      const ok = await loadDriveFileList(pin);
+      if(!ok) return;
+    } else {
+      drivePanel.classList.remove("hidden");
+      updateDriveLockUI();
+      fetchPinHint();
+      setStatus(driveStatus, "Vui lòng nhập mã PIN để mở khóa Drive trước khi lưu.", "err");
+      pinInput.focus();
+      return;
+    }
+  }
+
+  const filename = makeAutoFilename(items);
+  const { headers, rows } = buildFullRawCsvData(items);
+  const csvContent = "\uFEFF" + toCsvText(headers, rows);
+
+  saveDriveBtn.disabled = true;
+  setStatus(statusMsg, `Đang lưu bản gốc đầy đủ (7 cột) "${filename}" lên Google Drive...`);
+  try{
+    const send = async overwrite => {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "save", pin, filename, content: csvContent, overwrite })
+      });
+      return res.json();
+    };
+
+    let data = await send(false);
+    if(!data.ok && data.exists){
+      if(confirm(`File "${filename}" đã có trên Drive.\nBấm OK để GHI ĐÈ bản mới (đầy đủ 7 cột gốc), hoặc Cancel để hủy.`)){
+        data = await send(true);
+      } else {
+        setStatus(statusMsg, "Đã hủy lưu lên Drive.");
+        return;
+      }
+    }
+    if(!data.ok) throw new Error(data.error || "Lưu thất bại.");
+    setStatus(statusMsg, `✅ Đã lưu bản gốc đầy đủ "${data.name}" lên Google Drive${data.overwritten ? " (đã ghi đè)" : ""}.`, "ok");
+    if(driveUnlocked) loadDriveFileList(pin);
+  }catch(e){
+    setStatus(statusMsg, "Lỗi lưu lên Drive: " + e.message, "err");
+  }finally{
+    render();
+  }
+}
+
+// ===== Sự kiện giao diện =====
+tabLive.addEventListener("click", () => {
+  tabLive.classList.add("active");
+  tabDrive.classList.remove("active");
+  drivePanel.classList.add("hidden");
+  activeRecords = liveRecords;
+  activeSourceType = "live";
+  activeChannelFilter = "";
+  activeSourceLabel.textContent = "Firestore (Đã bàn giao)";
+  setStatus(statusMsg, `Đang xem dữ liệu Firestore (${liveRecords.length} dòng). Tên file đề xuất: ${makeAutoFilename(liveRecords)}`, "ok");
+  render();
+});
+
+tabDrive.addEventListener("click", () => {
+  tabDrive.classList.add("active");
+  tabLive.classList.remove("active");
+  drivePanel.classList.remove("hidden");
+  activeSourceType = "drive";
+  updateDriveLockUI();
+  render();
+  const savedPin = getSavedPin();
+  if(!driveUnlocked){
+    if(savedPin) loadDriveFileList(savedPin);
+    else fetchPinHint();
+  }
+});
+
+document.getElementById("toggleRulesBtn").addEventListener("click", () => {
+  const hidden = rulesPanel.classList.toggle("hidden");
+  if(!hidden) renderRulesEditor();
+});
+document.getElementById("closeRulesBtn").addEventListener("click", () => rulesPanel.classList.add("hidden"));
+document.getElementById("addRuleBtn").addEventListener("click", () => {
+  convertRules.push({ type: "carrier", match: "", target: "" });
+  saveRules();
+  renderRulesEditor();
+});
+document.getElementById("resetRulesBtn").addEventListener("click", () => {
+  if(!confirm("Khôi phục bảng chuyển đổi về mặc định?")) return;
+  convertRules = DEFAULT_RULES.map(r => ({ ...r }));
+  saveRules();
+  renderRulesEditor();
+  render();
+});
+
+document.getElementById("saveGasUrlBtn").addEventListener("click", () => {
+  const u = gasUrlInput.value.trim();
+  try{ localStorage.setItem(LS_GAS_URL, u); }catch(e){}
+  setStatus(driveStatus, u ? "Đã lưu link Apps Script." : "Đã xóa link Apps Script.", "ok");
+  fetchPinHint();
+});
+
+document.getElementById("unlockBtn").addEventListener("click", () => {
+  const pin = pinInput.value.trim();
+  if(!pin) return;
+  loadDriveFileList(pin);
+});
+pinInput.addEventListener("keydown", e => { if(e.key === "Enter") document.getElementById("unlockBtn").click(); });
+
+document.getElementById("refreshDriveBtn").addEventListener("click", () => {
+  const pin = getSavedPin();
+  if(pin) loadDriveFileList(pin);
+});
+
+loadSelectedFilesBtn.addEventListener("click", () => {
+  const checked = Array.from(driveFileList.querySelectorAll(".drive-chk:checked"))
+    .map(cb => ({ id: cb.value, name: cb.dataset.name }));
+  if(checked.length) loadFilesFromDrive(checked);
+});
+
+editHintBtn.addEventListener("click", async () => {
+  const nextHint = prompt("Nhập câu gợi ý để tự nhớ mã PIN (sẽ hiển thị trước khi mở khóa, không ghi đáp án):", currentHint || "");
+  if(nextHint === null) return;
+  const url = getGasUrl(), pin = getSavedPin();
+  setStatus(driveStatus, "Đang lưu gợi ý PIN...");
+  try{
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "setHint", pin, hint: nextHint })
+    });
+    const data = await res.json();
+    if(!data.ok) throw new Error(data.error || "Không lưu được gợi ý.");
+    currentHint = data.hint || "";
+    setStatus(driveStatus, `✅ Đã cập nhật gợi ý PIN: "${currentHint}"`, "ok");
+  }catch(e){
+    setStatus(driveStatus, "Lỗi lưu gợi ý: " + e.message, "err");
+  }
+});
+
+lockBtn.addEventListener("click", () => {
+  driveUnlocked = false;
+  setSavedPin("");
+  pinInput.value = "";
+  updateDriveLockUI();
+  fetchPinHint();
+  setStatus(driveStatus, "Đã khóa kết nối Drive.");
+});
+
+document.getElementById("localFileInput").addEventListener("change", async e => {
+  const files = Array.from(e.target.files || []);
+  if(!files.length) return;
+  const fileEntries = [];
+  for(const f of files){
+    fileEntries.push({ name: f.name, isLive: false, records: parseCsvText(await f.text()) });
+  }
+  const { merged, removed } = mergeAndDedupeFiles(fileEntries);
+  activeRecords = merged;
+  activeSourceType = "local";
+  activeChannelFilter = "";
+  tabLive.classList.remove("active");
+  tabDrive.classList.remove("active");
+  drivePanel.classList.add("hidden");
+  const label = files.length === 1 ? files[0].name : `${files.length} file từ máy (gộp)`;
+  const dedupeNote = removed > 0 ? ` — đã tự lọc bỏ ${removed} dòng trùng lặp` : "";
+  activeSourceLabel.textContent = label;
+  setStatus(statusMsg, `Đã mở ${merged.length} dòng từ ${label}${dedupeNote}.`, "ok");
+  render();
+  e.target.value = "";
+});
+
+document.getElementById("viewDetailBtn").addEventListener("click", () => {
+  viewMode = "detail";
+  document.getElementById("viewDetailBtn").classList.add("active");
+  document.getElementById("viewSummaryBtn").classList.remove("active");
+  render();
+});
+
+document.getElementById("viewSummaryBtn").addEventListener("click", () => {
+  viewMode = "summary";
+  document.getElementById("viewSummaryBtn").classList.add("active");
+  document.getElementById("viewDetailBtn").classList.remove("active");
+  render();
+});
+
+downloadBtn.addEventListener("click", () => {
+  const items = getFiltered();
+  if(!items.length) return;
+  const { headers, rows } = buildViewCsvData(items);
+  const blob = new Blob(["\uFEFF" + toCsvText(headers, rows)], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = makeAutoFilename(items, activeChannelFilter);
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+});
+
+copyBtn.addEventListener("click", async () => {
+  const items = getFiltered();
+  if(!items.length) return;
+  const { headers, rows } = buildViewCsvData(items);
+  try{
+    await navigator.clipboard.writeText(toCsvText(headers, rows));
+    const old = copyBtn.textContent;
+    copyBtn.textContent = "✅ Đã copy";
+    setTimeout(() => { copyBtn.textContent = old; }, 1500);
+  }catch(e){
+    setStatus(statusMsg, "Không copy được vào clipboard: " + e.message, "err");
+  }
+});
+
+showOrderIdEl.addEventListener("change", () => { saveColPrefs(); render(); });
+showCodeEl.addEventListener("change", () => { saveColPrefs(); render(); });
+useConvertEl.addEventListener("change", () => {
+  activeChannelFilter = "";
+  saveColPrefs();
+  render();
+});
+
+saveDriveBtn.addEventListener("click", saveCurrentToDrive);
+reloadLiveBtn.addEventListener("click", loadLiveFirestore);
+searchInput.addEventListener("input", render);
+dateFromEl.addEventListener("change", render);
+dateToEl.addEventListener("change", render);
+
+// Khởi chạy
+loadColPrefs();
+loadLiveFirestore();
+</script>
+</body>
+</html>

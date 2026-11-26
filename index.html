@@ -499,16 +499,20 @@
   .batchbar .pdf-btn.dl{background:#3b82f6;}
   .batchbar .pdf-btn.merge{background:#8b5cf6;}
   .batchbar .pdf-btn svg{width:16px;height:16px;flex:none;}
+  .batchbar .div-btn{background:rgba(255,255,255,.16);color:#fff;}
+  .batchbar .div-btn.on{background:rgba(255,255,255,.34);}
+  .batchbar .div-btn svg{width:16px;height:16px;flex:none;}
+  .batchbar.busy .div-btn{display:none;}   /* đang tải/gộp: chữ tiến độ ở giữa cần chỗ */
   .batchbar button:disabled{opacity:.4;cursor:not-allowed;}
   /* Điện thoại: chỉ hiện icon cho 2 nút PDF, thu gọn khoảng cách/cỡ chữ để
      5 phần tử vẫn vừa 1 hàng ở màn hình ~360px. Nhãn chữ vẫn nằm trong
      aria-label/title nên không mất tính truy cập. */
   @media (max-width:520px){
-    .batchbar{padding:9px 10px;gap:6px;}
-    .batchbar .bb-group{gap:6px;}
+    .batchbar{padding:9px 8px;gap:6px;}
+    .batchbar .bb-group{gap:4px;}
     .batchbar button{padding:11px 12px;font-size:13px;}
-    .batchbar .pdf-btn{width:44px;padding:0;}
-    .batchbar .pdf-btn .btn-label{display:none;}
+    .batchbar .pdf-btn,.batchbar .div-btn{width:40px;padding:0;}
+    .batchbar .pdf-btn .btn-label,.batchbar .div-btn .btn-label{display:none;}
     .batchbar #batchCount{font-size:12px;}
   }
 
@@ -629,6 +633,96 @@
     margin-bottom:10px;
   }
   .empty{padding:60px 16px;}
+
+  /* ================= Bảng ghi chú vị trí =================
+     Điện thoại / tablet: nút 📌 góc trên-phải mở bảng dạng "tấm trượt từ đáy" (có nền mờ phía sau).
+     Desktop >=1250px: bảng ghim cố định góc dưới-trái, luôn hiện (giống bảng "Sản phẩm đã chọn" ở catalog). */
+  .note-fab{
+    position:fixed;top:14px;left:14px;z-index:40;width:40px;height:40px;border-radius:50%;
+    background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;
+    font-size:18px;line-height:1;cursor:pointer;padding:0;box-shadow:0 2px 10px var(--shadow);
+  }
+  .note-fab.has-note::after{content:"";position:absolute;top:5px;right:5px;width:9px;height:9px;border-radius:50%;background:var(--amber);}
+  @media (max-width:420px){ .note-fab{width:34px;height:34px;font-size:15px;top:10px;left:10px;} }
+  .loc-note-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;display:none;}
+  .loc-note-backdrop.show{display:block;}
+  .loc-note{
+    position:fixed;left:0;right:0;bottom:0;margin:0 auto;width:100%;max-width:var(--maxw);
+    max-height:85vh;max-height:85dvh;z-index:1001;display:none;flex-direction:column;
+    background:var(--card);border:1px solid var(--border);border-bottom:none;border-radius:16px 16px 0 0;
+    box-shadow:0 -8px 28px var(--shadow);padding:14px;
+  }
+  .loc-note.show{display:flex;}
+  .loc-note-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+  .loc-note-head h3{flex:1;margin:0;font-size:16px;}
+  .loc-note-edit{
+    width:36px;height:36px;border:none;border-radius:8px;background:var(--gray-bg);color:var(--text);
+    font-size:16px;cursor:pointer;padding:0;flex-shrink:0;
+  }
+  .loc-note-edit.active{background:var(--blue-bg);}
+  .loc-note-body{overflow:auto;min-height:0;flex:0 1 auto;}
+  .loc-note-text{white-space:pre-wrap;word-break:break-word;font-size:15px;line-height:1.5;min-height:96px;}
+  .loc-note-text.empty{color:var(--muted);font-style:italic;}
+  .loc-note-body textarea{
+    display:block;width:100%;min-height:120px;font-size:16px;line-height:1.5;padding:10px 12px;
+    border:1px solid var(--border);border-radius:8px;font-family:inherit;resize:none;overflow:hidden;
+  }
+  .loc-note-err{color:var(--red);font-size:12.5px;margin-top:6px;}
+  .loc-note-btns,.loc-note-actions{display:flex;gap:8px;margin-top:10px;}
+  .loc-note-btns button,.loc-note-close{
+    flex:1;border:none;border-radius:8px;padding:11px;font-size:14px;font-weight:600;cursor:pointer;
+  }
+  .loc-note-save{background:var(--green-solid);color:#fff;}
+  .loc-note-cancel,.loc-note-close{background:var(--gray-bg);color:var(--text);}
+  @media (min-width:1250px){
+    .note-fab,.loc-note-backdrop,.loc-note-actions{display:none !important;}
+    .loc-note{
+      display:flex;left:16px;right:auto;bottom:16px;width:260px;max-width:260px;margin:0;max-height:70vh;
+      border:1px solid var(--border);border-radius:14px;z-index:20;box-shadow:0 8px 28px var(--shadow);
+    }
+    /* Nút thu nhỏ: chỉ hiện khi ghi chú đang TRỐNG (có ghi chú thì không cho thu nhỏ để khỏi bỏ sót) */
+    .loc-note.can-mini .loc-note-minbtn{display:block;}
+    /* Trạng thái thu nhỏ: chỉ còn 1 thanh nhỏ ở góc dưới-trái, bấm vào để mở */
+    .loc-note.mini{
+      width:auto;max-width:none;padding:8px 14px;cursor:pointer;border-radius:999px;
+    }
+    .loc-note.mini:hover{background:var(--gray-bg);}
+    .loc-note.mini .loc-note-head{margin:0;}
+    .loc-note.mini .loc-note-head h3{font-size:14px;white-space:nowrap;}
+    .loc-note.mini .loc-note-body,
+    .loc-note.mini .loc-note-edit,
+    .loc-note.mini .loc-note-minbtn{display:none;}
+  }
+  .loc-note-minbtn{
+    display:none;width:36px;height:36px;border:none;border-radius:8px;background:var(--gray-bg);color:var(--text);
+    font-size:16px;font-weight:700;cursor:pointer;padding:0;flex-shrink:0;
+  }
+
+  /* ================= Đường kẻ ngang phân cách các nhóm đơn (tab Chờ xử lý) =================
+     Chèn bằng nút "—" ở thanh công cụ: tích chọn đơn → bấm "—" → đường kẻ nằm ngay TRÊN đơn đó. */
+  :root{--divider:#e879f9;}
+  body.light-theme{--divider:#c026d3;}
+  .order-divider{display:flex;align-items:center;gap:8px;padding:0 16px;margin:0 0 10px;min-height:22px;}
+  .od-line{flex:1;height:4px;border-radius:2px;background:var(--divider);}
+  .od-x{
+    flex:none;width:24px;height:24px;border-radius:50%;border:none;padding:0;cursor:pointer;
+    background:transparent;color:var(--divider);font-size:14px;line-height:1;opacity:.75;
+  }
+  .od-x:hover{opacity:1;background:var(--gray-bg);}
+  .toolbarMid{display:flex;align-items:center;gap:6px;justify-self:center;}
+
+  /* ================= Cảnh báo đang lọc theo hãng ================= */
+  .carrierWarnWrap{padding:0 16px 10px;background:var(--card);border-bottom:1px solid var(--border);}
+  .carrierWarn{
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:rgba(251,191,36,.14);
+    border:1px solid var(--amber);color:var(--amber);border-radius:8px;padding:7px 10px;
+    font-size:12.5px;font-weight:600;line-height:1.4;
+  }
+  .carrierWarn .cw-text{flex:1 1 180px;min-width:0;}
+  .carrierWarn button{
+    border:none;border-radius:6px;background:var(--amber);color:#1a1d21;font-weight:700;
+    font-size:12.5px;padding:7px 12px;cursor:pointer;
+  }
 </style>
 </head>
 <body>
@@ -664,7 +758,9 @@
   <div id="errArea"></div>
   <div class="listToolbar" id="listToolbar">
     <label class="selectAllRow"><input type="checkbox" id="selectAllBox"> Chọn tất cả</label>
-    <button class="sortModeBtn" id="sortModeBtn" type="button" title="Bật/tắt chế độ sắp xếp thứ tự đơn">🔀 Sắp xếp</button>
+    <div class="toolbarMid">
+      <button class="sortModeBtn" id="sortModeBtn" type="button" title="Bật/tắt chế độ sắp xếp thứ tự đơn">🔀 Sắp xếp</button>
+    </div>
     <div class="listToolbarRight">
       <span class="totalQtyInfo" id="totalQtyInfo">Số lượng: 0</span>
       <button class="clearAllBtn" id="clearAllBtn" style="display:none;">🧹 Làm sạch</button>
@@ -673,13 +769,15 @@
   <div class="carrierBar" id="carrierBar" style="display:none;">
     <div class="carrierChips" id="carrierChips"></div>
   </div>
+  <div class="carrierWarnWrap" id="carrierWarnWrap" style="display:none;"><div class="carrierWarn" id="carrierWarn"></div></div>
   <div id="list"></div>
 </main>
 
 <div class="status-line" id="connStatus"></div>
 
 <div class="batchbar" id="batchbar">
-  <div class="bb-group bb-left" id="batchPdfGroup">
+  <div class="bb-group bb-left">
+  <div class="bb-group" id="batchPdfGroup">
     <button class="pdf-btn dl" id="batchDownloadPdf" type="button" title="Tải phiếu giao của các đơn đã chọn" aria-label="Tải PDF">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v8"/><path d="M4.5 7 8 10.5 11.5 7"/><path d="M2.5 13.5h11"/></svg>
       <span class="btn-label">Tải PDF</span>
@@ -689,12 +787,29 @@
       <span class="btn-label">Gộp PDF</span>
     </button>
   </div>
+  <button class="div-btn" id="divBtn" type="button" title="Chèn đường kẻ phía trên các đơn đã chọn" aria-label="Chèn đường kẻ ngang">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3.5h12" stroke-width="2.4"/><rect x="3" y="7" width="10" height="6.5" rx="1.2"/></svg>
+    <span class="btn-label">Kẻ</span>
+  </button>
+  </div>
   <span id="batchCount">0 đã chọn</span>
   <div class="bb-group bb-right">
     <button class="done-btn" id="batchDone"></button>
     <button class="del-btn" id="batchDel">Xóa</button>
   </div>
 </div>
+
+<button class="note-fab" id="locNoteFab" type="button" title="Ghi chú" aria-label="Ghi chú">📌</button>
+<div class="loc-note-backdrop" id="locNoteBackdrop"></div>
+<aside class="loc-note" id="locNotePanel" aria-label="Ghi chú">
+  <div class="loc-note-head">
+    <h3>📌 Ghi chú</h3>
+    <button class="loc-note-edit" id="locNoteEditBtn" type="button" title="Sửa ghi chú" aria-label="Sửa ghi chú">✏️</button>
+    <button class="loc-note-minbtn" id="locNoteMinBtn" type="button" title="Thu nhỏ" aria-label="Thu nhỏ ghi chú">—</button>
+  </div>
+  <div class="loc-note-body" id="locNoteBody"></div>
+  <div class="loc-note-actions"><button class="loc-note-close" id="locNoteCloseBtn" type="button">Đóng</button></div>
+</aside>
 
 <!-- jsQR: thư viện thuần JS đọc mã QR từ dữ liệu ảnh (canvas), dùng để đọc
      trực tiếp mã QR in trên phiếu giao thay vì dò chữ theo mẫu từng hãng. -->
@@ -741,7 +856,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getFirestore, collection, addDoc, onSnapshot, doc,
-  updateDoc, deleteDoc, deleteField, serverTimestamp, query, orderBy
+  updateDoc, deleteDoc, deleteField, serverTimestamp, query, orderBy, setDoc, arrayUnion, arrayRemove
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import * as pdfjsLib from "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.6.82/pdf.min.mjs";
 pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.6.82/pdf.worker.min.mjs";
@@ -774,9 +889,18 @@ let searchTerm = "";
 // ---- Tab "Chờ bàn giao" + "Đã bàn giao": lọc theo hãng vận chuyển ----
 // Chỉ còn xem theo thời gian + chip lọc nhanh theo hãng (dùng chung cho cả 2 tab).
 // Tab nào có thanh chip lọc theo hãng.
-function hasCarrierView(){ return currentTab === "dong_goi" || currentTab === "xong"; }
+function hasCarrierView(){ return currentTab === "in" || currentTab === "dong_goi" || currentTab === "xong"; }
 // Lọc nhanh theo 1 hãng cụ thể — "all" = không lọc.
 let carrierFilter = "all";
+// Trạng thái cho đường kẻ phân cách + bộ chống bỏ sót khi lọc hãng (khai báo sớm để render() dùng được ngay)
+const DIV_FIELD = { in: "keys", dong_goi: "dong_goi", xong: "xong" };   // trường Firestore lưu kẻ của từng tab ("keys" = tab Chờ in, giữ dữ liệu cũ)
+const TAB_STATUS = { in: "cho_in", dong_goi: "cho_dong_goi", xong: "xong" };
+let dividersByTab = { in: [], dong_goi: [], xong: [] };   // mỗi số = khóa thứ tự của đơn nằm NGAY DƯỚI đường kẻ; kẻ RIÊNG từng tab
+let tasksSettled = false, dividersSettled = false;        // chỉ tự dọn kẻ khi dữ liệu đã chắc chắn từ máy chủ (không phải bản tạm)
+const CARRIER_IDLE_MS = 120000;     // tab Chờ xử lý: bao lâu KHÔNG thao tác thì tự về "Tất cả"
+const CARRIER_HIDDEN_MS = 20000;   // rời app quá lâu rồi quay lại thì tự về "Tất cả"
+let carrierIdleTimer = null;
+let hiddenAt = 0;
 
 // UI-only ephemeral state (reset on re-render is fine; kept across snapshots via Sets keyed by id)
 let editingOrderIds = new Set();
@@ -823,6 +947,7 @@ const mergeLabelsBtn = document.getElementById("mergeLabelsBtn");
 const batchDownloadPdfBtn = document.getElementById("batchDownloadPdf");
 const batchMergePdfBtn = document.getElementById("batchMergePdf");
 const batchCountEl = document.getElementById("batchCount");
+const compactBar = window.matchMedia("(max-width:520px)");   // điện thoại: số đếm chỉ còn "12" để đủ chỗ cho 3 nút icon
 let labelBusy = false; // đang tải/gộp phiếu — khóa 2 nút, không cho cập nhật chữ
 
 // Thông báo thông tin (không phải lỗi), hiện lâu hơn để kịp đọc.
@@ -1008,8 +1133,10 @@ async function addTask(){
 const q = query(tasksCol, orderBy("createdAt", "asc"));
 onSnapshot(q, snap => {
   allTasks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  tasksSettled = !snap.metadata.fromCache && !snap.metadata.hasPendingWrites;
   connStatus.textContent = "";
   render();
+  schedulePruneDividers();
 }, err => {
   connStatus.textContent = "Lỗi kết nối: " + err.message;
 });
@@ -1310,6 +1437,7 @@ function getSelectedLabelGroups(){
 function setLabelButtonsDisabled(on){
   downloadAllBtn.disabled = on; mergeLabelsBtn.disabled = on;
   batchDownloadPdfBtn.disabled = on; batchMergePdfBtn.disabled = on;
+  batchbar.classList.toggle("busy", on);
 }
 function setLabelProgress(source, kind, i, n){
   if(source === "batch"){ // nút chỉ có icon (điện thoại) → hiện tiến độ ở ô số đếm ở giữa
@@ -1470,6 +1598,7 @@ function render(){
   updateDupWarning();
   updateLabelButtons();
   updateBatchBar();
+  armCarrierGuard(false);
   const badgeIn = countOrdersByStatus("cho_in");
   const badgeDG = countOrdersByStatus("cho_dong_goi");
   const badgeXong = countOrdersByStatus("xong");
@@ -1498,8 +1627,10 @@ function render(){
   if(hasCarrierView() && baseShown.length > 0){
     carrierBar.style.display = "flex";
     renderCarrierBar(baseShown);
+    updateCarrierWarn(baseShown, shown);
   } else {
     carrierBar.style.display = "none";
+    updateCarrierWarn(baseShown, shown);
   }
 
   if(shown.length === 0){
@@ -1519,7 +1650,7 @@ function render(){
   groups.forEach(g => { g.sortKey = orderSortKeyOf(g.items); });
   groups.sort((a, b) => b.sortKey - a.sortKey);   // khóa lớn → trên cùng
   currentGroups = groups;
-  groups.forEach(g => list.appendChild(renderOrderBox(g)));
+  appendGroupsWithDivider(groups);
 }
 
 // Thẻ tóm tắt 1 đơn hàng trong danh sách — kiểu Shopee, giờ là TẦNG DUY NHẤT
@@ -2689,10 +2820,288 @@ async function setOrderCarrier(orderId, carrier, customName){
   }catch(e){ showError("Không ghi được đơn vị vận chuyển: " + e.message); }
 }
 
+// =====================================================================
+// (1) BẢNG GHI CHÚ VỊ TRÍ — đồng bộ mọi máy qua Firestore: meta/locationNote
+// =====================================================================
+const locNoteRef = doc(db, "meta", "locationNote");
+const locNotePanel = document.getElementById("locNotePanel");
+const locNoteBackdrop = document.getElementById("locNoteBackdrop");
+const locNoteFab = document.getElementById("locNoteFab");
+const locNoteBody = document.getElementById("locNoteBody");
+const locNoteEditBtn = document.getElementById("locNoteEditBtn");
+const desktopNoteMQ = window.matchMedia("(min-width:1250px)");
+let locNoteText = "";
+let locNoteDraft = "";
+let locNoteEditing = false;
+let locNoteErr = "";       // lỗi khi lưu
+let locNoteSyncErr = "";   // lỗi đồng bộ
+let locNoteMini = true;    // desktop: thu nhỏ khi ghi chú trống (người dùng bấm mở thì = false)
+const locNoteMinBtn = document.getElementById("locNoteMinBtn");
+
+function setLocNoteOpen(open){
+  locNotePanel.classList.toggle("show", open);
+  locNoteBackdrop.classList.toggle("show", open && !desktopNoteMQ.matches);
+}
+function applyLocNoteMini(){
+  // Chỉ được thu nhỏ khi ghi chú trống và không đang soạn. Có ghi chú → luôn mở rộng, không thu nhỏ được.
+  const canMini = !locNoteText.trim() && !locNoteEditing;
+  if(locNoteText.trim()) locNoteMini = true;   // có ghi chú: lần sau trống lại sẽ về dạng thu nhỏ
+  const mini = canMini && locNoteMini;
+  locNotePanel.classList.toggle("mini", mini);
+  locNotePanel.classList.toggle("can-mini", canMini && !locNoteMini);
+  if(mini){ locNotePanel.setAttribute("role","button"); locNotePanel.tabIndex = 0; locNotePanel.setAttribute("aria-expanded","false"); }
+  else { locNotePanel.removeAttribute("role"); locNotePanel.removeAttribute("tabindex"); locNotePanel.removeAttribute("aria-expanded"); }
+}
+function renderLocNote(){
+  locNoteFab.classList.toggle("has-note", !!locNoteText.trim());
+  applyLocNoteMini();
+  locNoteEditBtn.classList.toggle("active", locNoteEditing);
+  locNoteBody.innerHTML = "";
+  if(locNoteEditing){
+    const ta = document.createElement("textarea");
+    ta.value = locNoteDraft;
+    ta.placeholder = "Ghi chú...";
+    const fit = () => { ta.style.height = "auto"; ta.style.height = ta.scrollHeight + "px"; };
+    ta.addEventListener("input", () => { locNoteDraft = ta.value; fit(); });
+    ta.addEventListener("keydown", e => { if((e.ctrlKey || e.metaKey) && e.key === "Enter") saveLocNote(); });
+    locNoteBody.appendChild(ta);
+    if(locNoteErr){
+      const er = document.createElement("div");
+      er.className = "loc-note-err";
+      er.textContent = "⚠️ " + locNoteErr;
+      locNoteBody.appendChild(er);
+    }
+    const btns = document.createElement("div");
+    btns.className = "loc-note-btns";
+    const cancel = document.createElement("button");
+    cancel.type = "button"; cancel.className = "loc-note-cancel"; cancel.textContent = "Hủy";
+    cancel.addEventListener("click", () => { locNoteEditing = false; locNoteErr = ""; locNoteMini = true; renderLocNote(); });
+    const save = document.createElement("button");
+    save.type = "button"; save.className = "loc-note-save"; save.textContent = "Lưu";
+    save.addEventListener("click", saveLocNote);
+    btns.appendChild(cancel); btns.appendChild(save);
+    locNoteBody.appendChild(btns);
+    setTimeout(() => { fit(); ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }, 0);
+  } else {
+    const t = document.createElement("div");
+    t.className = "loc-note-text" + (locNoteText ? "" : " empty");
+    t.textContent = locNoteText || "Chưa có ghi chú. Bấm ✏️ để viết.";
+    locNoteBody.appendChild(t);
+    if(locNoteSyncErr){
+      const er = document.createElement("div");
+      er.className = "loc-note-err";
+      er.textContent = "⚠️ " + locNoteSyncErr;
+      locNoteBody.appendChild(er);
+    }
+  }
+}
+async function saveLocNote(){
+  const text = locNoteDraft.replace(/\s+$/, "");
+  try{
+    await setDoc(locNoteRef, { text, updatedAt: serverTimestamp() });
+    locNoteText = text;
+    locNoteEditing = false;
+    locNoteErr = "";
+    locNoteMini = true;
+  }catch(e){
+    locNoteErr = "Không lưu được ghi chú: " + e.message;
+  }
+  renderLocNote();
+}
+locNoteEditBtn.addEventListener("click", () => {
+  if(locNoteEditing){ const ta = locNoteBody.querySelector("textarea"); if(ta) ta.focus(); return; }
+  locNoteDraft = locNoteText;
+  locNoteErr = "";
+  locNoteEditing = true;
+  renderLocNote();
+});
+locNotePanel.addEventListener("click", () => {
+  if(locNotePanel.classList.contains("mini")){ locNoteMini = false; renderLocNote(); }
+});
+locNotePanel.addEventListener("keydown", e => {
+  if(locNotePanel.classList.contains("mini") && (e.key === "Enter" || e.key === " ") && e.target === locNotePanel){
+    e.preventDefault(); locNoteMini = false; renderLocNote();
+  }
+});
+locNoteMinBtn.addEventListener("click", e => {
+  e.stopPropagation();
+  if(!locNoteText.trim() && !locNoteEditing){ locNoteMini = true; renderLocNote(); }
+});
+locNoteFab.addEventListener("click", () => setLocNoteOpen(!locNotePanel.classList.contains("show")));
+locNoteBackdrop.addEventListener("click", () => setLocNoteOpen(false));
+document.getElementById("locNoteCloseBtn").addEventListener("click", () => setLocNoteOpen(false));
+document.addEventListener("keydown", e => { if(e.key === "Escape" && !desktopNoteMQ.matches) setLocNoteOpen(false); });
+desktopNoteMQ.addEventListener("change", () => setLocNoteOpen(locNotePanel.classList.contains("show")));
+onSnapshot(locNoteRef, snap => {
+  locNoteText = snap.exists() ? (snap.data().text || "") : "";
+  locNoteSyncErr = "";
+  if(!locNoteEditing) renderLocNote();   // đang gõ dở thì không ghi đè bản nháp
+  else locNoteFab.classList.toggle("has-note", !!locNoteText.trim());
+}, err => {
+  locNoteSyncErr = "Lỗi đồng bộ ghi chú: " + err.message;
+  if(!locNoteEditing) renderLocNote();
+});
+renderLocNote();
+
+// =====================================================================
+// (2) ĐƯỜNG KẺ NGANG PHÂN CÁCH CÁC NHÓM ĐƠN (tab Chờ xử lý) — đồng bộ: meta/dividers
+// Dùng như "chèn đường kẻ ngang" của Google Docs: tích chọn đơn → bấm nút "—" → đường kẻ
+// xuất hiện ngay TRÊN đơn đó (bấm lại lần nữa để gỡ). Chèn được nhiều đường → nhiều nhóm.
+// Mỗi đường lưu bằng "khóa thứ tự" của đơn nằm ngay dưới nó (không lưu theo vị trí số),
+// nên đơn mới thêm tự lên trên cùng, còn đơn cũ bàn giao/xóa đi thì đường kẻ vẫn đứng đúng chỗ.
+// =====================================================================
+const dividersRef = doc(db, "meta", "dividers");
+onSnapshot(dividersRef, snap => {
+  const d = snap.exists() ? snap.data() : {};
+  Object.keys(DIV_FIELD).forEach(tab => {
+    const arr = d[DIV_FIELD[tab]];
+    dividersByTab[tab] = Array.isArray(arr) ? arr.filter(k => typeof k === "number").sort((x, y) => y - x) : [];
+  });
+  dividersSettled = !snap.metadata.fromCache && !snap.metadata.hasPendingWrites;
+  render();
+  schedulePruneDividers();
+}, err => { connStatus.textContent = "Lỗi đồng bộ đường kẻ: " + err.message; });
+
+// Khóa thứ tự của từng đơn đang nằm ở 1 tab — tính trên TOÀN BỘ đơn của tab theo trạng thái,
+// KHÔNG phụ thuộc tìm kiếm / lọc hãng (các bộ lọc đó chỉ đổi cách hiển thị).
+function tabOrderKeyMap(tab){
+  const by = new Map();
+  allTasks.forEach(t => {
+    if(t.status !== TAB_STATUS[tab]) return;
+    const k = orderKey(t);
+    if(!by.has(k)) by.set(k, []);
+    by.get(k).push(t);
+  });
+  const m = new Map();
+  by.forEach((items, k) => m.set(k, orderSortKeyOf(items)));
+  return m;
+}
+
+// Đường kẻ chỉ hiện khi KHÔNG tìm kiếm và KHÔNG lọc hãng (dữ liệu kẻ không bị ảnh hưởng).
+function dividersHidden(){ return !!searchTerm || (hasCarrierView() && carrierFilter !== "all"); }
+
+// Ghi từng thay đổi nhỏ (arrayUnion / arrayRemove) thay vì ghi đè cả danh sách → nhiều máy
+// cùng sửa / cùng tự dọn không đè mất thay đổi của nhau. Firestore hiện kết quả ngay trên máy
+// đang bấm và tự hoàn tác nếu ghi lỗi.
+async function writeDividers(tab, addKeys, removeKeys){
+  const op = addKeys.length ? arrayUnion(...addKeys) : arrayRemove(...removeKeys);
+  try{ await setDoc(dividersRef, { [DIV_FIELD[tab]]: op, updatedAt: serverTimestamp() }, { merge: true }); }
+  catch(e){ showError("Không lưu được đường kẻ: " + e.message); }
+}
+
+// Tự xóa: kẻ của 1 tab bị gỡ khi tab đó không còn đơn nào nằm dưới nó (các đơn đã sang tab khác).
+let pruneTimer = null;
+function schedulePruneDividers(){ clearTimeout(pruneTimer); pruneTimer = setTimeout(pruneDividers, 1200); }
+async function pruneDividers(){
+  if(!tasksSettled || !dividersSettled) return;
+  const patch = {};
+  Object.keys(DIV_FIELD).forEach(tab => {
+    const keys = dividersByTab[tab];
+    if(!keys.length) return;
+    const valid = Array.from(tabOrderKeyMap(tab).values());
+    const minKey = valid.length ? Math.min(...valid) : Infinity;
+    const stale = keys.filter(k => k < minKey);          // không còn đơn nào có khóa <= k
+    if(stale.length) patch[DIV_FIELD[tab]] = arrayRemove(...stale);
+  });
+  if(Object.keys(patch).length === 0) return;
+  try{ await setDoc(dividersRef, patch, { merge: true }); }catch(e){ /* sẽ thử lại ở lần đồng bộ sau */ }
+}
+
+document.getElementById("divBtn").addEventListener("click", () => {
+  if(dividersHidden()){ showNotice("Bỏ tìm kiếm / lọc hãng để chèn hoặc gỡ đường kẻ."); return; }
+  const tab = currentTab;
+  const map = tabOrderKeyMap(tab);
+  const keys = Array.from(new Set(Array.from(selected).filter(id => map.has(id)).map(id => map.get(id))));
+  if(keys.length === 0){ showNotice("Tích chọn đơn muốn chèn đường kẻ phía trên."); return; }
+  const have = new Set(dividersByTab[tab]);
+  const missing = keys.filter(k => !have.has(k));
+  selected.clear();   // tránh lỡ tay bấm "Đã in xong" lên các đơn vừa chọn
+  render();
+  if(missing.length) writeDividers(tab, missing, []);   // còn đơn chưa có kẻ → chèn cho tất cả
+  else writeDividers(tab, [], keys);                    // tất cả đã có kẻ → gỡ
+});
+
+function appendGroupsWithDivider(groups){
+  const ds = dividersByTab[currentTab].slice().sort((x, y) => y - x);
+  if(ds.length === 0 || dividersHidden()){
+    groups.forEach(g => list.appendChild(renderOrderBox(g)));
+    return;
+  }
+  // groups đã sắp theo khóa giảm dần. Đường kẻ K nằm ngay trước đơn đầu tiên có khóa <= K.
+  let di = 0;
+  groups.forEach(g => {
+    const here = [];
+    while(di < ds.length && g.sortKey <= ds[di]){ here.push(ds[di]); di++; }
+    if(here.length) list.appendChild(renderDividerEl(here));
+    list.appendChild(renderOrderBox(g));
+  });
+}
+function renderDividerEl(keys){
+  const el = document.createElement("div");
+  el.className = "order-divider";
+  const line = document.createElement("div"); line.className = "od-line";
+  const x = document.createElement("button");
+  x.type = "button"; x.className = "od-x"; x.textContent = "✕"; x.title = "Gỡ đường kẻ này";
+  x.addEventListener("click", () => writeDividers(currentTab, [], keys));
+  el.appendChild(line); el.appendChild(x);
+  return el;
+}
+
+// =====================================================================
+// (3) CHỐNG BỎ SÓT KHI LỌC THEO HÃNG Ở TAB "CHỜ XỬ LÝ"
+//  - Banner vàng luôn hiện khi đang lọc: ghi rõ đang ẩn bao nhiêu đơn + nút "Hiện tất cả".
+//  - Tự về "Tất cả" sau CARRIER_IDLE_MS KHÔNG THAO TÁC (chạm/cuộn/gõ phím đều tính là thao tác
+//    và làm đồng hồ chạy lại từ đầu → đang xem dở thì không bị reset giữa chừng).
+//  - Tắt màn hình / chuyển app rồi quay lại sau > CARRIER_HIDDEN_MS cũng tự về "Tất cả".
+//  - Bộ lọc chỉ nằm trên máy đang dùng (không đồng bộ), đổi tab / tải lại trang là về "Tất cả".
+// =====================================================================
+function carrierGuardActive(){ return currentTab === "in" && carrierFilter !== "all"; }
+function autoResetCarrierFilter(why){
+  if(!carrierGuardActive()) return;
+  carrierFilter = "all";
+  render();
+  showNotice(why);
+}
+function armCarrierGuard(restart){
+  if(!carrierGuardActive()){ clearTimeout(carrierIdleTimer); carrierIdleTimer = null; return; }
+  if(carrierIdleTimer && !restart) return;
+  clearTimeout(carrierIdleTimer);
+  carrierIdleTimer = setTimeout(() => {
+    carrierIdleTimer = null;
+    autoResetCarrierFilter(`Đã tự quay về "Tất cả" vì ${CARRIER_IDLE_MS / 60000} phút không thao tác — để không bỏ sót đơn của hãng khác.`);
+  }, CARRIER_IDLE_MS);
+}
+["pointerdown", "keydown", "scroll", "touchstart", "wheel"].forEach(ev =>
+  window.addEventListener(ev, () => { if(carrierIdleTimer) armCarrierGuard(true); }, { passive: true, capture: true }));
+document.addEventListener("visibilitychange", () => {
+  if(document.hidden){ hiddenAt = Date.now(); return; }
+  if(hiddenAt && Date.now() - hiddenAt > CARRIER_HIDDEN_MS){
+    autoResetCarrierFilter('Đã quay về "Tất cả" vì bạn vừa rời khỏi ứng dụng một lúc — để không bỏ sót đơn của hãng khác.');
+  }
+  hiddenAt = 0;
+});
+function updateCarrierWarn(baseShown, shown){
+  const wrap = document.getElementById("carrierWarnWrap");
+  const el = document.getElementById("carrierWarn");
+  if(carrierFilter === "all" || !hasCarrierView()){ wrap.style.display = "none"; el.innerHTML = ""; return; }
+  wrap.style.display = "block";
+  const hidden = countOrders(baseShown) - countOrders(shown);
+  el.innerHTML = "";
+  const txt = document.createElement("span");
+  txt.className = "cw-text";
+  txt.textContent = `⚠️ Đang chỉ hiện ${carrierLabelOf(carrierFilter)} — đang ẩn ${hidden} đơn của hãng khác.` +
+    (currentTab === "in" ? ` Tự về "Tất cả" sau ${CARRIER_IDLE_MS / 60000} phút không thao tác.` : "");
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.textContent = "Hiện tất cả";
+  btn.addEventListener("click", () => { carrierFilter = "all"; render(); });
+  el.appendChild(txt); el.appendChild(btn);
+}
+
 // ---- Batch actions ----
 function updateBatchBar(){
   const n = selected.size;
-  if(!labelBusy) batchCountEl.textContent = n + " đã chọn"; // đang tải/gộp thì ô này đang hiện tiến độ
+  if(!labelBusy) batchCountEl.textContent = compactBar.matches ? String(n) : n + " đã chọn"; // đang tải/gộp thì ô này đang hiện tiến độ
   const doneBtn = document.getElementById("batchDone");
   // Tab "Đã bàn giao" là bước cuối nên không có thao tác chuyển tiếp hàng loạt.
   if(currentTab === "xong"){
@@ -2712,8 +3121,24 @@ function updateBatchBar(){
     batchDownloadPdfBtn.title = has ? `Tải ${groups.length} phiếu giao đã chọn` : "Các đơn đã chọn chưa có phiếu giao";
     batchMergePdfBtn.title = has ? `Gộp ${groups.length} phiếu giao đã chọn thành 1 file` : "Các đơn đã chọn chưa có phiếu giao";
   }
+  // Nút đường kẻ: hiện ở cả 3 tab; mờ khi đang tìm kiếm / lọc hãng; sáng lên nếu mọi đơn đã chọn đều đã có kẻ (bấm = gỡ).
+  const divBtn = document.getElementById("divBtn");
+  if(n > 0){
+    const hidden = dividersHidden();
+    divBtn.disabled = hidden;
+    let allHave = false;
+    if(!hidden){
+      const map = tabOrderKeyMap(currentTab), have = new Set(dividersByTab[currentTab]);
+      const ks = Array.from(selected).filter(id => map.has(id)).map(id => map.get(id));
+      allHave = ks.length > 0 && ks.every(k => have.has(k));
+    }
+    divBtn.classList.toggle("on", allHave);
+    divBtn.title = hidden ? "Bỏ tìm kiếm / lọc hãng để chèn hoặc gỡ đường kẻ"
+      : allHave ? "Gỡ đường kẻ phía trên các đơn đã chọn" : "Chèn đường kẻ phía trên các đơn đã chọn";
+  }
   batchbar.classList.toggle("show", n > 0 && !sortMode);
 }
+compactBar.addEventListener("change", () => updateBatchBar());
 
 document.getElementById("batchDone").addEventListener("click", async () => {
   const tasks = getSelectedTasks();
