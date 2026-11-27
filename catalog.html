@@ -856,6 +856,64 @@ body[data-current-mode="task"] #viewSwitch { display: flex !important; }
 .dup-box p{margin:0 0 8px;font-size:13px;color:var(--muted);line-height:1.45;}
 .dup-box ul{margin:0 0 4px;padding-left:18px;font-size:13px;}
 .dup-actions{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
+
+/* ---- Nút chuyển Lưới/List của tab Quản lý (chỉ hiện ở tab Quản lý) ---- */
+#manageViewSwitch{display:none !important;}
+body[data-current-mode="manage"] #manageViewSwitch{display:flex !important;}
+.mvswBtn{padding:6px 10px;font-size:14px;line-height:1;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text);cursor:pointer;}
+.mvswBtn.active{background:var(--blue-bg);border-color:var(--blue);color:var(--blue);}
+
+/* ---- Tab Quản lý: chế độ LIST 2 tầng (sản phẩm cha + dòng con phân loại) ---- */
+.mlist{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--card);}
+.mprod{position:relative;border-bottom:1px solid var(--border);}
+.mprod:last-child{border-bottom:none;}
+.mprod.sel{background:var(--blue-bg);}
+.mprow{display:flex;align-items:center;gap:10px;padding:10px 12px;}
+.mno{font-size:12px;font-weight:700;color:var(--muted);min-width:26px;flex-shrink:0;}
+.mrchk{width:20px;height:20px;flex-shrink:0;accent-color:var(--blue);}
+.mthumb,.mcthumb{flex-shrink:0;background:#fff;border:1px solid var(--border);border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#6b7280;font-size:10px;text-align:center;}
+.mthumb{width:56px;height:56px;}
+.mcthumb{width:46px;height:46px;}
+.mthumb img,.mcthumb img{width:100%;height:100%;object-fit:contain;background:#fff;display:block;cursor:zoom-in;}
+.mpmain{flex:1;min-width:0;}
+.mpname{font-size:14.5px;font-weight:600;line-height:1.35;word-break:break-word;}
+.mbadge{display:inline-block;font-size:11px;font-weight:600;border-radius:6px;padding:2px 7px;margin-left:6px;vertical-align:middle;border:1px solid transparent;white-space:nowrap;}
+.mbadge.b-common{background:var(--green-bg);color:var(--green);border-color:var(--green);}
+.mbadge.b-cover{background:var(--amber-bg);color:var(--amber);border-color:var(--amber);}
+.mlk{font-size:12px;margin-left:6px;color:var(--blue);text-decoration:none;white-space:nowrap;}
+.mpact{display:flex;gap:6px;flex-shrink:0;}
+.mpact button{background:var(--gray-bg);color:var(--text);font-size:13px;padding:7px 10px;border-radius:8px;}
+.mpact .mDel{color:var(--red);}
+.mpact .mOrd{padding:7px 8px;}
+.mpact button:disabled{opacity:.3;cursor:default;}
+.mchildren{margin:0 12px 10px 38px;border-left:2px dashed var(--border);padding-left:10px;}
+.mcrow{display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px solid var(--border);}
+.mcrow:first-child{border-top:none;}
+.mcpills{display:flex;flex-wrap:wrap;gap:5px;min-width:0;}
+.mpill{display:inline-flex;align-items:center;gap:5px;background:var(--gray-bg);border:1px solid var(--border);border-radius:999px;padding:3px 10px;font-size:12px;max-width:100%;word-break:break-word;}
+.mpill .mpl{text-decoration:none;font-size:12px;}
+.mpill.nolink{opacity:.85;}
+.mmoreBtn{background:none;color:var(--blue);font-size:12.5px;padding:6px 0 2px;font-weight:600;}
+.mlist .mmenu{bottom:auto;top:52px;right:10px;}
+@media (max-width:520px){
+  .mprow{flex-wrap:wrap;gap:8px;padding:10px;}
+  .mno{display:none;}
+  .mpmain{flex:1 1 calc(100% - 120px);}
+  .mpact{width:100%;justify-content:flex-end;}
+  .mpact button{flex:1;}
+  .mchildren{margin-left:12px;}
+}
+
+/* ---- Khung phóng to khi rê chuột + Lightbox ---- */
+#imgHover{position:fixed;z-index:4000;pointer-events:none;display:none;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:6px;box-shadow:0 10px 30px var(--shadow);max-width:372px;}
+#imgHover.show{display:block;}
+#imgHover img{display:block;width:100%;max-width:360px;max-height:360px;object-fit:contain;background:#fff;border-radius:6px;}
+#imgHover .cap,#lightbox .cap{font-size:12.5px;font-weight:600;color:var(--text);padding:6px 4px 2px;text-align:center;word-break:break-word;}
+#lightbox{position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,.88);display:none;flex-direction:column;align-items:center;justify-content:center;padding:16px;}
+#lightbox.show{display:flex;}
+#lightbox img{max-width:94vw;max-height:80vh;object-fit:contain;background:#fff;border-radius:8px;}
+#lightbox .cap{color:#fff;font-size:14px;margin-top:8px;}
+#lightbox .lb-x{position:absolute;top:12px;right:12px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.18);color:#fff;font-size:18px;padding:0;}
 </style>
 </head>
 <body>
@@ -900,6 +958,10 @@ body[data-current-mode="task"] #viewSwitch { display: flex !important; }
 
   <section>
     <div class="row" style="justify-content:space-between;align-items:center;">
+      <div class="viewSwitch" id="manageViewSwitch">
+        <button class="mvswBtn" data-mview="grid" type="button" title="Xem lưới">▦</button>
+        <button class="mvswBtn" data-mview="list" type="button" title="Xem danh sách">☰</button>
+      </div>
       <div class="viewSwitch" id="viewSwitch">
         <button class="vswBtn" data-view="grid" type="button" title="Xem lưới">▦</button>
         <button class="vswBtn" data-view="image" type="button" title="Xem ảnh">🖼</button>
@@ -1170,6 +1232,13 @@ let sortMode = false;
 // initialization" vì hàm cập nhật nút đọc biến này sớm hơn lúc nó
 // được khai báo (temporal dead zone của let). ----
 let viewMode = "image";
+// Chế độ xem của tab Quản lý: 'grid' (lưới ảnh) hoặc 'list' (danh sách 2 tầng).
+// Lưu vào localStorage để giữ lại sau khi tải lại trang (try/catch phòng khi bị chặn).
+let manageView = (function(){
+  try{ return localStorage.getItem("manage-view") === "list" ? "list" : "grid"; }catch(e){ return "grid"; }
+})();
+// Sản phẩm đang bung hết phân loại ("Xem thêm") ở list view.
+const expandedManage = new Set();
 // Ở chế độ xem ảnh: id sản phẩm đang mở overlay chọn phân loại trên điện
 // thoại (chạm để bật/tắt, vì không có hover thật như máy tính).
 let openImageCardId = null;
@@ -1208,6 +1277,8 @@ function syncFloatingBar(){
 }
 applyModeUI();
 updateViewSwitch();
+
+updateManageViewSwitch();
 
 // ---- Tái cấu trúc toolbar quản lý danh mục (chỉ đổi vị trí trong DOM +
 // vài style trực tiếp bằng JS, không đổi logic hiển thị/ẩn theo mode đã có
@@ -2324,6 +2395,182 @@ document.getElementById("insLinkBtn").addEventListener("click", () => runEditorT
 document.getElementById("editorTextarea").addEventListener("input", refreshEditorPreview);
 
 function openUrl(u){ if(u) window.open(u, "_blank", "noopener"); }
+
+// ===== Tab Quản lý: LIST VIEW 2 tầng =====
+function updateManageViewSwitch(){
+  document.querySelectorAll(".mvswBtn").forEach(b => b.classList.toggle("active", b.dataset.mview === manageView));
+}
+document.querySelectorAll(".mvswBtn").forEach(b => {
+  b.addEventListener("click", () => {
+    manageView = b.dataset.mview === "list" ? "list" : "grid";
+    try{ localStorage.setItem("manage-view", manageView); }catch(e){ /* bỏ qua nếu bị chặn */ }
+    openMenuId = null;
+    updateManageViewSwitch();
+    renderList();
+  });
+});
+
+// Gom các phân loại dùng chung 1 URL ảnh thành 1 nhóm (1 dòng con + nhiều pill).
+// Phân loại chỉ có link (chưa có ảnh) được gom vào nhóm "chưa có ảnh" đặt cuối.
+function manageGroups(p){
+  const vi = p.variantImages || {}, vl = p.variantLinks || {};
+  const all = labelsOf(p);
+  Object.keys(vi).concat(Object.keys(vl)).forEach(k => { if(!all.includes(k)) all.push(k); });
+  const map = new Map();
+  all.forEach(l => {
+    const img = vi[l] || "", link = vl[l] || "";
+    if(!img && !link) return;
+    if(!map.has(img)) map.set(img, []);
+    map.get(img).push({ label: l, link });
+  });
+  const groups = Array.from(map.entries()).map(([img, items]) => ({ img, items }));
+  groups.sort((a, b) => (a.img ? 0 : 1) - (b.img ? 0 : 1));
+  return groups;
+}
+
+function renderManageList(filtered){
+  const wrap = document.createElement("div");
+  wrap.className = "mlist";
+  filtered.forEach((p, idx) => {
+    const groups = manageGroups(p);
+    const hasOwnImgs = groups.some(g => g.img);
+    const thumb = thumbOf(p);
+    const vl = p.variantLinks || {};
+    const nLinks = Object.values(vl).filter(Boolean).length;
+    const anyLink = p.link || Object.values(vl).find(Boolean) || "";
+    const first = idx === 0, last = idx === filtered.length - 1;
+    const expanded = expandedManage.has(p.id);
+    const visible = (groups.length > 3 && !expanded) ? groups.slice(0, 3) : groups;
+    const hiddenCount = groups.slice(visible.length).reduce((n, g) => n + g.items.length, 0);
+    const badge = hasOwnImgs ? '<span class="mbadge b-cover">Ảnh bìa</span>' : (p.image ? '<span class="mbadge b-common">Ảnh chung</span>' : "");
+    const linkChips = (p.link ? `<a class="mlk" href="${escapeHtml(p.link)}" target="_blank" rel="noopener" title="Mở link file in chung">🔗 Link chung</a>` : "")
+      + (nLinks ? `<span class="mlk" style="color:var(--muted);" title="${nLinks} link file in riêng theo phân loại">🔗 +${nLinks}</span>` : "");
+    const childrenHtml = visible.map(g => {
+      const names = g.items.map(it => `${it.label}${it.link ? " 🔗" : ""}`).join(", ");
+      const pills = g.items.map(it => `<span class="mpill${it.link ? "" : " nolink"}">${escapeHtml(it.label)}${it.link ? ` <a class="mpl" href="${escapeHtml(it.link)}" target="_blank" rel="noopener" title="Mở link file in: ${escapeHtml(it.link)}">🔗</a>` : ""}</span>`).join("");
+      const th = g.img
+        ? `<img class="zimg" loading="lazy" src="${escapeHtml(g.img)}" data-full="${escapeHtml(g.img)}" data-cap="${escapeHtml(g.items.map(it => it.label).join(", "))}" alt="">`
+        : `<span>Chưa có ảnh</span>`;
+      return `<div class="mcrow"><div class="mcthumb" title="${escapeHtml(names)}">${th}</div><div class="mcpills">${pills}</div></div>`;
+    }).join("");
+    const moreBtn = groups.length > 3
+      ? `<button type="button" class="mmoreBtn">${expanded ? "Thu gọn ▴" : `Xem thêm ${hiddenCount} phân loại ▾`}</button>` : "";
+    const actions = sortMode
+      ? `<button type="button" class="mOrd mTop" title="Lên đầu" ${first ? "disabled" : ""}>⤒</button><button type="button" class="mOrd mUp" title="Lên 1 bậc" ${first ? "disabled" : ""}>▲</button><button type="button" class="mOrd mDown" title="Xuống 1 bậc" ${last ? "disabled" : ""}>▼</button><button type="button" class="mOrd mBot" title="Xuống cuối" ${last ? "disabled" : ""}>⤓</button>`
+      : `<button type="button" class="mEdit" title="Sửa">✏️ Sửa</button><button type="button" class="mDel" title="Xóa">🗑</button><button type="button" class="mMore" title="Thao tác khác">···</button>`;
+    const el = document.createElement("div");
+    el.className = "mprod" + (selected.has(p.id) ? " sel" : "");
+    el.dataset.id = p.id;
+    el.innerHTML = `
+      <div class="mprow">
+        <span class="mno">#${idx + 1}</span>
+        ${sortMode ? "" : `<input type="checkbox" class="mrchk" ${selected.has(p.id) ? "checked" : ""}>`}
+        <div class="mthumb">${thumb ? `<img class="zimg" loading="lazy" src="${escapeHtml(thumb)}" data-full="${escapeHtml(thumb)}" data-cap="${escapeHtml(p.name)}" alt="">` : "<span>Không bìa</span>"}</div>
+        <div class="mpmain"><div class="mpname">${escapeHtml(p.name)}${badge}${linkChips}</div></div>
+        <div class="mpact">${actions}</div>
+      </div>
+      ${(childrenHtml || moreBtn) ? `<div class="mchildren">${childrenHtml}${moreBtn}</div>` : ""}
+      ${openMenuId === p.id && !sortMode ? `<div class="mmenu">
+        ${thumb ? `<button type="button" data-act="img">👁 Xem ảnh lớn</button>` : ""}
+        ${anyLink ? `<button type="button" data-act="link">🔗 Mở link file in</button>` : ""}
+        <button type="button" data-act="top">⤒ Lên đầu</button>
+        <button type="button" data-act="bottom">⤓ Xuống cuối</button>
+        <button type="button" data-act="del" class="danger">🗑 Xóa</button></div>` : ""}`;
+    const q = s => el.querySelector(s);
+    const deleteProduct = async () => {
+      if(!confirm(`Xóa sản phẩm "${p.name}"?`)) return;
+      try{ await deleteDoc(doc(db, "catalog", p.id)); selected.delete(p.id); cleanupProductState(p.id); expandedManage.delete(p.id); }
+      catch(err){ showError("Không xóa được sản phẩm: " + err.message); }
+    };
+    if(sortMode){
+      if(!first){ q(".mTop").addEventListener("click", () => moveToTop(p.id)); q(".mUp").addEventListener("click", () => moveItem(p.id, -1)); }
+      if(!last){ q(".mDown").addEventListener("click", () => moveItem(p.id, 1)); q(".mBot").addEventListener("click", () => moveToBottom(p.id)); }
+    } else {
+      q(".mrchk").addEventListener("change", e => {
+        if(e.target.checked) selected.add(p.id); else selected.delete(p.id);
+        el.classList.toggle("sel", e.target.checked);
+        updateActionBar(); updateSelectAllState(filtered);
+      });
+      q(".mEdit").addEventListener("click", () => openEditor(p));
+      q(".mDel").addEventListener("click", deleteProduct);
+      q(".mMore").addEventListener("click", e => { e.stopPropagation(); openMenuId = (openMenuId === p.id) ? null : p.id; renderList(); });
+      el.querySelectorAll(".mmenu button").forEach(b => b.addEventListener("click", async e => {
+        e.stopPropagation();
+        const act = b.dataset.act;
+        openMenuId = null;
+        if(act === "img") openUrl(thumb);
+        else if(act === "link") openUrl(anyLink);
+        else if(act === "top") await moveToTop(p.id);
+        else if(act === "bottom") await moveToBottom(p.id);
+        else if(act === "del") await deleteProduct();
+        renderList();
+      }));
+    }
+    const mb = q(".mmoreBtn");
+    if(mb) mb.addEventListener("click", () => {
+      if(expandedManage.has(p.id)) expandedManage.delete(p.id); else expandedManage.add(p.id);
+      renderList();
+    });
+    wrap.appendChild(el);
+  });
+  return wrap;
+}
+
+// ---- Xem trước ảnh: rê chuột = khung nổi phóng to (~360px, né mép màn hình);
+// bấm = Lightbox toàn màn hình (X / bấm nền / Esc để đóng). Dùng event delegation
+// trên mọi <img class="zimg"> nên không phải gắn lại sau mỗi lần render. ----
+(function setupImagePreview(){
+  const canHover = () => window.matchMedia("(hover:hover) and (pointer:fine)").matches;
+  const tip = document.createElement("div");
+  tip.id = "imgHover";
+  tip.innerHTML = '<img alt=""><div class="cap"></div>';
+  document.body.appendChild(tip);
+  const tipImg = tip.querySelector("img"), tipCap = tip.querySelector(".cap");
+  const lb = document.createElement("div");
+  lb.id = "lightbox";
+  lb.innerHTML = '<button type="button" class="lb-x" aria-label="Đóng">✕</button><img alt=""><div class="cap"></div>';
+  document.body.appendChild(lb);
+  const lbImg = lb.querySelector("img"), lbCap = lb.querySelector(".cap");
+  let last = { x: 0, y: 0 };
+  function place(){
+    const w = tip.offsetWidth, h = tip.offsetHeight, m = 12;
+    let x = last.x + 18, y = last.y + 18;
+    if(x + w + m > window.innerWidth) x = last.x - w - 18;   // né mép phải
+    if(x < m) x = m;
+    if(y + h + m > window.innerHeight) y = window.innerHeight - h - m; // né mép dưới
+    if(y < m) y = m;
+    tip.style.left = x + "px"; tip.style.top = y + "px";
+  }
+  const zimgOf = e => (e.target && e.target.closest) ? e.target.closest("img.zimg") : null;
+  tipImg.addEventListener("load", () => { if(tip.classList.contains("show")) place(); });
+  document.addEventListener("mouseover", e => {
+    if(!canHover() || lb.classList.contains("show")) return;
+    const t = zimgOf(e);
+    if(!t) return;
+    last = { x: e.clientX, y: e.clientY };
+    tipImg.src = t.dataset.full || t.src;
+    tipCap.textContent = t.dataset.cap || "";
+    tip.classList.add("show");
+    place();
+  });
+  document.addEventListener("mousemove", e => {
+    if(!tip.classList.contains("show")) return;
+    last = { x: e.clientX, y: e.clientY };
+    place();
+  });
+  document.addEventListener("mouseout", e => { if(zimgOf(e)) tip.classList.remove("show"); });
+  function closeLb(){ lb.classList.remove("show"); lbImg.removeAttribute("src"); }
+  document.addEventListener("click", e => {
+    const t = zimgOf(e);
+    if(!t) return;
+    tip.classList.remove("show");
+    lbImg.src = t.dataset.full || t.src;
+    lbCap.textContent = t.dataset.cap || "";
+    lb.classList.add("show");
+  });
+  lb.addEventListener("click", e => { if(e.target !== lbImg) closeLb(); });
+  document.addEventListener("keydown", e => { if(e.key === "Escape" && lb.classList.contains("show")) closeLb(); });
+})();
 function renderManageGrid(filtered){
   const wrap = document.createElement("div");
   wrap.className = "img-grid";
@@ -2413,7 +2660,7 @@ function renderList(){
     return;
   }
   if(true){ // Tab Thêm việc: chỉ còn lưới/ảnh; tab Quản lý: lưới ảnh có nút chức năng
-    list.appendChild(isManage ? renderManageGrid(filtered) : (viewMode === "grid" ? renderGrid(filtered) : renderImageGrid(filtered)));
+    list.appendChild(isManage ? (manageView === "list" ? renderManageList(filtered) : renderManageGrid(filtered)) : (viewMode === "grid" ? renderGrid(filtered) : renderImageGrid(filtered)));
     updateActionBar();
     updateSelectAllState(filtered);
     updateTaskBar();
@@ -2963,11 +3210,15 @@ document.getElementById("exportBtn").addEventListener("click", () => {
     alert("Danh mục đang trống, chưa có gì để xuất.");
     return;
   }
-  const text = allProducts.map(productToLine).join("\n");
+  // Xuất ĐẦY ĐỦ theo cấu hình mới: dòng sản phẩm + các dòng ![Tên](URL ảnh) /
+  // [Tên](URL link file in) (chung và riêng từng phân loại) — cùng cú pháp với
+  // khung Sửa, nên dán lại vào ô Nhập danh sách (Mở rộng) là nhập lại được nguyên vẹn.
+  // Mỗi sản phẩm là 1 khối, cách nhau 1 dòng trống.
+  const text = allProducts.map(productToEditorText).join("\n\n");
   // Chỉ để xem / sao chép ra ngoài lưu trữ — bấm "Lưu" ở đây không ghi gì
   // xuống Firestore, tránh nhầm lẫn với việc sửa từng sản phẩm.
   openEditorRaw("Xuất danh sách hiện có (chỉ để xem/sao chép)", text, async () => true,
-    `Đây là toàn bộ danh mục hiện có, mỗi dòng 1 sản phẩm theo đúng định dạng nhập liệu.<br>
+    `Đây là toàn bộ danh mục hiện có: mỗi sản phẩm 1 khối gồm dòng sản phẩm (kèm phân loại) và các dòng <b>![Tên](URL ảnh)</b> / <b>[Tên](URL link file in)</b> (chung + riêng từng phân loại), đúng định dạng nhập liệu.<br>
      Chỉ để xem và sao chép ra ngoài lưu trữ.`, "Đóng");
 });
 
