@@ -213,8 +213,6 @@
     background:var(--card);
     cursor:pointer;
   }
-  .order-box.warn{border-color:var(--amber);}
-  .order-box.ready{border-color:var(--green);}
 
   .order-summary-header{
     padding:9px 12px;background:var(--row-bg);border-bottom:1px solid var(--border);
@@ -362,9 +360,6 @@
      khác nhau: GHN ~8 ký tự, SPX ~18 ký tự...). */
   .order-name-placeholder{color:var(--border);font-weight:400;letter-spacing:1px;}
 
-  .order-status-line{font-size:11.5px;text-align:center;padding:6px 12px;color:var(--muted);border-bottom:1px solid var(--border);}
-  .order-status-line.warn{color:var(--amber);font-weight:600;}
-  .order-status-line.ready{color:var(--green);font-weight:600;}
 
   .order-summary-actions{display:flex;gap:8px;padding:10px 12px;}
   .order-summary-actions button{
@@ -1345,17 +1340,6 @@ function openThumbLightbox(t){
 }
 
 // ---- Grouping helpers ----
-function orderPackInfo(orderId){
-  const items = allTasks.filter(t => t.orderId === orderId);
-  const pending = items.filter(t => t.status === "cho_in").length;
-  const readyToPack = items.filter(t => t.status === "cho_dong_goi").length;
-  return {
-    total: items.length,
-    pending, readyToPack,
-    eligible: pending === 0 && readyToPack > 0
-  };
-}
-
 function groupShown(shown){
   const order = [];
   const map = new Map();
@@ -1409,21 +1393,21 @@ function matchesSearch(t){
     (t.note || "").toLowerCase().includes(searchTerm);
 }
 
-// Các đơn ĐANG XỬ LÝ có phiếu giao = tab "Chờ xử lý" + tab "Chờ bàn giao" gộp
-// chung (mỗi đơn 1 lần, đơn ở tab 1 xếp trước), có áp từ khóa tìm kiếm. Dùng
-// chung cho nút "Tải tất cả phiếu giao" và "Gộp 1 file PDF". Không áp bộ lọc
-// hãng. Tab "Đã bàn giao" không dùng 2 nút này.
+// Các đơn có phiếu giao CỦA ĐÚNG TAB ĐANG MỞ: tab "Chờ xử lý" chỉ lấy đơn chờ
+// xử lý, tab "Chờ bàn giao" chỉ lấy đơn chờ bàn giao (mỗi đơn 1 lần), có áp từ
+// khóa tìm kiếm. Dùng chung cho nút "Tải tất cả phiếu giao" và "Gộp 1 file
+// PDF". Không áp bộ lọc hãng. Tab "Đã bàn giao" không dùng 2 nút này.
 function getActiveLabelGroups(){
-  let tasks = allTasks.filter(t => t.status === "cho_in" || t.status === "cho_dong_goi");
-  tasks.sort((a, b) => (a.status === "cho_in" ? 0 : 1) - (b.status === "cho_in" ? 0 : 1)); // sort ổn định: giữ thứ tự cũ trong từng tab
+  const status = currentTab === "in" ? "cho_in" : currentTab === "dong_goi" ? "cho_dong_goi" : null;
+  if(!status) return [];
+  let tasks = allTasks.filter(t => t.status === status);
   if(searchTerm) tasks = tasks.filter(matchesSearch);
   return groupShown(tasks).filter(g => g.shipLabelUrl);
 }
 
 // Phiếu giao của các đơn đang được TÍCH CHỌN (thanh thao tác hàng loạt). Selected
 // chứa id từng sản phẩm; groupShown gộp theo orderId nên 1 đơn nhiều sản phẩm
-// chỉ cho ra 1 phiếu (không bị tải/gộp trùng). Cùng thứ tự với
-// getActiveLabelGroups (đơn "Chờ xử lý" trước, "Chờ bàn giao" sau).
+// chỉ cho ra 1 phiếu (không bị tải/gộp trùng).
 // Trả { groups: các đơn CÓ phiếu, missing: số đơn đã chọn nhưng chưa có phiếu }.
 function getSelectedLabelGroups(){
   const tasks = getSelectedTasks();
@@ -1659,12 +1643,6 @@ function render(){
 function renderOrderBox(g){
   const box = document.createElement("div");
   box.className = "order-box";
-
-  let info = null;
-  if(currentTab === "dong_goi"){
-    info = orderPackInfo(g.orderId);
-    box.classList.add(info.eligible ? "ready" : "warn");
-  }
 
   const isExpanded = expandedOrderIds.has(g.orderId);
 
@@ -1925,15 +1903,6 @@ function renderOrderBox(g){
   }
   box.appendChild(codeRow);
 
-  if(currentTab === "dong_goi" && info){
-    const line = document.createElement("div");
-    line.className = "order-status-line " + (info.eligible ? "ready" : "warn");
-    line.textContent = info.eligible
-      ? "Đủ hàng — sẵn sàng bàn giao"
-      : `Đơn chưa đủ — còn ${info.pending} sản phẩm đang in`;
-    box.appendChild(line);
-  }
-
   const actionsRow = document.createElement("div");
   actionsRow.className = "order-summary-actions";
 
@@ -1960,13 +1929,11 @@ function renderOrderBox(g){
     revBtn.addEventListener("click", () => revertOrderItems(g.items));
     actionsRow.appendChild(revBtn);
 
-    if(info && info.eligible){
-      const btn = document.createElement("button");
-      btn.className = "order-primary-btn green";
-      btn.textContent = "🚚 Đã bàn giao";
-      btn.addEventListener("click", () => handOverWholeOrder(g.orderId));
-      actionsRow.appendChild(btn);
-    }
+    const btn = document.createElement("button");
+    btn.className = "order-primary-btn green";
+    btn.textContent = "🚚 Đã bàn giao";
+    btn.addEventListener("click", () => handOverWholeOrder(g.orderId));
+    actionsRow.appendChild(btn);
   } else if(currentTab === "xong"){
     const revBtn = document.createElement("button");
     revBtn.className = "ship-quick-btn";
@@ -2161,7 +2128,7 @@ async function revertStatus(t){
 }
 
 // Bàn giao cả đơn cho shipper: chuyển mọi sản phẩm của đơn đang ở tab "Chờ bàn
-// giao" sang tab "Đã bàn giao". Nút chỉ hiện khi đơn đủ hàng (orderPackInfo).
+// giao" sang tab "Đã bàn giao".
 async function handOverWholeOrder(orderId){
   const items = allTasks.filter(t => t.orderId === orderId && t.status === "cho_dong_goi");
   try{
@@ -2345,7 +2312,7 @@ function detectCarrierFromText(text){
 //  - BEST: "TTVN" + số                       (vd TTVN1113547228)
 //  - J&T:  "JNT..." (Lazada, vd JNTMP0042877234VNA) hoặc 12 chữ số bắt đầu
 //          bằng 86 (TikTok, vd 862434050357)
-//  - GHN:  "GY" + 6 ký tự chữ/số = 8 ký tự  (vd GYYHQPEF, GYRNKR37)
+//  - GHN:  "GY" hoặc "GR" + 6 ký tự chữ/số = 8 ký tự  (vd GYYHQPEF, GYEE97XK, GRQFAQK4, GRQFFCDT)
 // Không khớp luật nào → null ("chưa rõ", để người dùng tự chọn), KHÔNG đoán.
 // Nếu gặp hãng/mã mới thì thêm luật ở đây.
 function detectCarrierFromCode(code){
@@ -2355,7 +2322,7 @@ function detectCarrierFromCode(code){
   if(/^TTVN\d{6,}$/i.test(c)) return "best";
   if(/^JNT[A-Z0-9]{8,}$/i.test(c)) return "jt";
   if(/^86\d{10}$/.test(c)) return "jt";
-  if(/^GY[A-Z0-9]{6}$/i.test(c)) return "ghn";
+  if(/^G[YR][A-Z0-9]{6}$/i.test(c)) return "ghn";
   return null;
 }
 
@@ -2386,7 +2353,7 @@ function detectTrackingFromText(text){
   // GHN / họ Shopee: có nhãn "Mã vận đơn:" ngay trước mã
   const lab = cleaned.match(/Mã vận đơn:?\s*([A-Za-z0-9]{5,})/i);
   if(lab) return lab[1];
-  if((m = cleaned.match(/\bGY[A-Z0-9]{6}\b/g))) return mostFrequent(m);
+  if((m = cleaned.match(/\bG[YR][A-Z0-9]{6}\b/g))) return mostFrequent(m);
   return null;
 }
 
@@ -2575,7 +2542,7 @@ async function downloadShipLabel(url, orderName){
 // HIỂN THỊ trong danh sách hiện tại (theo tab + tìm kiếm) — tránh trình
 // duyệt chặn khi kích hoạt quá nhiều tải xuống cùng lúc.
 // groups: danh sách đơn cần tải; opts.source = "top" (nút đầu danh sách, tải
-// MỌI đơn đang xử lý, có hỏi xác nhận) | "batch" (nút trên thanh chọn, chỉ các
+// MỌI đơn của tab đang mở, có hỏi xác nhận) | "batch" (nút trên thanh chọn, chỉ các
 // đơn đã tích — không hỏi vì người dùng đã chủ động chọn); opts.skipNote = ghi
 // chú số đơn bị bỏ qua vì chưa có phiếu.
 async function downloadShipLabels(groups, opts = {}){
@@ -2584,7 +2551,7 @@ async function downloadShipLabels(groups, opts = {}){
     showError("Không có phiếu giao nào để tải.");
     return;
   }
-  if(source === "top" && !confirm(`Tải xuống ${groups.length} phiếu giao (Chờ xử lý + Chờ bàn giao)?`)) return;
+  if(source === "top" && !confirm(`Tải xuống ${groups.length} phiếu giao (tab ${STATUS_LABEL[currentTab] || "hiện tại"})?`)) return;
   labelBusy = true;
   setLabelButtonsDisabled(true);
   for(let i = 0; i < groups.length; i++){
@@ -2695,7 +2662,7 @@ async function extractLabelBlocks(arrayBuffer, outDoc, PDFDocument){
   return blocks;
 }
 
-// groups/opts giống downloadShipLabels (source "top" = mọi đơn đang xử lý,
+// groups/opts giống downloadShipLabels (source "top" = mọi đơn của tab đang mở,
 // "batch" = chỉ các đơn đã tích).
 async function mergeShipLabels(groups, opts = {}){
   const source = opts.source || "top";
