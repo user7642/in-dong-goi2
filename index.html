@@ -669,6 +669,33 @@
   }
   .loc-note-save{background:var(--green-solid);color:#fff;}
   .loc-note-cancel,.loc-note-close{background:var(--gray-bg);color:var(--text);}
+  /* Ảnh trong ghi chú: tự co theo bề rộng bảng (điện thoại / desktop đều vừa), bấm để xem lớn */
+  .loc-note-imgs{display:flex;flex-direction:column;gap:8px;margin-top:10px;}
+  .loc-note-imgs img{display:block;width:100%;height:auto;max-height:60vh;object-fit:contain;border-radius:8px;border:1px solid var(--border);background:#fff;cursor:zoom-in;}
+  .loc-note-thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+  .lnt{position:relative;width:72px;height:72px;border-radius:8px;border:1px solid var(--border);background:var(--gray-bg);overflow:hidden;}
+  .lnt img{width:100%;height:100%;object-fit:cover;display:block;}
+  .lnt .x{position:absolute;top:2px;right:2px;width:22px;height:22px;border:none;border-radius:50%;background:rgba(0,0,0,.7);color:#fff;font-size:12px;padding:0;cursor:pointer;line-height:1;}
+  .lnt.busy{display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted);text-align:center;}
+  .loc-note-addimg{display:block;width:100%;margin-top:10px;border:1px dashed var(--border);background:transparent;color:var(--text);border-radius:8px;padding:9px;font-size:13px;cursor:pointer;}
+  .loc-note-hint{font-size:12px;color:var(--muted);margin-top:4px;}
+  /* Ghi chú dạng dòng chảy: chữ / ảnh / chữ... (ảnh nằm đúng chỗ con trỏ lúc dán) */
+  .loc-note-flow{display:flex;flex-direction:column;gap:8px;}
+  .loc-note-flow .loc-note-text{min-height:0;}
+  .loc-note-flow img{display:block;width:100%;height:auto;max-height:60vh;object-fit:contain;border-radius:8px;border:1px solid var(--border);background:#fff;cursor:zoom-in;}
+  /* Khung soạn thảo kiểu trang tài liệu: 1 khung chung, chữ không có ô viền riêng */
+  .lnb-doc{border:1px solid var(--border);border-radius:8px;padding:8px 10px;min-height:110px;cursor:text;}
+  .lnb-doc:focus-within{border-color:var(--blue);}
+  .loc-note-body textarea.lnb-ta{display:block;width:100%;min-height:26px;margin:0;padding:2px 0;border:none;outline:none;box-shadow:none;background:transparent;color:inherit;font-size:15px;line-height:1.5;border-radius:0;}
+  .loc-note-body textarea.lnb-ta.solo{min-height:96px;}
+  .lnfig{position:relative;margin:6px 0 2px;}
+  .lnfig img{display:block;width:100%;height:auto;max-height:40vh;object-fit:contain;border-radius:8px;border:1px solid var(--border);background:#fff;}
+  .lnfig .x{position:absolute;top:6px;right:6px;width:28px;height:28px;border:none;border-radius:50%;background:rgba(0,0,0,.7);color:#fff;font-size:13px;padding:0;cursor:pointer;line-height:1;}
+  .lnfig.busy{height:84px;display:flex;align-items:center;justify-content:center;border:1px dashed var(--border);border-radius:8px;color:var(--muted);font-size:13px;}
+  #noteLightbox{position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center;padding:12px;}
+  #noteLightbox.show{display:flex;}
+  #noteLightbox img{max-width:96vw;max-height:92vh;object-fit:contain;background:#fff;border-radius:6px;}
+  #noteLightbox .lbx{position:absolute;top:10px;right:10px;width:40px;height:40px;border:none;border-radius:50%;background:rgba(255,255,255,.2);color:#fff;font-size:18px;cursor:pointer;padding:0;}
   @media (min-width:1250px){
     .note-fab,.loc-note-backdrop,.loc-note-actions{display:none !important;}
     .loc-note{
@@ -871,6 +898,11 @@ const firebaseConfig = {
 // thẳng từ trình duyệt (không lộ khóa bí mật nào trong code).
 const CLOUDINARY_CLOUD_NAME = "e8beonzt";
 const CLOUDINARY_UPLOAD_PRESET = "ship-labels";
+// Ảnh đính kèm bảng ghi chú 📌: dùng 1 upload preset RIÊNG (unsigned) đã cài sẵn
+// "Asset folder" = Ghi-chu-index trên Cloudinary -> ảnh luôn vào đúng thư mục đó,
+// không lẫn vào thư mục chung. Thư mục cấu hình ở preset nên không cần gửi từ trình duyệt.
+const CLOUDINARY_NOTE_PRESET = "ghi-chu-index";
+const NOTE_MAX_IMAGES = 6;
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -2805,55 +2837,277 @@ let locNoteSyncErr = "";   // lỗi đồng bộ
 let locNoteMini = true;    // desktop: thu nhỏ khi ghi chú trống (người dùng bấm mở thì = false)
 const locNoteMinBtn = document.getElementById("locNoteMinBtn");
 
+// Ghi chú = chuỗi khối theo thứ tự: {t:"text",v:"..."} hoặc {t:"img",u:"https://..."}
+// (ảnh nằm đúng vị trí đã chèn, chữ ngay dưới ảnh là chú thích của ảnh đó).
+let locNoteBlocks = [];        // đã lưu (đồng bộ mọi máy)
+let locNoteDraftBlocks = [];   // bản nháp đang sửa; ảnh đang tải có busy:true
+let locNoteCaret = null;       // vị trí con trỏ gần nhất {block,pos}
+let locNotePendingFocus = null;// khối chữ cần trả con trỏ sau khi vẽ lại
+function noteBusyCount(){ return locNoteDraftBlocks.filter(b => b.t === "img" && b.busy).length; }
+function noteImgCount(){ return locNoteDraftBlocks.filter(b => b.t === "img").length; }
+function hasLocNote(){ return locNoteBlocks.some(b => b.t === "img" || (b.v || "").trim()); }
+// Chuẩn hóa để sửa được: luôn có khối chữ ở đầu, cuối và giữa 2 ảnh; 2 khối chữ liền nhau thì gộp.
+function normBlocks(list){
+  const out = [];
+  (list || []).forEach(b => {
+    if(b.t === "img"){
+      if(!out.length || out[out.length - 1].t === "img") out.push({ t: "text", v: "" });
+      out.push(b);
+    } else {
+      const last = out[out.length - 1];
+      if(last && last.t === "text"){ if(b.v) last.v = last.v ? last.v + "\n" + b.v : b.v; }
+      else out.push({ t: "text", v: b.v || "" });
+    }
+  });
+  if(!out.length || out[out.length - 1].t === "img") out.push({ t: "text", v: "" });
+  return out;
+}
+// Đọc từ Firestore: ưu tiên blocks; bản cũ chỉ có text + images thì quy về chữ rồi các ảnh.
+function blocksFromDoc(d){
+  const okUrl = u => typeof u === "string" && /^https:\/\//.test(u);
+  if(Array.isArray(d.blocks)){
+    return d.blocks.filter(b => b && ((b.t === "text" && typeof b.v === "string") || (b.t === "img" && okUrl(b.u))))
+      .map(b => b.t === "img" ? { t: "img", u: b.u } : { t: "text", v: b.v });
+  }
+  const out = [];
+  if(typeof d.text === "string" && d.text.trim()) out.push({ t: "text", v: d.text });
+  (Array.isArray(d.images) ? d.images : []).filter(okUrl).forEach(u => out.push({ t: "img", u }));
+  return out;
+}
+function blocksForSave(){
+  const o = [];
+  locNoteDraftBlocks.forEach(b => {
+    if(b.t === "img"){ if(b.u && !b.busy) o.push({ t: "img", u: b.u }); }
+    else { const v = (b.v || "").replace(/\s+$/, ""); if(v.trim()) o.push({ t: "text", v }); }
+  });
+  return o;
+}
+function captureNoteFocus(){
+  const a = document.activeElement;
+  if(a && a.tagName === "TEXTAREA" && a.__b && locNoteBody.contains(a)) locNotePendingFocus = { block: a.__b, pos: a.selectionStart };
+}
 function setLocNoteOpen(open){
   locNotePanel.classList.toggle("show", open);
   locNoteBackdrop.classList.toggle("show", open && !desktopNoteMQ.matches);
 }
 function applyLocNoteMini(){
-  // Chỉ được thu nhỏ khi ghi chú trống và không đang soạn. Có ghi chú → luôn mở rộng, không thu nhỏ được.
-  const canMini = !locNoteText.trim() && !locNoteEditing;
-  if(locNoteText.trim()) locNoteMini = true;   // có ghi chú: lần sau trống lại sẽ về dạng thu nhỏ
+  // Chỉ được thu nhỏ khi ghi chú trống (không chữ, không ảnh) và không đang soạn.
+  const canMini = !hasLocNote() && !locNoteEditing;
+  if(hasLocNote()) locNoteMini = true;   // có ghi chú: lần sau trống lại sẽ về dạng thu nhỏ
   const mini = canMini && locNoteMini;
   locNotePanel.classList.toggle("mini", mini);
   locNotePanel.classList.toggle("can-mini", canMini && !locNoteMini);
   if(mini){ locNotePanel.setAttribute("role","button"); locNotePanel.tabIndex = 0; locNotePanel.setAttribute("aria-expanded","false"); }
   else { locNotePanel.removeAttribute("role"); locNotePanel.removeAttribute("tabindex"); locNotePanel.removeAttribute("aria-expanded"); }
 }
+
+// ---- Ảnh trong ghi chú ----
+// Chèn tham số biến đổi của Cloudinary vào URL để ảnh hiển thị nhẹ + vừa khung (w = bề rộng tối đa).
+function noteImgUrl(url, w){
+  return url.includes("/image/upload/") ? url.replace("/image/upload/", `/image/upload/c_limit,w_${w},q_auto,f_auto/`) : url;
+}
+function makeNoteImg(url, w, cls){
+  const img = document.createElement("img");
+  if(cls) img.className = cls;
+  img.loading = "lazy"; img.alt = "";
+  img.src = noteImgUrl(url, w);
+  // Nếu tài khoản Cloudinary chặn biến đổi (strict transformations) thì quay về ảnh gốc.
+  img.onerror = () => { img.onerror = null; img.src = url; };
+  return img;
+}
+// Thu nhỏ ảnh trước khi tải (cạnh dài tối đa 1600px, JPEG 85%) — ảnh chụp màn hình/điện thoại
+// thường vài MB, thu nhỏ giúp tải nhanh, đỡ tốn dung lượng Cloudinary.
+async function shrinkImage(file){
+  if(!/^image\/(png|jpe?g|webp|bmp)$/i.test(file.type)) return file;
+  try{
+    const bmp = await createImageBitmap(file, { imageOrientation: "from-image" });
+    const MAX = 1600, k = Math.min(1, MAX / Math.max(bmp.width, bmp.height));
+    if(k === 1 && file.size < 600 * 1024){ if(bmp.close) bmp.close(); return file; }
+    const cv = document.createElement("canvas");
+    cv.width = Math.round(bmp.width * k); cv.height = Math.round(bmp.height * k);
+    const ctx = cv.getContext("2d");
+    ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.drawImage(bmp, 0, 0, cv.width, cv.height);
+    if(bmp.close) bmp.close();
+    const blob = await new Promise(r => cv.toBlob(r, "image/jpeg", 0.85));
+    return (blob && blob.size < file.size) ? blob : file;
+  }catch(e){ return file; }
+}
+async function uploadNoteImage(file){
+  const blob = await shrinkImage(file);
+  const fd = new FormData();
+  fd.append("file", blob, "ghi-chu.jpg");
+  fd.append("upload_preset", CLOUDINARY_NOTE_PRESET);
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, { method: "POST", body: fd });
+  const data = await res.json().catch(() => ({}));
+  if(!res.ok || !data.secure_url){
+    const m = (data.error && data.error.message) || ("HTTP " + res.status);
+    throw new Error(/preset/i.test(m) ? `${m} (kiểm tra upload preset "${CLOUDINARY_NOTE_PRESET}" đã tạo, chế độ Unsigned)` : m);
+  }
+  return data.secure_url;
+}
+// Chèn ảnh vào đúng vị trí con trỏ: tách khối chữ làm 2 (trước | sau), đặt ảnh ở giữa.
+// Chữ phía sau con trỏ trở thành khối chữ nằm ngay dưới ảnh (chỗ ghi chú cho ảnh).
+function addNoteFiles(fileList, target){
+  const files = Array.from(fileList || []).filter(f => f && /^image\//.test(f.type));
+  if(!files.length) return;
+  let cur = (target && locNoteDraftBlocks.includes(target.block)) ? target : null;
+  if(!cur){ const lt = locNoteDraftBlocks[locNoteDraftBlocks.length - 1]; cur = { block: lt, pos: (lt.v || "").length }; }
+  locNoteErr = "";
+  for(const f of files){
+    if(noteImgCount() >= NOTE_MAX_IMAGES){ locNoteErr = `Tối đa ${NOTE_MAX_IMAGES} ảnh cho mỗi ghi chú.`; break; }
+    const v = cur.block.v || "";
+    const idx = locNoteDraftBlocks.indexOf(cur.block);
+    const img = { t: "img", busy: true, u: "" };
+    const tail = { t: "text", v: v.slice(cur.end != null ? cur.end : cur.pos) };
+    cur.block.v = v.slice(0, cur.pos);
+    locNoteDraftBlocks.splice(idx + 1, 0, img, tail);
+    cur = { block: tail, pos: 0 };
+    uploadNoteImage(f)
+      .then(u => { img.u = u; img.busy = false; })
+      .catch(e => {
+        locNoteErr = "Không tải được ảnh: " + e.message;
+        const i = locNoteDraftBlocks.indexOf(img);
+        if(i >= 0){ locNoteDraftBlocks.splice(i, 1); locNoteDraftBlocks = normBlocks(locNoteDraftBlocks); }
+      })
+      .finally(() => { captureNoteFocus(); renderLocNote(); });
+  }
+  locNoteCaret = cur; locNotePendingFocus = cur;
+  renderLocNote();
+}
+// Lightbox xem ảnh lớn (bấm nền / ✕ / Esc để đóng)
+const noteLb = document.createElement("div");
+noteLb.id = "noteLightbox";
+noteLb.innerHTML = '<button type="button" class="lbx" aria-label="Đóng">✕</button><img alt="">';
+document.body.appendChild(noteLb);
+const noteLbImg = noteLb.querySelector("img");
+function openNoteLb(url){
+  noteLbImg.onerror = () => { noteLbImg.onerror = null; noteLbImg.src = url; };
+  noteLbImg.src = noteImgUrl(url, 2000);
+  noteLb.classList.add("show");
+}
+function closeNoteLb(){ noteLb.classList.remove("show"); noteLbImg.removeAttribute("src"); }
+noteLb.addEventListener("click", e => { if(e.target !== noteLbImg) closeNoteLb(); });
+document.addEventListener("keydown", e => { if(e.key === "Escape" && noteLb.classList.contains("show")){ e.stopPropagation(); closeNoteLb(); } }, true);
+
 function renderLocNote(){
-  locNoteFab.classList.toggle("has-note", !!locNoteText.trim());
+  locNoteFab.classList.toggle("has-note", hasLocNote());
   applyLocNoteMini();
   locNoteEditBtn.classList.toggle("active", locNoteEditing);
   locNoteBody.innerHTML = "";
   if(locNoteEditing){
-    const ta = document.createElement("textarea");
-    ta.value = locNoteDraft;
-    ta.placeholder = "Ghi chú...";
-    const fit = () => { ta.style.height = "auto"; ta.style.height = ta.scrollHeight + "px"; };
-    ta.addEventListener("input", () => { locNoteDraft = ta.value; fit(); });
-    ta.addEventListener("keydown", e => { if((e.ctrlKey || e.metaKey) && e.key === "Enter") saveLocNote(); });
-    locNoteBody.appendChild(ta);
+    const fits = [];
+    const docEl = document.createElement("div");
+    docEl.className = "lnb-doc";
+    // Bấm vào khoảng trống của khung (dưới cùng) -> đưa con trỏ về cuối khối chữ cuối.
+    docEl.addEventListener("click", e => {
+      if(e.target !== docEl) return;
+      const tas = docEl.querySelectorAll("textarea");
+      const last = tas[tas.length - 1];
+      if(last){ last.focus(); last.setSelectionRange(last.value.length, last.value.length); }
+    });
+    locNoteDraftBlocks.forEach((b, i) => {
+      if(b.t === "text"){
+        const ta = document.createElement("textarea");
+        ta.className = "lnb-ta"; ta.rows = 1; ta.__b = b; ta.value = b.v || "";
+        const solo = locNoteDraftBlocks.length === 1;
+        if(solo){ ta.className += " solo"; ta.placeholder = "Ghi chú... (dán ảnh Ctrl+V tại vị trí con trỏ)"; }
+        const fit = () => { ta.style.height = "auto"; ta.style.height = ta.scrollHeight + "px"; };
+        fits.push(fit);
+        const mark = () => { locNoteCaret = { block: b, pos: ta.selectionStart }; };
+        ta.addEventListener("input", () => { b.v = ta.value; fit(); mark(); });
+        ["focus", "click", "keyup", "select"].forEach(ev => ta.addEventListener(ev, mark));
+        ta.addEventListener("keydown", e => {
+          if((e.ctrlKey || e.metaKey) && e.key === "Enter"){ saveLocNote(); return; }
+          // Mũi tên ↑/↓ ở mép khối chữ: nhảy sang khối chữ trước/sau (qua ảnh) như trình soạn thảo.
+          if(ta.selectionStart !== ta.selectionEnd || e.shiftKey || e.ctrlKey || e.metaKey || e.altKey) return;
+          const tas = Array.from(locNoteBody.querySelectorAll("textarea.lnb-ta")), k = tas.indexOf(ta);
+          if(e.key === "ArrowUp" && ta.selectionStart === 0 && k > 0){
+            e.preventDefault(); const t = tas[k - 1]; t.focus(); t.setSelectionRange(t.value.length, t.value.length);
+          } else if(e.key === "ArrowDown" && ta.selectionStart === ta.value.length && k >= 0 && k < tas.length - 1){
+            e.preventDefault(); const t = tas[k + 1]; t.focus(); t.setSelectionRange(0, 0);
+          }
+        });
+        docEl.appendChild(ta);
+      } else if(b.busy){
+        const f = document.createElement("div"); f.className = "lnfig busy"; f.textContent = "Đang tải ảnh…";
+        docEl.appendChild(f);
+      } else {
+        const f = document.createElement("div"); f.className = "lnfig";
+        f.appendChild(makeNoteImg(b.u, 700));
+        const x = document.createElement("button");
+        x.type = "button"; x.className = "x"; x.textContent = "✕"; x.title = "Gỡ ảnh này"; x.setAttribute("aria-label", "Gỡ ảnh");
+        x.addEventListener("click", () => {
+          const k = locNoteDraftBlocks.indexOf(b);
+          const prev = locNoteDraftBlocks[k - 1];
+          locNoteDraftBlocks.splice(k, 1);
+          locNoteDraftBlocks = normBlocks(locNoteDraftBlocks);
+          if(prev) locNotePendingFocus = { block: prev };
+          renderLocNote();
+        });
+        f.appendChild(x); docEl.appendChild(f);
+      }
+    });
+    locNoteBody.appendChild(docEl);
+    const add = document.createElement("button");
+    add.type = "button"; add.className = "loc-note-addimg"; add.textContent = "🖼 Thêm ảnh tại vị trí con trỏ";
+    const fi = document.createElement("input");
+    fi.type = "file"; fi.accept = "image/*"; fi.multiple = true; fi.style.display = "none";
+    fi.addEventListener("change", () => { addNoteFiles(fi.files, locNoteCaret); fi.value = ""; });
+    add.addEventListener("click", () => fi.click());
+    locNoteBody.appendChild(add); locNoteBody.appendChild(fi);
+    const hint = document.createElement("div");
+    hint.className = "loc-note-hint";
+    hint.textContent = "Dán (Ctrl+V) hoặc kéo thả ảnh tại vị trí con trỏ. Bấm vào khoảng trống trên/dưới ảnh để gõ chữ. Tối đa " + NOTE_MAX_IMAGES + " ảnh.";
+    locNoteBody.appendChild(hint);
     if(locNoteErr){
       const er = document.createElement("div");
       er.className = "loc-note-err";
       er.textContent = "⚠️ " + locNoteErr;
       locNoteBody.appendChild(er);
     }
+    const busy = noteBusyCount();
     const btns = document.createElement("div");
     btns.className = "loc-note-btns";
     const cancel = document.createElement("button");
     cancel.type = "button"; cancel.className = "loc-note-cancel"; cancel.textContent = "Hủy";
     cancel.addEventListener("click", () => { locNoteEditing = false; locNoteErr = ""; locNoteMini = true; renderLocNote(); });
     const save = document.createElement("button");
-    save.type = "button"; save.className = "loc-note-save"; save.textContent = "Lưu";
+    save.type = "button"; save.className = "loc-note-save"; save.textContent = busy ? "Đang tải ảnh…" : "Lưu";
+    save.disabled = busy > 0;
     save.addEventListener("click", saveLocNote);
     btns.appendChild(cancel); btns.appendChild(save);
     locNoteBody.appendChild(btns);
-    setTimeout(() => { fit(); ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }, 0);
+    setTimeout(() => {
+      fits.forEach(f => f());
+      const pf = locNotePendingFocus; locNotePendingFocus = null;
+      if(pf){
+        const ta = Array.from(locNoteBody.querySelectorAll("textarea")).find(t => t.__b === pf.block);
+        if(ta){ const n = pf.pos == null ? ta.value.length : Math.min(pf.pos, ta.value.length); ta.focus(); ta.setSelectionRange(n, n); }
+      }
+    }, 0);
   } else {
-    const t = document.createElement("div");
-    t.className = "loc-note-text" + (locNoteText ? "" : " empty");
-    t.textContent = locNoteText || "Chưa có ghi chú. Bấm ✏️ để viết.";
-    locNoteBody.appendChild(t);
+    if(!hasLocNote()){
+      const t = document.createElement("div");
+      t.className = "loc-note-text empty";
+      t.textContent = "Chưa có ghi chú. Bấm ✏️ để viết.";
+      locNoteBody.appendChild(t);
+    } else {
+      const flow = document.createElement("div");
+      flow.className = "loc-note-flow";
+      locNoteBlocks.forEach(b => {
+        if(b.t === "img"){
+          const img = makeNoteImg(b.u, 900);
+          img.addEventListener("click", e => { e.stopPropagation(); openNoteLb(b.u); });
+          flow.appendChild(img);
+        } else if((b.v || "").trim()){
+          const t = document.createElement("div");
+          t.className = "loc-note-text"; t.textContent = b.v;
+          flow.appendChild(t);
+        }
+      });
+      locNoteBody.appendChild(flow);
+    }
     if(locNoteSyncErr){
       const er = document.createElement("div");
       er.className = "loc-note-err";
@@ -2863,10 +3117,14 @@ function renderLocNote(){
   }
 }
 async function saveLocNote(){
-  const text = locNoteDraft.replace(/\s+$/, "");
+  if(noteBusyCount() > 0){ locNoteErr = "Ảnh đang tải lên, đợi xong rồi bấm Lưu."; renderLocNote(); return; }
+  const blocks = blocksForSave();
+  // text + images giữ lại để tương thích bản cũ / nơi khác đọc ghi chú.
+  const text = blocks.filter(b => b.t === "text").map(b => b.v).join("\n");
+  const images = blocks.filter(b => b.t === "img").map(b => b.u);
   try{
-    await setDoc(locNoteRef, { text, updatedAt: serverTimestamp() });
-    locNoteText = text;
+    await setDoc(locNoteRef, { blocks, text, images, updatedAt: serverTimestamp() });
+    locNoteBlocks = blocks; locNoteText = text;
     locNoteEditing = false;
     locNoteErr = "";
     locNoteMini = true;
@@ -2877,10 +3135,30 @@ async function saveLocNote(){
 }
 locNoteEditBtn.addEventListener("click", () => {
   if(locNoteEditing){ const ta = locNoteBody.querySelector("textarea"); if(ta) ta.focus(); return; }
-  locNoteDraft = locNoteText;
+  locNoteDraftBlocks = normBlocks(locNoteBlocks.map(b => Object.assign({}, b)));
+  locNoteCaret = null;
+  locNotePendingFocus = { block: locNoteDraftBlocks[0] };
   locNoteErr = "";
   locNoteEditing = true;
   renderLocNote();
+});
+// Dán ảnh (Ctrl+V / ảnh chụp màn hình / copy từ Zalo) hoặc kéo thả vào bảng khi đang sửa.
+locNotePanel.addEventListener("paste", e => {
+  if(!locNoteEditing || !e.clipboardData) return;
+  const imgs = Array.from(e.clipboardData.files || []).filter(f => /^image\//.test(f.type));
+  if(!imgs.length) return;   // dán chữ bình thường thì để nguyên
+  e.preventDefault();
+  const t = e.target;
+  addNoteFiles(imgs, (t && t.tagName === "TEXTAREA" && t.__b) ? { block: t.__b, pos: t.selectionStart, end: t.selectionEnd } : locNoteCaret);
+});
+locNotePanel.addEventListener("dragover", e => { if(locNoteEditing) e.preventDefault(); });
+locNotePanel.addEventListener("drop", e => {
+  if(!locNoteEditing || !e.dataTransfer) return;
+  const imgs = Array.from(e.dataTransfer.files || []).filter(f => /^image\//.test(f.type));
+  if(!imgs.length) return;
+  e.preventDefault();
+  const t = e.target;
+  addNoteFiles(imgs, (t && t.tagName === "TEXTAREA" && t.__b) ? { block: t.__b, pos: t.selectionStart } : locNoteCaret);
 });
 locNotePanel.addEventListener("click", () => {
   if(locNotePanel.classList.contains("mini")){ locNoteMini = false; renderLocNote(); }
@@ -2892,7 +3170,7 @@ locNotePanel.addEventListener("keydown", e => {
 });
 locNoteMinBtn.addEventListener("click", e => {
   e.stopPropagation();
-  if(!locNoteText.trim() && !locNoteEditing){ locNoteMini = true; renderLocNote(); }
+  if(!hasLocNote() && !locNoteEditing){ locNoteMini = true; renderLocNote(); }
 });
 locNoteFab.addEventListener("click", () => setLocNoteOpen(!locNotePanel.classList.contains("show")));
 locNoteBackdrop.addEventListener("click", () => setLocNoteOpen(false));
@@ -2900,10 +3178,12 @@ document.getElementById("locNoteCloseBtn").addEventListener("click", () => setLo
 document.addEventListener("keydown", e => { if(e.key === "Escape" && !desktopNoteMQ.matches) setLocNoteOpen(false); });
 desktopNoteMQ.addEventListener("change", () => setLocNoteOpen(locNotePanel.classList.contains("show")));
 onSnapshot(locNoteRef, snap => {
-  locNoteText = snap.exists() ? (snap.data().text || "") : "";
+  const d = snap.exists() ? snap.data() : {};
+  locNoteText = d.text || "";
+  locNoteBlocks = blocksFromDoc(d);
   locNoteSyncErr = "";
   if(!locNoteEditing) renderLocNote();   // đang gõ dở thì không ghi đè bản nháp
-  else locNoteFab.classList.toggle("has-note", !!locNoteText.trim());
+  else locNoteFab.classList.toggle("has-note", hasLocNote());
 }, err => {
   locNoteSyncErr = "Lỗi đồng bộ ghi chú: " + err.message;
   if(!locNoteEditing) renderLocNote();
